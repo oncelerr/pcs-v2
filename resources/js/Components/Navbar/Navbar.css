@@ -1,0 +1,89 @@
+.navbar-cont {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 24px;
+  transition: all 0.3s ease-in-out;
+  /* smooth animation */
+  z-index: 1000;
+  margin-top: 42px;
+}
+
+.navbar-cont.scrolled {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.navbar-wrp {
+  display: flex;
+  align-items: center;
+  transition: background 0.3s ease-in-out, 
+              box-shadow 0.3s ease-in-out, 
+              margin-top 0.3s ease-in-out, 
+              padding 0.3s ease-in-out;
+  border-radius: 16px;
+}
+
+.navbar-wrp.scrolled {
+  margin-top: -1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+
+  /* neumorphic highlights & shadows */
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+
+  /* highlights top-left, shadow bottom-right */
+  box-shadow:
+    -4px -4px 12px rgba(255, 255, 255, 0.7),
+    /* highlight top-left */
+    6px 6px 16px rgba(0, 0, 0, 0.25);
+  /* shadow bottom-right */
+}
+
+
+.navbar-cont img {
+  margin-right: 126px;
+  cursor: pointer;
+}
+
+.nav-links {
+  display: flex;
+  gap: 61px;
+}
+
+.nav-link {
+  font-family: DM Sans;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 20px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.login-btn {
+  margin-left: 175px;
+  font-family: DM Sans;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 20px;
+  color: white;
+  background-color: #106552;
+  padding: 11.5px 38px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.login-btn:hover {
+  background-color: rgba(154, 43, 96, 1);
+}
