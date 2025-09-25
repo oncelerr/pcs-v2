@@ -1,0 +1,199 @@
+.abt-hero {
+  width: 100%;
+  aspect-ratio: 1440 / 634;
+  background-image: url('/assets/abt-bg.png');
+  background-size: contain;
+  background-position: top center;
+  background-repeat: no-repeat;
+  display: flex;
+  padding: 2rem;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.abt-hero-h1 {
+  font-family: DM Sans;
+  font-weight: 700;
+  font-style: Bold;
+  font-size: 52px;
+  line-height: 57px;
+  letter-spacing: -2px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.first-span {
+  color: #106552;
+}
+
+.second-span {
+  color: #9A2B60;
+}
+
+.abt-hero-p {
+  font-family: DM Sans;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 24px;
+  line-height: 32px;
+  letter-spacing: 0px;
+  text-align: center;
+  vertical-align: middle;
+  width: 623px;
+  margin-top: 24px;
+  margin-bottom: 48px;
+}
+
+.abt-hero-btn {
+  font-family: Inter;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: white;
+  background-color: #000000;
+  padding: 18px 37px;
+  border-radius: 6px;
+  transition: all 0.3s ease-in-out;
+}
+
+.abt-hero-btn:hover {
+  background-color: white;
+  color: black;
+  box-shadow: 0 0 15px #9A2B60;
+  transform: translateY(-2px);
+  cursor: pointer;
+}
+
+.section-two {
+  margin-top: -120px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+
+.section-two-wrp {
+  width: 1212px;
+  aspect-ratio: 1212 / 474;
+  background-image: url('/assets/Frame-211.png');
+  background-size: contain;
+  background-position: top center;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: row;
+  padding: 89px 0;
+  justify-content: center;
+
+  gap: 32px;
+}
+
+.section-two-left {
+  width: 275px;
+}
+
+.section-two-left-h1 {
+  font-family: DM Sans;
+  font-weight: 700;
+  font-style: Bold;
+  font-size: 48px;
+  line-height: 42px;
+  letter-spacing: 0px;
+  text-align: center;
+  vertical-align: middle;
+  color: white;
+}
+
+.section-two-right {
+  width: 705px;
+}
+
+.section-two-right-p {
+  font-family: DM Sans;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 20px;
+  line-height: 32px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  color: white;
+  text-align: left;
+}
+
+.section-three {
+  display: flex;
+  padding: 116px;
+  justify-content: center;
+}
+
+.nineth-wrp {
+  display: flex;
+  gap: 104px;
+}
+
+.nineth-left {
+  width: 523px;
+}
+
+.nineth-title-h1 {
+  font-family: Inter;
+  font-weight: 700;
+  font-style: Bold;
+  font-size: 40px;
+  leading-trim: NONE;
+  line-height: 42px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  margin-bottom: 24px;
+}
+
+.nineth-p {
+  font-family: Inter;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 24px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  margin-bottom: 49px;
+}
+
+.nineth-p-bold {
+  font-family: Inter;
+  font-weight: 700;
+  font-style: Bold;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 24px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+}
+
+.nineth-btn {
+  font-family: Inter;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 20px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  padding: 18px 68px;
+  color: white;
+  background-color: #000000;
+  border-radius: 6px;
+}
+
+.nineth-btn:hover {
+  background-color: white;
+  color: black;
+  box-shadow: 0 0 15px #9A2B60;
+  transform: translateY(-2px);
+  cursor: pointer;
+}

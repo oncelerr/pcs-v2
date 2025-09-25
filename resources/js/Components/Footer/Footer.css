@@ -1,10 +1,13 @@
 .footer-cont {
     width: 100%;
+    max-width: 100%;
     background-color: #106552;
-    padding: 60px 53px;
+    padding: 60px 5%;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .footer-wrp {
@@ -12,16 +15,24 @@
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 .top {
     display: flex;
+    flex-wrap: wrap;
     gap: 32px;
+    width: 100%;
+    justify-content: space-between;
 }
 
 .pcs {
-    width: 409px;
-    margin-right: 153px;
+    width: 100%;
+    max-width: 409px;
+    margin-right: 0;
+    flex: 1 1 300px;
 }
 
 .abt-img {
@@ -89,6 +100,14 @@
     border-radius: 50px;
     background-color: #9A2B60;
     margin-bottom: 45px;
+    transition: all 0.3s ease-in-out;
+}
+
+.get-in-touch:hover {
+    scale: 1.05;
+    cursor: pointer;
+    box-shadow: 0 0 15px #9A2B60;
+    transition: all 0.3s ease-in-out;
 }
 
 .socials {
@@ -104,6 +123,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease-in-out;
+}
+
+.facebook:hover {
+    box-shadow: 0 0 15px #ffffff3b;
 }
 
 .instagram {
@@ -114,13 +138,35 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease-in-out;
+}
+
+.instagram:hover {
+    box-shadow: 0 0 15px #ffffff3b;
+}
+
+.linkedin {
+    width: 50px;
+    height: 50px;
+    border: 2px solid #ffffff12;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease-in-out;
+}
+
+.linkedin:hover {
+    box-shadow: 0 0 15px #ffffff3b;
 }
 
 .catalog {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    width: 140px;
+    width: auto;
+    min-width: 140px;
+    margin: 10px 0;
 }
 
 .catalog-title {
@@ -131,7 +177,7 @@
     line-height: 140%;
     letter-spacing: 0%;
     color: white;
-    margin-bottom: 16px;
+    margin-bottom: 5px;
 }
 
 .nav-link-footer {
@@ -144,13 +190,21 @@
     color: white;
     margin-bottom: 5px;
     cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+.nav-link-footer:hover {
+    scale: 1.05;
+    cursor: pointer;
 }
 
 .servicess {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    width: 155px;
+    width: auto;
+    min-width: 140px;
+    margin: 10px 0;
 }
 
 .service-title {
@@ -168,7 +222,9 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    width: 140px;
+    width: auto;
+    min-width: 140px;
+    margin: 10px 0;
 }
 
 .resources-title {
@@ -186,7 +242,9 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    width: 179px;
+    width: auto;
+    min-width: 140px;
+    margin: 10px 0;
 }
 
 .accepted-payments-title {
@@ -200,12 +258,21 @@
     margin-bottom: 16px;
 }
 
+.bottom {
+    width: 100%;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .bottom p {
     font-family: Inter;
     font-weight: 400;
     font-size: 12px;
     line-height: 140%;
     letter-spacing: 0%;
-    text-align: right;
-    color: #4c8c7d;
+    text-align: center;
+    color: #9ec7bd;
+    margin: 0;
+    padding: 0 20px;
 }

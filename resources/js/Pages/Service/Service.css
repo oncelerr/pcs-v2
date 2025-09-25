@@ -1,0 +1,246 @@
+.serv-cont {
+    width: 100%;
+    aspect-ratio: 1440 / 634;
+    background-image: url('/assets/Frame-6.png');
+    background-size: contain;
+    background-position: top center;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.serv-cont-left {
+    display: flex;
+    flex-direction: column;
+    width: 607px;
+}
+
+.serv-title {
+    font-family: DM Sans;
+    font-weight: 700;
+    font-style: Bold;
+    font-size: 52px;
+    line-height: 57px;
+    letter-spacing: -2px;
+    vertical-align: middle;
+    text-align: left;
+}
+
+.serv-desc {
+    font-family: DM Sans;
+    font-weight: 500;
+    font-style: Medium;
+    font-size: 16px;
+    line-height: 32px;
+    letter-spacing: 0px;
+    text-align: left;
+    margin-top: 16px;
+    margin-bottom: 34px;
+}
+
+.serv-btn {
+    font-family: Inter;
+    font-weight: 500;
+    font-style: Medium;
+    font-size: 16px;
+    line-height: 20px;
+    letter-spacing: 0%;
+    vertical-align: middle;
+    color: white;
+    background-color: #000000;
+    padding: 18px 0;
+    border-radius: 6px;
+    width: 244px;
+}
+
+.serv-card-wrp {
+    display: flex;
+    padding: 80px 5%;
+    gap: 48px;
+    background-color: #f6f6f4;
+    box-sizing: border-box;
+    justify-content: center;
+}
+
+@media (min-width: 1201px) {
+    .serv-card-wrp {
+        padding: 99px 110.5px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .serv-card-wrp {
+        flex-direction: column;
+        padding: 60px 24px;
+    }
+
+    .serv-card-tab {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 16px;
+        margin-bottom: 24px;
+        padding-right: 0;
+    }
+
+    .serv-card-btn {
+        white-space: nowrap;
+        width: auto;
+        padding: 12px 24px !important;
+    }
+}
+
+.serv-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    width: 100%;
+    margin-top: 24px;
+}
+
+.serv-card-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    width: 323px;
+}
+
+.serv-card-btn {
+    font-family: DM Sans;
+    font-weight: 700;
+    font-style: Bold;
+    font-size: 24px;
+    line-height: 20px;
+    letter-spacing: 0px;
+    vertical-align: middle;
+    text-align: left;
+    padding: 20px 16px;
+    width: 323px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+.serv-card-btn:hover {
+    background-color: #d4b2c3;
+    color: black;
+    border-radius: 6px;
+    transform: translateY(-2px);
+}
+
+.serv-card-btn.active {
+    background-color: #106552;
+    color: white;
+    border-radius: 6px;
+}
+
+.serv-card {
+    display: flex;
+    flex-direction: column;
+    width: 826px;
+}
+
+.serv-page-title {
+    font-family: DM Sans;
+    font-weight: 700;
+    font-style: Bold;
+    font-size: 48px;
+    leading-trim: NONE;
+    line-height: 52px;
+    letter-spacing: -2px;
+    vertical-align: middle;
+    text-align: left;
+    margin-bottom: 16px;
+}
+
+.serv-page-desc {
+    font-family: DM Sans;
+    font-weight: 500;
+    font-style: Medium;
+    font-size: 16px;
+    line-height: 32px;
+    letter-spacing: 0px;
+    vertical-align: middle;
+    text-align: left;
+    margin-bottom: 42px;
+}
+
+.serv-each-card {
+    width: 100%;
+    min-height: 559px;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    box-sizing: border-box;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.serv-each-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.serv-each-card-title {
+    font-family: DM Sans;
+    font-weight: 700;
+    font-style: Bold;
+    font-size: 20px;
+    leading-trim: NONE;
+    line-height: 20px;
+    letter-spacing: 0px;
+    vertical-align: middle;
+    margin-top: 24px;
+    margin-bottom: 14px;
+}
+
+.serv-each-card-img {
+    width: 329px;
+    height: 194.05px;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+.serv-each-card-desc {
+    font-family: DM Sans;
+    font-weight: 400;
+    font-style: Regular;
+    font-size: 14px;
+    leading-trim: NONE;
+    line-height: 32px;
+    letter-spacing: 0px;
+    vertical-align: middle;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 160px;
+    min-height: 160px;
+    margin-bottom: 16px;
+}
+
+.serv-each-card-btn {
+    font-family: Inter;
+    font-weight: 500;
+    font-style: Medium;
+    font-size: 16px;
+    leading-trim: NONE;
+    line-height: 20px;
+    letter-spacing: 0%;
+    vertical-align: middle;
+    color: white;
+    background-color: #000;
+    border-radius: 6px;
+    padding: 18px 0;
+    transition: all 0.3s ease-in-out;
+}
+
+.serv-each-card-btn:hover {
+  background-color: white;
+  color: black;
+  box-shadow: 0 0 15px #9A2B60;
+  cursor: pointer;
+}

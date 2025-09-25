@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "./Home.css";
+import { useNavigate } from "react-router-dom";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -60,18 +61,22 @@ export default function Home() {
     {
       title: "Business Formation",
       text: "We take care of the full registration process, making sure your company is set up correctly and legally in the U.S., without the usual stress and confusion.",
+      link: "business-formation"
     },
     {
       title: "Compliance & Legal",
       text: "Staying compliant doesn't stop after registration. We monitor your business’ obligations throughout the year so you never miss a deadline or face unexpected penalties.",
+      link: "compliance-and-legal"
     },
     {
       title: "Brand & Representation",
       text: "With the technicalities handled, you can finally focus on growing your business. We’re here to support your journey with reliable compliance and advisory services.",
+      link: "brand-and-representation"
     },
     {
       title: "Virtual Office Solutions",
       text: "Our team ensures your business taxes are filed properly and on time, helping you avoid penalties and stay compliant with U.S. tax laws.",
+      link: "virtual-office-solutions"
     },
   ];
 
@@ -334,6 +339,67 @@ export default function Home() {
     }
   }, []);
 
+  const navigate = useNavigate();
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
+  const pricingSection = useRef<HTMLDivElement>(null);
+  const pricingCards = useRef<HTMLDivElement[]>([]);
+  const pricingTitle = useRef<HTMLHeadingElement>(null);
+  const pricingSubtitle = useRef<HTMLParagraphElement>(null);
+
+  // GSAP Animation
+  useEffect(() => {
+    if (!pricingSection.current) return;
+
+    // Animation for title and subtitle
+    gsap.fromTo(
+      [pricingTitle.current, pricingSubtitle.current],
+      { y: 50, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        stagger: 0.2,
+        scrollTrigger: {
+          trigger: pricingSection.current,
+          start: "top 70%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    gsap.fromTo(
+      pricingCards.current,
+      { y: 100, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        stagger: 0.2,
+        scrollTrigger: {
+          trigger: pricingSection.current,
+          start: "top 60%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    // Clean up ScrollTrigger instances on component unmount
+    return () => {
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    };
+  }, []);
+
+  // Add cards to the ref array
+  const addToCardsRef = (el: HTMLDivElement | null) => {
+    if (el && !pricingCards.current.includes(el)) {
+      pricingCards.current.push(el);
+    }
+  };
+
   return (
     <>
       <div className="home-container">
@@ -342,7 +408,7 @@ export default function Home() {
         </h1>
         <p className="hero-p" ref={heroParagraphRef}>Business Registration • Tax Filing • Compliance</p>
         <div className="btn-wrp">
-          <button className="get-started-btn">Get Started</button>
+          <button className="get-started-btn" onClick={() => handleNavigation("/services")}>Get Started</button>
           <button className="see-pricing-btn" onClick={scrollToPricing}>See Pricing</button>
         </div>
       </div>
@@ -415,7 +481,20 @@ export default function Home() {
                 <div className="services">
                   <h1 className="services-h1">{service.title}</h1>
                   <p className="services-p">{service.text}</p>
-                  <button className="services-btn">
+                  <button 
+                    className="services-btn" 
+                    onClick={() => {
+                      navigate('/services?service=' + service.link);
+                      setTimeout(() => {
+                        const element = document.getElementById('service');
+                        if (element) {
+                          const yOffset = -100;
+                          const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                          window.scrollTo({ top: y, behavior: 'smooth' });
+                        }
+                      }, 100);
+                    }}
+                  >
                     <img src="/assets/arrow.png" alt="" />
                   </button>
                 </div>
@@ -425,14 +504,14 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <div id="pricing-section" className="seventh-section">
+      <div id="pricing-section" className="seventh-section" ref={pricingSection}>
         <div className="seventh-wrp">
-          <h1 className="seventh-h11">Simple, One-Time Pricing</h1>
-          <p className="seventh-p">Pay once, enjoy our services without hidden fees or recurring charges.</p>
+          <h1 className="seventh-h11" ref={pricingTitle}>Simple, One-Time Pricing</h1>
+          <p className="seventh-p" ref={pricingSubtitle}>Pay once, enjoy our services without hidden fees or recurring charges.</p>
           <img className="seventh-dots" src="/assets/dots.png" alt="" />
           <div className="seventh-card-wrp">
             {pricingPlans.map((plan, index) => (
-              <div className="seventh-card" key={index}>
+              <div className="seventh-card" key={index} ref={addToCardsRef}>
                 {plan.popular && <div className="popular-badge">Popular</div>}
                 <p className="seventh-badge">{plan.badge}</p>
                 <h1 className="seventh-title">
@@ -471,7 +550,7 @@ export default function Home() {
         </div>
         <div className="eight-bottom">
           <h1 className="eight-bottom-h1">Take the first step toward a stress-free <br />business journey.</h1>
-          <button className="eigth-btn-bottom">Sign up, Today!</button>
+          <button className="eigth-btn-bottom">Sign up today!</button>
         </div>
       </div>
       <div className="nineth-section">
@@ -486,7 +565,14 @@ export default function Home() {
               <span className="nineth-p-bold">Quick Support, Clear Answers</span><br />
               Reach out today, and we’ll respond promptly with the guidance and solutions you need to move forward with confidence.
             </p>
-            <button className="nineth-btn">Contact Us</button>
+            <button 
+              className="nineth-btn" 
+              onClick={() => {
+                navigate('/contact');
+              }}
+            >
+              Contact Us
+            </button>
           </div>
           <div className="nineth-right">
             <img src="/assets/nineth-im.png" alt="" />
@@ -496,3 +582,4 @@ export default function Home() {
     </>
   );
 }
+

@@ -14,7 +14,7 @@
 
     <!-- Vite -->
     @viteReactRefresh
-    @vite(['resources/css/app.css', 'resources/js/app.jsx'])
+    @vite(['resources/css/app.css', 'resources/js/app.tsx'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -25,7 +25,7 @@
 <body>
     <div id="app"></div>
     @viteReactRefresh
-    @vite('resources/js/app.jsx')
+    @vite('resources/js/app.tsx')
 </body>
 
 </html>
