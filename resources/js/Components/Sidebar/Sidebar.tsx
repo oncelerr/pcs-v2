@@ -46,19 +46,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <div className={"submenu " + (profileOpen ? 'open' : '')}>
           {isAdmin ? (
             <>
-              <Link to="/user-management" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
+              <Link to="/all-users" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
                 <span>All Users</span>
               </Link>
-              <Link to="/user-management" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
+              <Link to="/pending" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
                 <span>Pending</span>
               </Link>
-              <Link to="/user-management" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
+              <Link to="/compliance" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
                 <span>Compliance</span>
               </Link>
-              <Link to="/user-management" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
+              <Link to="/compliance-success" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
                 <span>Approved</span>
               </Link>
-              <Link to="/user-management" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
+              <Link to="/compliance-uploads" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
                 <span>Uploads</span>
               </Link>
             </>
@@ -75,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         </div>
 
         <Link
-          to={isAdmin ? '/content-management' : '/user-service'}
+          to={isAdmin ? '/blog-management' : '/user-service'}
           className={'sidebar-link ' + (isActive(isAdmin ? '/content-management' : '/user-service') ? 'active' : '')}
         >
           <img src="/assets/services-icon.png" alt="" /> {isAdmin ? 'Blogs' : 'Services'}

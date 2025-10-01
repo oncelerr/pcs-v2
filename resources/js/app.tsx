@@ -23,6 +23,7 @@ const Terms = lazy(() => import('./Pages/Terms/Terms'));
 const Privacy = lazy(() => import('./Pages/Privacy/Privacy'));
 const Dashboard = lazy(() => import('./Pages/Dashboard/Dashboard'));
 const MyProfile = lazy(() => import('./Pages/MyProfile/MyProfile'));
+const AllUsers = lazy(() => import('./Pages/AllUsers/AllUsers'))
 const AccountSetting = lazy(() => import('./Pages/AccountSetting/AccountSetting'));
 
 const PageWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -57,7 +58,19 @@ const AppContent: React.FC = () => {
   const location = useLocation();
 
   const isPrivateRoute = (pathname: string): boolean => {
-    const privateRoutes = ['/dashboard', '/profile', '/user-service', '/acc-settings', '/admin'];
+    const privateRoutes = [
+      '/dashboard', 
+      '/profile', 
+      '/user-service', 
+      '/acc-settings', 
+      '/admin', 
+      '/all-users', 
+      '/pending', 
+      '/compliance', 
+      '/compliance-success', 
+      '/compliance-uploads', 
+      '/blog-management'
+    ];
     return privateRoutes.some(route => pathname.startsWith(route));
   };
 
@@ -87,16 +100,14 @@ const AppContent: React.FC = () => {
           <Route path="/acc-settings" element={<DashboardPage title="Account Settings"><AccountSetting /></DashboardPage>} />
         </Route>
 
-        {/* Admin Route - Top Level, role-protected */}
-        <Route path="/admin" element={
-          <PrivateRoute requiredRoles="Admin">
-            <DashboardLayout>
-              <DashboardPage title="Admin Dashboard">
-                <div>Welcome, Admin! Only users with the Admin role can see this.</div>
-              </DashboardPage>
-            </DashboardLayout>
-          </PrivateRoute>
-        } />
+        <Route element={<PrivateRoute requiredRoles="Admin"><DashboardLayout /></PrivateRoute>}>
+          <Route path="/all-users" element={<DashboardPage title="Dashboard"><AllUsers /></DashboardPage>} />
+          <Route path="/pending" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
+          <Route path="/compliance" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
+          <Route path="/compliance-success" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
+          <Route path="/compliance-uploads" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
+          <Route path="/blog-management" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
+        </Route>
 
         {/* 403 Access Denied Page */}
         <Route path="/403" element={

@@ -48,6 +48,12 @@
   transition: opacity 300ms, transform 300ms;
 }
 
+.main-content {
+  margin-left: 269px;
+  flex: 1;
+  padding: 48px;
+}
+
 .main-content-header {
   display: flex;
   justify-content: space-between;
@@ -186,4 +192,16 @@
 
 .main-content-user:hover {
  background-color: #9A2B60;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 24px;
+  }
+  
+  .menu-toggle {
+    display: block;
+  }
 }

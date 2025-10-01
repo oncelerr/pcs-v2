@@ -115,12 +115,7 @@ body {
   line-height: 25.6px;
 }
 
-/* Main Content */
-.main-content {
-  margin-left: 269px;
-  flex: 1;
-  padding: 48px;
-}
+/* Main Content styles moved to DashboardLayout.css */
 
 .header {
   display: flex;
@@ -534,11 +529,6 @@ body {
     height: auto;
     position: relative;
     border-radius: 0;
-  }
-  
-  .main-content {
-    margin-left: 0;
-    padding: 24px;
   }
   
   .header {
