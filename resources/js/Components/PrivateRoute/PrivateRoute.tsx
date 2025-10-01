@@ -5,17 +5,18 @@ import { useAuth } from '../../contexts/AuthContext';
 interface PrivateRouteProps {
   children?: ReactNode;
   redirectTo?: string;
+  requiredRoles?: string | string[]; // 👈 optional role requirement(s)
 }
 
-const PrivateRoute: React.FC<PrivateRouteProps> = ({ 
-  children, 
-  redirectTo = '/login' 
+const PrivateRoute: React.FC<PrivateRouteProps> = ({
+  children,
+  redirectTo = '/login',
+  requiredRoles
 }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
   const [shouldRender, setShouldRender] = useState(false);
 
-  // Wait for auth check to complete before rendering
   useEffect(() => {
     if (!loading) {
       setShouldRender(true);
@@ -23,7 +24,6 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
   }, [loading]);
 
   if (loading || !shouldRender) {
-    // Show a loading spinner or skeleton while checking auth status
     return (
       <div style={{
         display: 'flex',
@@ -45,11 +45,22 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
   }
 
   if (!isAuthenticated) {
-    // Redirect to login page with the current location to return after login
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // If user is authenticated, render the children or the outlet
+  // ✅ Role-based protection
+  if (requiredRoles) {
+    const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
+    const hasAccess = roles.some(r => user?.role?.name?.toLowerCase() === r.toLowerCase());
+
+    if (!hasAccess) {
+      return <Navigate to="/403" replace />; // 🔒 or "/dashboard"
+    }
+  }
+
+  console.log('user:', user);
+  console.log('requiredRoles:', requiredRoles);
+
   return children ? <>{children}</> : <Outlet />;
 };
 

@@ -1,127 +1,137 @@
 /* Sidebar Styles */
 .sidebar {
-  width: 250px;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+  width: 269px;
   height: 100vh;
   position: fixed;
+  padding: 48px 24px;
   left: 0;
   top: 0;
-  background-color: #106552;
+  background-color: #005444;
   color: white;
-  padding: 1rem 0;
-  transition: transform 0.3s ease-in-out;
   z-index: 1000;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1.5rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 1rem;
+  width: 221px;
 }
 
-.sidebar-header h3 {
-  margin: 0;
-  color: white;
-  font-size: 1.25rem;
-  font-weight: 600;
+.sidenav-hr {
+  width: 221px;
+  height: 1px;
+  background-color: #C3D8D4;
+  margin: 24px 0;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
+/* Make nav fill the remaining vertical space so the logout can stick to bottom */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.sidebar-link {
+  display: flex;
+  font-family: DM Sans;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 150%;
+  letter-spacing: 0.2px;
+  color: #B8DCD5;
+  gap: 10px;
+  width: 221px;
+  height: 48px;
+  align-items: center;
+  padding: 12px 14px;
+  transition: all 0.3s ease;
+}
+
+.sidebar-logout {
+  margin-top: auto;
+  display: flex;
+  font-family: DM Sans;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 150%;
+  letter-spacing: 0.2px;
+  color: #B8DCD5;
+  gap: 10px;
+  width: 221px;
+  height: 48px;
+  align-items: center;
+  padding: 12px 14px;
+  transition: all 0.3s ease;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  line-height: 1;
 }
 
-.sidebar-nav ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.sidebar-link img{
+  width: 24px;
+  height: 24px;
 }
 
-.sidebar-nav li {
-  margin: 0.5rem 0;
+/* Push chevron icon to the far right within the link */
+.sidebar-link .chevron {
+  margin-left: auto;
+  transition: transform 0.2s ease;
 }
 
-.sidebar-nav a, .logout-btn {
+/* Rotate chevron when open */
+.sidebar-link .chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Submenu container (collapsed by default) */
+.submenu {
+  overflow: hidden;
+  opacity: 0;
+  max-height: 0;
+  transition: opacity 0.2s ease, max-height 0.25s ease;
+  font-family: DM Sans;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 150%;
+  letter-spacing: 0.2px;
+}
+
+.submenu.open {
+  opacity: 1;
+  max-height: 300px; /* enough to show items */
+}
+
+/* Submenu link styling */
+.submenu-link {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1.5rem;
-  color: rgba(255, 255, 255, 0.8);
+  width: 221px;
+  height: 40px;
+  padding: 8px 14px 8px 48px; /* indent to align under parent */
+  color: #B8DCD5;
   text-decoration: none;
-  transition: all 0.2s ease;
-  background: none;
-  border: none;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  font-size: 0.95rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border-radius: 6px;
 }
 
-.sidebar-nav a:hover, .logout-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+.submenu-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+
+.active {
   color: white;
-}
-
-.sidebar-nav .active a {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-  border-left: 3px solid white;
-}
-
-.icon {
-  margin-right: 0.75rem;
-  font-size: 1.1rem;
-  text-align: center;
-}
-
-/* Mobile styles */
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  
-  .sidebar.open {
-    transform: translateX(0);
-  }
-}
-
-/* Content wrapper for pages with sidebar */
-.content-wrapper {
-  margin-left: 250px;
-  padding: 1.5rem;
-  min-height: 100vh;
-  background-color: #f5f7fa;
-}
-
-/* Mobile menu toggle button */
-.menu-toggle {
-  display: none;
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  z-index: 1001;
-  background: #106552;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem;
-  cursor: pointer;
-}
-
-@media (max-width: 768px) {
-  .content-wrapper {
-    margin-left: 0;
-    padding-top: 4rem;
-  }
-  
-  .menu-toggle {
-    display: block;
-  }
+  background-color: #146857;
+  border-radius: 8px;
 }

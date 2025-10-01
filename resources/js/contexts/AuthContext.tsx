@@ -20,6 +20,13 @@ export interface User {
   email_verified_at?: string | null;
   created_at?: string;
   updated_at?: string;
+  role_id?: number;
+  role?: {
+    id: number;
+    name: string;
+    created_at?: string;
+    updated_at?: string;
+  };
 }
 
 interface LoginCredentials {
@@ -43,6 +50,8 @@ interface AuthError {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  hasRole: (role: string) => boolean;
+  isAdmin: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
@@ -60,6 +69,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Check if user is authenticated
   const isAuthenticated = !!user;
 
+  // Check if user has a specific role
+  const hasRole = useCallback((role: string): boolean => {
+    if (!user?.role) return false;
+    const roleName = typeof user.role === 'string' ? user.role : user.role.name;
+    return roleName.toLowerCase() === role.toLowerCase();
+  }, [user]);
+
+  // Check if user is admin
+  const isAdmin = useCallback((): boolean => {
+    return hasRole('Admin');
+  }, [hasRole]);
+
   // Clear any authentication errors
   const clearError = useCallback(() => setError(null), []);
 
@@ -69,11 +90,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         setLoading(true);
         const token = localStorage.getItem('auth_token');
-        
-        if (token) {
+
+        // First, check for OAuth token in URL (e.g., /dashboard?token=...)
+        const url = new URL(window.location.href);
+        const urlToken = url.searchParams.get('token');
+
+        if (urlToken) {
+          localStorage.setItem('auth_token', urlToken);
+          axios.defaults.headers.common['Authorization'] = `Bearer ${urlToken}`;
+
+          // Clean URL params related to oauth without reloading
+          url.searchParams.delete('token');
+          url.searchParams.delete('provider');
+          url.searchParams.delete('status');
+          url.searchParams.delete('oauth_error');
+          const newUrl = url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '') + url.hash;
+          window.history.replaceState({}, document.title, newUrl);
+
+          // Fetch user data
+          const { data } = await axios.get<{ user: User }>('/api/user');
+          setUser(data.user);
+        } else if (token) {
           // Set the default Authorization header
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          
+
           // Fetch user data
           const { data } = await axios.get<{ user: User }>('/api/user');
           setUser(data.user);
@@ -99,11 +139,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       setLoading(true);
       clearError();
-      
+
       // Attempt login
-      const { data } = await axios.post<AuthResponse>('/api/login', { 
-        email, 
-        password 
+      const { data } = await axios.post<AuthResponse>('/api/login', {
+        email,
+        password
       }, {
         headers: {
           'Accept': 'application/json',
@@ -114,18 +154,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data.requires_verification) {
         throw new Error('Please verify your email first. Check your email for the OTP.');
       }
-      
+
       if (data.user && data.token) {
         // Store the token in localStorage
         localStorage.setItem('auth_token', data.token);
-        
+
         // Set the default Authorization header for future requests
         axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-        
+
         setUser(data.user);
         return Promise.resolve();
       }
-      
+
       throw new Error('Invalid response from server');
     } catch (err) {
       const error = err as AxiosError<AuthError>;
@@ -140,32 +180,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Handle user logout
   const logout = useCallback(async () => {
     try {
-      // Remove the token from localStorage
-      localStorage.removeItem('auth_token');
-      
-      // Remove the Authorization header
-      delete axios.defaults.headers.common['Authorization'];
-      
-      // Call the logout API
+      setLoading(true);
+
+      // Get token before removing it
+      const token = localStorage.getItem('auth_token');
+
+      // Call the logout API with both Bearer token and cookies
       await axios.post('/api/logout', {}, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        withCredentials: true, // 👈 this ensures Laravel session cookie is sent
       });
-      
+
+      // Clear frontend auth state
+      localStorage.removeItem('auth_token');
+      delete axios.defaults.headers.common['Authorization'];
       setUser(null);
+
       return Promise.resolve();
     } catch (err) {
-      // Even if the API call fails, we still want to clear the local auth state
+      // Even if API fails, clear local state
       localStorage.removeItem('auth_token');
       delete axios.defaults.headers.common['Authorization'];
       setUser(null);
-      
-      const error = err as AxiosError<AuthError>;
-      const errorMessage = error.response?.data?.message || 'Logged out successfully';
-      
-      // Don't reject on logout errors, just log them
-      console.error('Logout error:', errorMessage);
+
+      console.error('Logout error:', err);
       return Promise.resolve();
     } finally {
       setLoading(false);
@@ -196,13 +234,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        isAuthenticated, 
-        login, 
-        logout, 
-        loading, 
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        hasRole,
+        isAdmin: hasRole('Admin'),
+        login,
+        logout,
+        loading,
         error,
         clearError,
       }}
@@ -214,11 +254,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  
+
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
+
   return context;
 };
 
@@ -231,9 +271,9 @@ export const useProtectedRoute = (redirectPath = '/login') => {
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       // Redirect to login with the current location to return after login
-      navigate(redirectPath, { 
+      navigate(redirectPath, {
         state: { from: location },
-        replace: true 
+        replace: true
       });
     }
   }, [isAuthenticated, loading, navigate, location, redirectPath]);

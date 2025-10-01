@@ -6,9 +6,333 @@
   background-position: top center;
   background-repeat: no-repeat;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
   align-items: center;
-  padding: 2rem;
+  justify-content: center;
+  gap: 181px;
+}
+
+.register-left {}
+
+.register-logo {
+  height: 32px;
+  object-fit: contain;
+  margin-bottom: 16px;
+}
+
+.register-title {
+  font-family: DM Sans;
+  font-weight: 700;
+  font-style: Bold;
+  font-size: 36px;
+  line-height: 100%;
+  margin-bottom: 13.72px;
+}
+
+.register-subtitle {
+  font-family: DM Sans;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  line-height: 100%;
+  margin-bottom: 23.03px
+}
+
+.register-name {
+  font-family: DM Sans;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 14px;
+  line-height: 25.82px;
+  margin-bottom: 6.45px
+}
+
+.register-input-name {
+  all: unset;
+  padding-left: 12.91px;
+  height: 50px;
+  width: calc(560px - 14.90px);
+  border: 1px solid #D9D9D9;
+  background-color: white;
+  border-radius: 6.45px;
+  font-family: Inter;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 14px;
+  line-height: 100%;
+  transition: all 0.3s ease;
+  margin-bottom: 16px
+}
+
+.register-input-email {
+  all: unset;
+  padding-left: 12.91px;
+  height: 50px;
+  width: calc(560px - 14.90px);
+  border: 1px solid #D9D9D9;
+  background-color: white;
+  border-radius: 6.45px;
+  font-family: Inter;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 14px;
+  line-height: 100%;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+}
+
+.register-input-password {
+  all: unset;
+  padding-left: 12.91px;
+  height: 50px;
+  width: calc(560px - 14.90px);
+  border: 1px solid #D9D9D9;
+  background-color: white;
+  border-radius: 6.45px;
+  font-family: Inter;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 14px;
+  line-height: 100%;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+}
+
+.register-input-confirm-password {
+  all: unset;
+  padding-left: 12.91px;
+  height: 50px;
+  width: calc(560px - 14.90px);
+  border: 1px solid #D9D9D9;
+  background-color: white;
+  border-radius: 6.45px;
+  font-family: Inter;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 14px;
+  line-height: 100%;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+}
+
+.register-button {
+  all: unset;
+  font-family: Inter;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 12.91px;
+  line-height: 16.14px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  text-align: center;
+  color: white;
+  width: 560px;
+  height: 45.18px;
+  background-color: black;
+  border-radius: 4.84px;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.register-button:disabled,
+.register-button[disabled] {
+  background-color: #bfbfbf;
+  color: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.register-agree-label {
+  font-family: DM Sans;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 14px;
+  letter-spacing: 0%;
+  vertical-align: top;
+  color: #757575;
+  height: 18px;
+}
+
+.register-agree-label a {
+  color: #9A2B60;
+  cursor: pointer;
+}
+
+.input-error {
+  border-color: #dc3545 !important;
+}
+
+.register-agree-input {
+  all: unset;
+  height: 16px;
+  width: 16px;
+  border: 1px solid #757575;
+  border-radius: 1.61px;
+  display: inline-block;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #ffffff;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 12px;
+  transition: all 0.3s ease;
+}
+
+.register-agree-input:hover {
+  border-color: #9A2B60;
+}
+
+.register-agree-input:checked {
+  background-color: #9A2B60;
+  border-color: #9A2B60;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpolyline points='3.5,8.5 6.5,11.5 12.5,5.5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.register-or {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: DM Sans;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 14px;
+  line-height: 160%;
+  color: #949494;
+  margin: 19.36px 0;
+}
+
+.register-hr {
+  width: 257.09px;
+  height: 1px;
+  background-color: #949494;
+}
+
+.register-already {
+  font-family: DM Sans;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 11.29px;
+  line-height: 160%;
+  letter-spacing: 0px;
   text-align: center;
 }
+
+.register-already a {
+  color: #146755;
+  cursor: pointer;
+}
+
+.register-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Inter;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 12.91px;
+  leading-trim: NONE;
+  line-height: 16.14px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  gap: 8px;
+  height: 45.18px;
+  width: 560px;
+  border-radius: 4.84px;
+  background-color: #106552;
+  color: white;
+  margin-bottom: 12.91px;
+  cursor: pointer;
+}
+
+.otp-cont {
+  margin-top: 1rem;
+}
+
+.otp-success {
+  background: #e6fffa;
+  border: 1px solid #b2f5ea;
+  color: #106552;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-family: DM Sans;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 11.29px;
+  line-height: 160%;
+  letter-spacing: 0px;
+  text-align: center;
+}
+
+.otp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-family: DM Sans;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 14px;
+  line-height: 160%;
+  letter-spacing: 0px;
+}
+
+.form-control {
+  all: unset;
+  height: 50px;
+  width: calc(560px - 14.90px);
+  border: 1px solid #D9D9D9;
+  background-color: white;
+  border-radius: 6.45px;
+  font-family: Inter;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 14px;
+  line-height: 100%;
+  transition: all 0.3s ease;
+  text-align: center;
+  letter-spacing: 8px;
+}
+
+.register-otp-button {
+  all: unset;
+  font-family: Inter;
+  font-weight: 500;
+  font-style: Medium;
+  font-size: 12.91px;
+  leading-trim: NONE;
+  line-height: 16.14px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  gap: 8px;
+  height: 45.18px;
+  width: calc(560px - 14.90px);
+  border-radius: 4.84px;
+  background-color: #106552;
+  color: white;
+  margin-bottom: 12.91px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.register-resend-otp {
+  font-family: DM Sans;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 14px;
+  line-height: 160%;
+  letter-spacing: 0px;
+  text-align: center;
+}
+  

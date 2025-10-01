@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Notifications\SendOtpNotification;
+use App\Services\UserStageItemService;
 
 class AuthController extends Controller
 {
@@ -32,7 +33,7 @@ class AuthController extends Controller
         try {
             // Generate OTP (6 digits)
             $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-            
+
             // Create the user
             $user = User::create([
                 'name' => $validated['name'],
@@ -48,6 +49,8 @@ class AuthController extends Controller
             // Send OTP to user's email
             $user->notify(new SendOtpNotification($otp));
 
+            UserStageItemService::initializeFor($user);
+
             // Log the user in
             Auth::login($user);
 
@@ -61,7 +64,7 @@ class AuthController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Registration error: ' . $e->getMessage());
-            
+
             return response()->json([
                 'message' => 'Registration failed. Please try again.',
                 'error' => config('app.debug') ? $e->getMessage() : null,
@@ -126,7 +129,7 @@ class AuthController extends Controller
 
         // Generate new OTP
         $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-        
+
         $user->otp = $otp;
         $user->otp_expires_at = Carbon::now()->addHours(24);
         $user->save();
@@ -174,13 +177,18 @@ class AuthController extends Controller
 
             // Revoke all tokens...
             $user->tokens()->delete();
-            
-            // Create new token
-            $token = $user->createToken('auth_token')->plainTextToken;
+
+            // Create new token with role information
+            $token = $user->createToken('auth_token', ['role:' . $user->role->name])->plainTextToken;
 
             return response()->json([
                 'message' => 'Login successful',
-                'user' => $user->only(['id', 'name', 'email', 'username', 'role_id']),
+                'user' => array_merge($user->only(['id', 'name', 'email', 'username', 'role_id']), [
+                    'role' => [
+                        'id' => $user->role->id,
+                        'name' => $user->role->name
+                    ]
+                ]),
                 'token' => $token,
                 'token_type' => 'Bearer',
             ]);
@@ -201,8 +209,15 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         try {
-            // Revoke all of the user's tokens
+            // Revoke Sanctum tokens
             $request->user()->tokens()->delete();
+
+            // Log out of session
+            Auth::logout();
+
+            // Invalidate the session
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
             return response()->json([
                 'message' => 'Successfully logged out',
@@ -214,7 +229,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * Get the authenticated user
      *
@@ -223,8 +238,20 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
+        $user = $request->user()->load('role'); // make sure role relationship is loaded
+
         return response()->json([
-            'user' => $request->user()->only(['id', 'name', 'email', 'username', 'role_id'])
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'username' => $user->username,
+                'role_id' => $user->role_id,
+                'role' => $user->role ? [
+                    'id' => $user->role->id,
+                    'name' => $user->role->name
+                ] : null
+            ]
         ]);
     }
 }

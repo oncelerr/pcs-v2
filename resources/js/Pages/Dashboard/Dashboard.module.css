@@ -1,0 +1,505 @@
+/* Dashboard.module.css */
+
+.dashboardContainer {
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 16px;
+  display: inline-flex;
+}
+
+.mainContent {
+  width: 654px;
+  height: 1054px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 16px;
+  display: inline-flex;
+}
+
+.right-bar {
+  width: 415px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-end;
+  gap: 16px;
+  display: inline-flex;
+}
+
+/* Card Styles */
+.card {
+  width: 100%;
+  padding-bottom: 32px;
+  padding-left: 32px;
+  padding-right: 32px;
+  background: white;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  outline: 1px #E7E7E7 solid;
+  outline-offset: -1px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 32px;
+  display: flex;
+}
+
+.cardHeader {
+  width: 100%;
+  height: 68px;
+  padding-left: 27px;
+  padding-right: 27px;
+  padding-top: 17px;
+  padding-bottom: 17px;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  outline: 1px #E7E7E7 solid;
+  outline-offset: -1px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: inline-flex;
+}
+
+.cardIcon {
+  color: #18987B;
+  font-size: 16px;
+  font-family: 'Font Awesome 6 Pro';
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: 0.20px;
+}
+
+.cardTitle {
+  color: black;
+  font-size: 16px;
+  font-family: 'DM Sans';
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.20px;
+}
+
+/* Status Progress Styles */
+.statusProgressContainer {
+  width: 607px;
+  border-radius: 6px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  display: flex;
+}
+
+.statusIcons {
+  align-self: stretch;
+  padding-left: 60px;
+  padding-right: 60px;
+  justify-content: space-between;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.statusIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  display: inline-flex;
+}
+
+.statusIcon.completed {
+  background: #106552;
+  outline: 2px white solid;
+  outline-offset: -2px;
+}
+
+.statusIcon.current {
+  background: #BBDBD0;
+}
+
+.statusIcon.pending {
+  background: rgba(171, 183, 194, 0.10);
+}
+
+.progressBar {
+  align-self: stretch;
+  height: 8px;
+  background: #CFD6DC;
+  border-radius: 5px;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.progressFill {
+  width: 298px;
+  align-self: stretch;
+  background: #106552;
+  border-radius: 5px;
+}
+
+.statusCards {
+  align-self: stretch;
+  justify-content: space-between;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.statusCard {
+  padding: 16px;
+  border-radius: 6px;
+  outline: 1px #CFD6DC solid;
+  outline-offset: -1px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  display: inline-flex;
+}
+
+.statusCard.completed {
+  width: 162px;
+  background: #106552;
+}
+
+.statusCard.current {
+  background: white;
+}
+
+.statusSection {
+  align-self: stretch;
+  opacity: 0.80;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+  display: flex;
+}
+
+.statusTitle {
+  align-self: stretch;
+  text-align: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  font-family: 'DM Sans';
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.statusTitle.completed {
+  color: #BBDBD0;
+}
+
+.statusTitle.current {
+  color: #106552;
+}
+
+.statusItem {
+  padding-left: 6px;
+  padding-right: 6px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-radius: 4px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  display: flex;
+}
+
+.statusItem.active {
+  align-self: stretch;
+  background: #E6F8F0;
+}
+
+.statusItemContent {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  display: inline-flex;
+}
+
+.statusIndicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+.statusIndicator.active {
+  padding: 3px;
+  background: #106552;
+}
+
+.statusIndicator.inactive {
+  border-radius: 9999px;
+  outline: 1px #AABEBD solid;
+  outline-offset: -0.50px;
+}
+
+.statusIndicatorDot {
+  width: 6px;
+  height: 6px;
+  background: #E6F8F0;
+  border-radius: 9999px;
+}
+
+.statusText {
+  text-align: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  font-family: 'DM Sans';
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.statusText.active {
+  color: #106552;
+}
+
+.statusText.inactive {
+  color: #D0D4D8;
+}
+
+.statusText.completed {
+  color: #AABEBD;
+}
+
+.statusText.pending {
+  color: #919191;
+}
+
+.currentStatusLabel {
+  flex: 1 1 0;
+  height: 10px;
+  text-align: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #949494;
+  font-size: 10px;
+  font-family: 'DM Sans';
+  font-style: italic;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+/* Table Styles */
+.tableHeader {
+  width: 653px;
+  padding-left: 32px;
+  padding-right: 32px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  background: #F8F8F8;
+  border-left: 1px #E7E7E7 solid;
+  border-right: 1px #E7E7E7 solid;
+  border-bottom: 1px #E7E7E7 solid;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: inline-flex;
+}
+
+.tableHeaderContent {
+  flex: 1 1 0;
+  justify-content: space-between;
+  align-items: center;
+  display: flex;
+}
+
+.tableHeaderText {
+  color: #757575;
+  font-size: 14px;
+  font-family: 'DM Sans';
+  font-weight: 500;
+  line-height: 21px;
+  letter-spacing: 0.20px;
+}
+
+.tableRow {
+  align-self: stretch;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+.tableCell {
+  color: #474747;
+  font-size: 14px;
+  font-family: 'DM Sans';
+  font-weight: 400;
+  line-height: 21px;
+  letter-spacing: 0.20px;
+}
+
+.statusBadge {
+  width: 133px;
+  height: 28px;
+  padding-left: 6px;
+  padding-right: 6px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  background: #E6F8F0;
+  border-radius: 4px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+.statusBadgeText {
+  color: #106552;
+  font-size: 14px;
+  font-family: 'DM Sans';
+  font-weight: 400;
+  line-height: 21px;
+  letter-spacing: 0.20px;
+}
+
+.actionLink {
+  color: #9A2B60;
+  font-size: 14px;
+  font-family: 'DM Sans';
+  font-weight: 500;
+  line-height: 21px;
+  letter-spacing: 0.20px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.actionLink:hover {
+  text-decoration: underline;
+}
+
+.divider {
+  align-self: stretch;
+  height: 0;
+  outline: 1px #E0E0E0 solid;
+  outline-offset: -0.50px;
+}
+
+/* Sidebar Card Styles */
+.sidebarCard {
+  align-self: stretch;
+  padding-bottom: 32px;
+  padding-left: 32px;
+  padding-right: 32px;
+  background: white;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  outline: 1px #E7E7E7 solid;
+  outline-offset: -1px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 32px;
+  display: flex;
+}
+
+.sidebarCard.taxes {
+  height: 370px;
+}
+
+.sidebarContent {
+  align-self: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 22px;
+  display: flex;
+}
+
+.sidebarItem {
+  align-self: stretch;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+.sidebarItemInfo {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 8px;
+  display: inline-flex;
+}
+
+.sidebarItemInfo.wide {
+  width: 167px;
+}
+
+.sidebarItemTitle {
+  color: #474747;
+  font-size: 14px;
+  font-family: 'DM Sans';
+  font-weight: 400;
+  line-height: 21px;
+  letter-spacing: 0.20px;
+}
+
+.sidebarItemTitle.multiline {
+  line-height: 22.40px;
+}
+
+.sidebarItemDate {
+  align-self: stretch;
+  color: #949494;
+  font-size: 14px;
+  font-family: 'DM Sans';
+  font-weight: 500;
+  line-height: 21px;
+  letter-spacing: 0.20px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .dashboardContainer {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .mainContent {
+    width: 100%;
+    max-width: 654px;
+  }
+  
+  .sidebar {
+    width: 100%;
+    max-width: 415px;
+    align-items: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .statusCards {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .statusCard {
+    width: 100% !important;
+  }
+  
+  .tableHeader,
+  .mainContent {
+    width: 100%;
+  }
+  
+  .card {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
