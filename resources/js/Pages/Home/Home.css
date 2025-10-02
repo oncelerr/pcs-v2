@@ -819,6 +819,15 @@
   padding: 18px 37px;
   background-color: #000000;
   border-radius: 6px;
+  transition: all 0.3s ease-in-out;
+}
+
+.eight-btn:hover {
+  background-color: white;
+  color: black;
+  box-shadow: 0 0 15px #9A2B60;
+  transform: translateY(-2px);
+  cursor: pointer;
 }
 
 .eight-bottom {
@@ -862,6 +871,15 @@
   background-color: #000000;
   padding: 18px 37px;
   border-radius: 6px;
+  transition: all 0.3s ease-in-out;
+}
+
+.eigth-btn-bottom:hover {
+  background-color: white;
+  color: black;
+  box-shadow: 0 0 15px #9A2B60;
+  transform: translateY(-2px);
+  cursor: pointer;
 }
 
 .nineth-section {

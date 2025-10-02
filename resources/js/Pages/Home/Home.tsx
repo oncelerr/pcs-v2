@@ -517,7 +517,7 @@ export default function Home() {
                 <h1 className="seventh-title">
                   {plan.price} <span>One Time</span>
                 </h1>
-                <button className="seventh-btn">Get Started</button>
+                <button className="seventh-btn" onClick={() => navigate('/register')}>Get Started</button>
                 <div className="seventh-hr"></div>
                 <h1 className="seventh-h1">{plan.title}</h1>
 
@@ -542,7 +542,7 @@ export default function Home() {
               Start with a U.S. <br />business.
             </h1>
             <p className="eight-p">Starting a business in the United States provides access to the world’s largest market, a trusted legal and financial system, and global credibility. <br /><br />As a U.S. business owner, you can enjoy tax advantages, limited liability protection, and the flexibility to scale worldwide. With access to funding, banking, international payment platforms, and top talent, your U.S. business is set up for long-term growth and success.</p>
-            <button className="eight-btn">Start Your U.S. Business</button>
+            <button className="eight-btn" onClick={() => navigate('/register')}>Start Your U.S. Business</button>
           </div>
           <div className="eight-right">
             <img src="/assets/us-map.png" alt="" className="eight-img" />
@@ -550,7 +550,7 @@ export default function Home() {
         </div>
         <div className="eight-bottom">
           <h1 className="eight-bottom-h1">Take the first step toward a stress-free <br />business journey.</h1>
-          <button className="eigth-btn-bottom">Sign up today!</button>
+          <button className="eigth-btn-bottom" onClick={() => navigate('/register')}>Sign up today!</button>
         </div>
       </div>
       <div className="nineth-section">

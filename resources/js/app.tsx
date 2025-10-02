@@ -74,7 +74,10 @@ const AppContent: React.FC = () => {
     return privateRoutes.some(route => pathname.startsWith(route));
   };
 
-  const showNavbarFooter = !isPrivateRoute(location.pathname);
+  const showNavbarFooter = !isPrivateRoute(location.pathname) && ![
+    '/login', 
+    '/register'
+  ].some(route => location.pathname.startsWith(route));
 
   return (
     <>
