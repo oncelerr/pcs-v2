@@ -1,0 +1,363 @@
+/* Blocking Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(2px);
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-height: 90vh;
+  box-shadow: 0px 20px 60px rgba(0, 0, 0, 0.2);
+  border: 1px solid #E7E7E7;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalHeader {
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.modalTitle {
+  color: #0F172A;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  margin: 0;
+}
+
+.modalBody {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px 24px 24px;
+  color: #475569;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.modalBodyBtn {
+  all: unset;
+  border-radius: 8px;
+  padding: 16px 20px;
+  font-family: Inter;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 12.91px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: #fff;
+  background-color: #146755;
+  cursor: pointer;
+}
+
+.seventhSection {
+  width: 100%;
+  display: flex;
+  padding: 2rem;
+  justify-content: center;
+  align-items: center;
+  gap: 80px;
+}
+
+.seventhWrp {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 1280px;
+  z-index: 1;
+}
+
+.seventhH11 {
+  font-family: DM Sans;
+  font-weight: 700;
+  font-style: Bold;
+  font-size: 48px;
+  leading-trim: NONE;
+  line-height: 42px;
+  letter-spacing: 0px;
+  text-align: center;
+  vertical-align: middle;
+  margin-bottom: 16px;
+}
+
+.seventhP {
+  font-family: DM Sans;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 24px;
+  letter-spacing: 0px;
+  text-align: center;
+  vertical-align: middle;
+  margin-bottom: 65px;
+}
+
+.seventhDots {
+  width: 206px;
+  height: 105px;
+  position: absolute;
+  top: 11.5%;
+  left: 86%;
+}
+
+.seventhDots2 {
+  width: 206px;
+  height: 105px;
+  position: absolute;
+  z-index: -1;
+  top: 92%;
+  left: -3.3%;
+}
+
+.seventhCardWrp {
+  display: flex;
+  gap: 24px;
+}
+
+.seventhCardBg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 306px !important;
+  height: 832px;
+  border-radius: 18px;
+  background-image: linear-gradient(180deg, #106552 0%, #18987B 50%, #1CB290 75%, #20CBA5 100%);
+}
+
+.seventhCard {
+  background-color: white;
+  padding: 0 27.5px;
+  padding-top: 32px;
+  padding-bottom: 32px;
+  border-radius: 16px;
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0px 4px 8.4px 0px #0000001F;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  will-change: transform, box-shadow;
+  transform-origin: center;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.seventhCard:hover {
+  transform: scale(1.08);
+  box-shadow: 0 15px 30px rgba(25, 101, 82, 0.25);
+  z-index: 2;
+}
+
+.seventhCard:first-child {
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  background-clip: padding-box;
+  border: solid 0px transparent;
+  padding: 0 27.5px;
+  padding-top: 32px;
+  padding-bottom: 32px;
+  border-radius: 16px;
+  box-shadow: 0px 4px 8.4px 0px #0000001F;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  will-change: transform, box-shadow;
+  transform-origin: center;
+  z-index: 1;
+}
+
+.seventhCard:first-child:hover {
+  transform: scale(1.08);
+  box-shadow: 0 15px 30px rgba(25, 101, 82, 0.25);
+  z-index: 2;
+}
+
+.seventhCard:first-child::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  border-radius: 16px;
+  padding: 2px;
+  background: linear-gradient(180deg, #106552 0%, #18987B 50%, #1CB290 75%, #20CBA5 100%);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.popularBadge {
+  position: absolute;
+  width: 107px;
+  height: 46px;
+  background-color: #106552;
+  top: -23px;
+  left: 75%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border-radius: 8px;
+  z-index: 1;
+  font-family: Inter;
+  font-weight: 700;
+  font-style: Bold;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 32px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+}
+
+.seventhCardBg {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 306px;
+  height: 832px;
+  border-radius: 18px;
+  background-image: linear-gradient(180deg, #106552 0%, #18987B 50%, #1CB290 75%, #20CBA5 100%);
+  box-sizing: border-box;
+}
+
+.seventhBadge {
+  font-family: DM Sans;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 20px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  margin-bottom: 14px;
+}
+
+.seventhTitle {
+  font-family: DM Sans;
+  font-weight: 600;
+  font-style: SemiBold;
+  font-size: 40px;
+  leading-trim: NONE;
+  line-height: 42px;
+  letter-spacing: 0px;
+  text-align: left;
+  vertical-align: bottom;
+  margin-bottom: 24px;
+}
+
+.seventhTitle span {
+  font-family: DM Sans;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 20px;
+  letter-spacing: 0px;
+  vertical-align: bottom;
+}
+
+.seventhBtn {
+  width: 247px;
+  height: 46px;
+  font-family: DM Sans;
+  font-weight: 600;
+  font-style: SemiBold;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 32px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  color: white;
+  border-radius: 8px;
+  background-color: #000000;
+  color: white;
+  font-family: 'DM Sans';
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 24px;
+  transition: all 0.3s ease-in-out;
+}
+
+.seventhCard:hover .seventhBtn {
+  background-color: white;
+  color: black;
+  box-shadow: 0 0 15px #9A2B60;
+  transform: translateY(-2px);
+}
+
+.seventhHr {
+  width: 247px;
+  height: 1px;
+  background-color: #DEE2E6;
+}
+
+.seventhH1 {
+  font-family: DM Sans;
+  font-weight: 700;
+  font-style: Bold;
+  font-size: 24px;
+  leading-trim: NONE;
+  line-height: 42px;
+  letter-spacing: 0px;
+  vertical-align: middle;
+  margin-bottom: 16px;
+  margin-top: 24px;
+}
+
+.seventhInclusions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.seventhInclusions img {
+  height: 14px;
+  width: 14px;
+  margin-top: 8px;
+}
+
+.seventhInclusionTxt {
+  font-family: DM Sans;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 14px;
+  leading-trim: NONE;
+  line-height: 32px;
+  letter-spacing: 0px;
+  vertical-align: top;
+}

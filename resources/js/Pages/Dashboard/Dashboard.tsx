@@ -1,9 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import './Dashboard.css'
 import { getStatusProgress } from './Components/StatusProgress';
+import CompleteProfileModal from './Components/CompleteProfileModal/CompleteProfileModal';
+import CompletePaymentModal from './Components/CompletePaymentModal/CompletePaymentModal';
+import Modal from '../../Components/Modal/Modal';
 
-const DocumentRow = ({ number, fileName, stage, onDownload }) => (
+type StageItemStatus = 'completed' | 'active' | 'pending';
+type StageItem = {
+  name: string;
+  status: StageItemStatus;
+};
+type Stage = {
+  name: string;
+  status: StageItemStatus;
+  items: StageItem[];
+};
+type StatusProgress = {
+  stages: Stage[];
+  percentage: number;
+};
+
+type DocumentRowProps = {
+  number: number;
+  fileName: string;
+  stage: string;
+  onDownload: (fileName: string) => void;
+};
+
+const DocumentRow: React.FC<DocumentRowProps> = ({ number, fileName, stage, onDownload }) => (
   <>
     <div className="table-row">
       <div style={{ color: '#474747', fontSize: 14, fontWeight: 400 }}>{number}</div>
@@ -15,7 +41,13 @@ const DocumentRow = ({ number, fileName, stage, onDownload }) => (
   </>
 );
 
-const ListItem = ({ title, subtitle, onAction }) => (
+type ListItemProps = {
+  title: string;
+  subtitle?: string;
+  onAction: () => void;
+};
+
+const ListItem: React.FC<ListItemProps> = ({ title, subtitle, onAction }) => (
   <>
     <div className="list-item">
       <div className="list-item__content">
@@ -30,11 +62,16 @@ const ListItem = ({ title, subtitle, onAction }) => (
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const [showPaymentSuccessModal, setShowPaymentSuccessModal] = useState(false);
+  const [showPaymentErrorModal, setShowPaymentErrorModal] = useState(false);
+  const [paymentErrorMessage, setPaymentErrorMessage] = useState('');
 
   // 👇 Local state instead of hardcoded IIFE
-  const [statusProgress, setStatusProgress] = useState<{ stages: any[]; percentage: number }>({
+  const [statusProgress, setStatusProgress] = useState<StatusProgress>({
     stages: [],
-    percentage: 0
+    percentage: 0,
   });
 
   const CACHE_KEY = 'statusProgress';
@@ -52,7 +89,7 @@ const Dashboard = () => {
           }
         }
 
-        const data = await getStatusProgress();
+        const data = (await getStatusProgress()) as StatusProgress;
         setStatusProgress(data);
 
         localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
@@ -63,6 +100,85 @@ const Dashboard = () => {
 
     fetchProgress();
   }, []);
+
+  // Handle payment success
+  useEffect(() => {
+    const handlePaymentSuccess = async () => {
+      const urlParams = new URLSearchParams(location.search);
+      const status = urlParams.get('status');
+      const sessionId = urlParams.get('session_id');
+
+      console.log('Payment success check:', { status, sessionId, userId: user?.id });
+
+      if (status === 'success' && sessionId && user?.id) {
+        try {
+          console.log('Processing payment success:', { sessionId, userId: user.id });
+          
+          // Get CSRF token
+          const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+          
+          const requestData = {
+            session_id: sessionId,
+            user_id: user.id
+          };
+          
+          console.log('Sending payment success request:', requestData);
+          
+          const response = await fetch('/api/payment-success', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': csrfToken || '',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(requestData),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            console.log('Payment success processed:', result);
+            
+            // Clear the status progress cache to force refresh
+            localStorage.removeItem(CACHE_KEY);
+            
+            // Refresh the progress data
+            const data = (await getStatusProgress()) as StatusProgress;
+            setStatusProgress(data);
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+            
+            // Clean up URL parameters
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+            
+            // Show success modal
+            setShowPaymentSuccessModal(true);
+            
+            // Auto-hide success modal after 3 seconds
+            setTimeout(() => {
+              setShowPaymentSuccessModal(false);
+            }, 3000);
+          } else {
+            const errorData = await response.json();
+            console.error('Failed to process payment success:', errorData);
+            
+            // Show error modal instead of alert
+            setPaymentErrorMessage(errorData.error || 'Unknown error');
+            setShowPaymentErrorModal(true);
+            
+            // Auto-hide error modal after 5 seconds
+            setTimeout(() => {
+              setShowPaymentErrorModal(false);
+            }, 5000);
+          }
+        } catch (error) {
+          console.error('Error processing payment success:', error);
+        }
+      }
+    };
+
+    handlePaymentSuccess();
+  }, [location.search, user?.id, CACHE_KEY]);
 
   const formationDocuments = [
     { id: 1, fileName: 'Operating Agreement', stage: 'Stage Registration' },
@@ -95,11 +211,20 @@ const Dashboard = () => {
     { id: 4, title: 'Compliance Notice - State' }
   ];
 
-  const handleDownload = (fileName) => {
+  // Show blocking modal when a Stage Item named "Profile Setup" is active
+  const hasActiveProfileSetup = statusProgress.stages.some((stage) =>
+    stage.items.some((item) => item.name === 'Profile Setup' && item.status === 'active')
+  );
+
+  const hasActivePayment = statusProgress.stages.some((stage) =>
+    stage.items.some((item) => item.name === 'Payment' && item.status === 'active')
+  );
+
+  const handleDownload = (fileName: string) => {
     console.log('Downloading:', fileName);
   };
 
-  const handleViewDetails = (item) => {
+  const handleViewDetails = (item: any) => {
     console.log('View details:', item);
   };
 
@@ -107,8 +232,36 @@ const Dashboard = () => {
     console.log('Logging out...');
   };
 
+  // Payment Success Modal
+  const PaymentSuccessModal = () => (
+    <div className="modal-overlay">
+      <div className="success-modal">
+        <div className="success-icon">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="32" fill="#106552"/>
+            <path d="M20 32L28 40L44 24" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <h3 className="success-title">Payment Successful!</h3>
+        <p className="success-message">Your payment has been processed and your stages have been updated.</p>
+        <div className="success-actions">
+          <button className="success-button" onClick={() => setShowPaymentSuccessModal(false)}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="dashboard">
+    <div className="dashboard-container">
+      {showPaymentSuccessModal && <Modal modalType="success" paymentErrorMessage={paymentErrorMessage} setShowModal={setShowPaymentSuccessModal} />}
+      {showPaymentErrorModal && <Modal modalType="error" paymentErrorMessage={paymentErrorMessage} setShowModal={setShowPaymentErrorModal} />}
+      {/* Blocking Modal for Active Profile Setup */}
+      {hasActiveProfileSetup && (
+        <CompleteProfileModal />
+      )}
+      {hasActivePayment && (
+        <CompletePaymentModal />
+      )}
       {/* Main Content */}
       <div className="content-grid">
         <div className="content-left">

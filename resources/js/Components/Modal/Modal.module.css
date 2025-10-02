@@ -1,0 +1,140 @@
+/* Payment Success Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  backdrop-filter: blur(2px);
+}
+
+.successModal {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  width: 400px;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0px 20px 60px rgba(0, 0, 0, 0.2);
+  animation: modalFadeIn 0.5s ease-out;
+}
+
+.successIcon {
+  margin: 0 auto 24px;
+  width: 64px;
+  height: 64px;
+  animation: iconPop 0.5s ease-out;
+}
+
+.successTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #106552;
+  margin-bottom: 12px;
+}
+
+.successMessage {
+  font-size: 16px;
+  color: #475569;
+  margin-bottom: 24px;
+}
+
+.successActions {
+  margin-top: 24px;
+}
+
+.successButton {
+  background: #106552;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.successButton:hover {
+  background: #0d5344;
+}
+
+/* Error Modal Styles */
+.errorModal {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  width: 400px;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0px 20px 60px rgba(0, 0, 0, 0.2);
+  animation: modalFadeIn 0.5s ease-out;
+}
+
+.errorIcon {
+  margin: 0 auto 24px;
+  width: 64px;
+  height: 64px;
+  animation: iconPop 0.5s ease-out;
+}
+
+.errorTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #EF4444;
+  margin-bottom: 12px;
+}
+
+.errorMessage {
+  font-size: 16px;
+  color: #475569;
+  margin-bottom: 24px;
+}
+
+.errorActions {
+  margin-top: 24px;
+}
+
+.errorButton {
+  background: #EF4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.errorButton:hover {
+  background: #dc2626;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes iconPop {
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

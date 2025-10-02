@@ -512,6 +512,63 @@ body {
   letter-spacing: 0.2px;
 }
 
+/* Blocking Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(2px);
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: min(480px, 90vw);
+  max-height: 90vh;
+  box-shadow: 0px 20px 60px rgba(0, 0, 0, 0.2);
+  border: 1px solid #E7E7E7;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal__header {
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.modal__title {
+  color: #0F172A;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  margin: 0;
+}
+
+.modal__body {
+  padding: 16px 24px 24px 24px;
+  color: #475569;
+  font-size: 16px;
+  line-height: 24px;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   .content-grid {
@@ -539,5 +596,18 @@ body {
   
   .search-box {
     width: 100%;
+  }
+  
+  .modal {
+    width: 95vw;
+    margin: 20px;
+  }
+  
+  .modal__title {
+    font-size: 18px;
+  }
+  
+  .modal__body {
+    font-size: 14px;
   }
 }

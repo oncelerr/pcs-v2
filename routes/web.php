@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Api\UserProgressController;
+use App\Http\Controllers\PaymentController;
 
 // API Routes
 Route::group(['prefix' => 'api'], function () {
@@ -23,9 +24,14 @@ Route::group(['prefix' => 'api'], function () {
         Route::get('/progress', [UserProgressController::class, 'index']);
     });
 
-
     // Contact Form
     Route::post('/contact', [\App\Http\Controllers\ContactController::class, 'send']);
+
+    // ✅ Stripe checkout session
+    Route::post('/create-checkout-session', [PaymentController::class, 'createCheckoutSession']);
+    
+    // ✅ Handle payment success
+    Route::post('/payment-success', [PaymentController::class, 'handlePaymentSuccess']);
 });
 
 // Test email route
@@ -39,6 +45,10 @@ Route::get('/test-email', function () {
     } catch (\Exception $e) {
         return 'Error sending test email: ' . $e->getMessage();
     }
+});
+
+Route::group(['prefix' => 'api'], function () {
+    Route::post('/submit-form', [\App\Http\Controllers\FormSubmitController::class, 'store']);
 });
 
 // Google OAuth routes with web middleware for session handling
