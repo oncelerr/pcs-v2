@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Role;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -15,35 +14,39 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create roles
+        // Create roles if not exist
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $userRole = Role::firstOrCreate(['name' => 'user']);
 
-        // Create test admin user
-        User::firstOrCreate(
-            ['email' => 'admin@example.com'],
+        // Create base admin account
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@gmail.com'],
             [
                 'name' => 'Admin User',
+                'username' => 'admin',
                 'password' => Hash::make('password'),
                 'role_id' => $adminRole->id,
                 'email_verified_at' => now(),
             ]
         );
 
-        // Create test regular user
-        User::firstOrCreate(
+        // Create base user account
+        $user = User::firstOrCreate(
             ['email' => 'user@example.com'],
             [
                 'name' => 'Test User',
+                'username' => 'user',
                 'password' => Hash::make('password'),
                 'role_id' => $userRole->id,
                 'email_verified_at' => now(),
             ]
         );
 
-        // Call other seeders
+        // Run migrations for stages and other tables
         $this->call([
             StagesTableSeeder::class,
+            UserSeeder::class,              // 👈 seeds new users starting after admin/user
+            UserInformationSeeder::class,   // 👈 attaches info to new users only
         ]);
     }
 }

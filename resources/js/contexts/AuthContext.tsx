@@ -1,17 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
+import LoadingSpinner from '../Components/LoadingSpinner';
 
-if (!document.getElementById('spinner-styles')) {
-  const style = document.createElement('style');
-  style.id = 'spinner-styles';
-  style.textContent = `
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  `;
-  document.head.appendChild(style);
-}
+// Spinner styles are now imported via LoadingSpinner.css
 
 export interface User {
   id: number;
@@ -212,25 +204,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Only render children once initial auth check is complete
   if (loading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        width: '100%',
-        backgroundColor: '#f5f5f5'
-      }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          border: '4px solid rgba(16, 101, 82, 0.1)',
-          borderTop: '4px solid #106552',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-        }}></div>
-      </div>
-    );
+    return <LoadingSpinner fullPage size="medium" color="#126654" />;
   }
 
   return (

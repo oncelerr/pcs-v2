@@ -6,6 +6,7 @@ import { getStatusProgress } from './Components/StatusProgress';
 import CompleteProfileModal from './Components/CompleteProfileModal/CompleteProfileModal';
 import CompletePaymentModal from './Components/CompletePaymentModal/CompletePaymentModal';
 import Modal from '../../Components/Modal/Modal';
+import LoadingSpinner from '../../Components/LoadingSpinner';
 
 type StageItemStatus = 'completed' | 'active' | 'pending';
 type StageItem = {
@@ -63,7 +64,7 @@ const ListItem: React.FC<ListItemProps> = ({ title, subtitle, onAction }) => (
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [showPaymentSuccessModal, setShowPaymentSuccessModal] = useState(false);
   const [showPaymentErrorModal, setShowPaymentErrorModal] = useState(false);
   const [paymentErrorMessage, setPaymentErrorMessage] = useState('');
@@ -255,11 +256,12 @@ const Dashboard = () => {
     <div className="dashboard-container">
       {showPaymentSuccessModal && <Modal modalType="success" paymentErrorMessage={paymentErrorMessage} setShowModal={setShowPaymentSuccessModal} />}
       {showPaymentErrorModal && <Modal modalType="error" paymentErrorMessage={paymentErrorMessage} setShowModal={setShowPaymentErrorModal} />}
-      {/* Blocking Modal for Active Profile Setup */}
-      {hasActiveProfileSetup && (
+      {/* Blocking Modal for Active Profile Setup - Only show for non-admin users */}
+      {hasActiveProfileSetup && !isAdmin && (
         <CompleteProfileModal />
       )}
-      {hasActivePayment && (
+      {/* Blocking Modal for Active Payment - Only show for non-admin users */}
+      {hasActivePayment && !isAdmin && (
         <CompletePaymentModal />
       )}
       {/* Main Content */}

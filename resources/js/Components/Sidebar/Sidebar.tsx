@@ -49,9 +49,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <Link to="/all-users" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
                 <span>All Users</span>
               </Link>
-              <Link to="/pending" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
-                <span>Pending</span>
-              </Link>
               <Link to="/compliance" className={'submenu-link ' + (isActive('/user-management') ? 'active' : '')}>
                 <span>Compliance</span>
               </Link>

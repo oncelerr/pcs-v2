@@ -5,6 +5,17 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Api\UserProgressController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\UserInformationController;
+use App\Http\Controllers\DocumentAccessController;
+use App\Http\Controllers\ComplianceUserController;
+
+// Secure document access with signed URLs
+Route::get('/document/view', [DocumentAccessController::class, 'viewDocument'])
+    ->middleware(['signed'])
+    ->name('document.view');
+
+Route::post('/api/secure-document-urls', [DocumentAccessController::class, 'getSecureUrls']);
+Route::post('/api/document-access-token', [DocumentAccessController::class, 'getAccessToken']);
 
 // API Routes
 Route::group(['prefix' => 'api'], function () {
@@ -32,6 +43,29 @@ Route::group(['prefix' => 'api'], function () {
     
     // ✅ Handle payment success
     Route::post('/payment-success', [PaymentController::class, 'handlePaymentSuccess']);
+    
+    // User Information routes with pagination
+    Route::prefix('user-information')->group(function () {
+        Route::get('/', [UserInformationController::class, 'index']);
+        Route::get('/{id}', [UserInformationController::class, 'show']);
+        Route::post('/', [UserInformationController::class, 'store']);
+        Route::put('/{id}', [UserInformationController::class, 'update']);
+        Route::delete('/{id}', [UserInformationController::class, 'destroy']);
+    });
+    
+    // Compliance User routes with pagination
+    Route::prefix('compliance-user')->group(function () {
+        Route::get('/', [ComplianceUserController::class, 'index']);
+        Route::get('/{id}', [ComplianceUserController::class, 'show']);
+        Route::post('/', [ComplianceUserController::class, 'store']);
+        Route::put('/{id}', [ComplianceUserController::class, 'update']);
+        Route::delete('/{id}', [ComplianceUserController::class, 'destroy']);
+        Route::post('/{id}/upload', [ComplianceUserController::class, 'uploadDocuments']);
+        Route::post('/{id}/tax', [ComplianceUserController::class, 'addTaxInfo']);
+    });
+    
+    // Password reset route
+    Route::post('/reset-password/{id}', [\App\Http\Controllers\PasswordResetController::class, 'resetPassword']);
 });
 
 // Test email route

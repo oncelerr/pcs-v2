@@ -81,6 +81,44 @@
   margin-left: 16px;
 }
 
+.filter-toggle-btn {
+  all: unset;
+  padding: 16px 20px;
+  border-radius: 8px;
+  font-family: Inter;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 12.91px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: white;
+  background-color: #146755;
+  width: calc(15% - 40px);
+  margin-left: -8px;
+  text-align: center;
+  transition: all 0.3s ease-in-out;
+}
+
+.filter-toggle-btn-active{
+  all: unset;
+  padding: 16px 20px;
+  border-radius: 8px;
+  font-family: Inter;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 12.91px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: white;
+  background-color: #9A2B60;
+  width: calc(15% - 40px);
+  margin-left: -8px;
+  text-align: center;
+  transition: all 0.3s ease-in-out;
+}
+
 .add-candidate {
   all: unset;
   padding: 16px 20px;
@@ -340,4 +378,76 @@
   font-size: 14px;
   color: #374151;
   cursor: pointer;
+}
+
+/* Status Cell Styles */
+.status-cell {
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 4px;
+  text-align: center;
+  transition: background-color 0.3s;
+}
+
+.status-cell:hover {
+  background-color: #f0f0f0;
+}
+
+.status-pending {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-in-progress {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-done {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-dropdown {
+  width: 100%;
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+}
+
+/* File Upload Styles */
+.file-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.file-upload-container input[type="file"] {
+  display: none;
+}
+
+.file-upload-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.file-select-btn, .file-cancel-btn {
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.file-select-btn {
+  background-color: #126654;
+  color: white;
+}
+
+.file-cancel-btn {
+  background-color: #dc3545;
+  color: white;
 }

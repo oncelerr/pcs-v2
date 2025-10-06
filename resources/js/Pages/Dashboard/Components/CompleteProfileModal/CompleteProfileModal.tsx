@@ -27,15 +27,38 @@ interface FormData {
   passport_file_name: string;
   proof_address_file_name: string;
   signature_file_name: string;
+  passport_file?: File | null;
+  proof_address_file?: File | null;
+  signature_file?: File | null;
 }
 
 interface ValidationErrors {
-  [key: string]: boolean;
+  [key: string]: boolean | string;
 }
 
 interface CompleteProfileModalProps {
   onClose?: () => void;
 }
+
+// Add CSS styles for file restrictions and error messages
+const fileRestrictionStyle: React.CSSProperties = {
+  fontSize: '12px',
+  color: '#666',
+  marginTop: '5px'
+};
+
+const errorMessageStyle: React.CSSProperties = {
+  color: 'red',
+  fontSize: '12px',
+  marginTop: '5px'
+};
+
+const helperTextStyle: React.CSSProperties = {
+  fontSize: '11px',
+  color: '#666',
+  marginTop: '3px',
+  fontStyle: 'italic'
+};
 
 export default function CompleteProfileModal({ onClose }: CompleteProfileModalProps = {}) {
   const { user } = useAuth();
@@ -75,7 +98,37 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
     'passport_file_name', 'proof_address_file_name', 'signature_file_name'
   ];
 
+  // Validation functions
+  const isLettersOnly = (value: string): boolean => {
+    return /^[A-Za-z\s'-]+$/.test(value);
+  };
+
+  const isNumbersOnly = (value: string): boolean => {
+    return /^[0-9]+$/.test(value);
+  };
+
   const handleInputChange = (field: keyof FormData, value: string) => {
+    // Apply field-specific validation
+    if (['firstName', 'middleName', 'lastName', 'suffixName', 'city', 'state'].includes(field)) {
+      // For name fields, city and state, only allow letters
+      if (value && !isLettersOnly(value)) {
+        setErrors(prev => ({ ...prev, [field]: 'Only letters, spaces, hyphens and apostrophes allowed' }));
+        return;
+      }
+    } else if (field === 'contactNumber') {
+      // For contact number, only allow numbers
+      if (value && !isNumbersOnly(value)) {
+        setErrors(prev => ({ ...prev, [field]: 'Only numbers allowed' }));
+        return;
+      }
+    } else if (field === 'zipCode') {
+      // For zip code, only allow numbers
+      if (value && !isNumbersOnly(value)) {
+        setErrors(prev => ({ ...prev, [field]: 'Only numbers allowed' }));
+        return;
+      }
+    }
+
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
@@ -83,12 +136,140 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
     }
   };
 
-  const handleFileChange = (field: keyof FormData, file: File | null) => {
+  // Check if file type is allowed (PDF, JPG, JPEG, PNG)
+  const isValidFileType = (file: File): boolean => {
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    return allowedTypes.includes(file.type);
+  };
+
+  // Check if file size is under 4MB
+  const isValidFileSize = (file: File): boolean => {
+    const maxSizeInBytes = 4 * 1024 * 1024; // 4MB
+    return file.size <= maxSizeInBytes;
+  };
+  
+  // Function to compress image files if they're too large
+  const compressImageIfNeeded = async (file: File): Promise<File | Blob> => {
+    // Only compress image files
+    if (!file.type.startsWith('image/')) {
+      return file;
+    }
+    
+    // Always compress images to ensure they're under 4MB
+    if (file.size <= 1 * 1024 * 1024) { // Only skip compression for very small files (< 1MB)
+      return file;
+    }
+    
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Calculate new dimensions while maintaining aspect ratio
+          // Use smaller dimensions for larger files
+          const maxDimension = file.size > 3 * 1024 * 1024 ? 1200 : 1600;
+          if (width > height && width > maxDimension) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else if (height > maxDimension) {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Convert to blob with reduced quality
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                // Create a new file from the blob
+                const compressedFile = new File(
+                  [blob],
+                  file.name,
+                  { type: file.type, lastModified: Date.now() }
+                );
+                resolve(compressedFile);
+              } else {
+                reject(new Error('Failed to compress image'));
+              }
+            },
+            file.type,
+            file.size > 3 * 1024 * 1024 ? 0.5 : 0.7 // 50% quality for large files, 70% for smaller ones
+          );
+        };
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleFileChange = async (field: keyof FormData, file: File | null) => {
     if (file) {
-      setFormData(prev => ({ ...prev, [field]: file.name }));
-      // Clear error when user selects a file
-      if (errors[field]) {
-        setErrors(prev => ({ ...prev, [field]: false }));
+      // Validate file type
+      if (!isValidFileType(file)) {
+        setErrors(prev => ({ 
+          ...prev, 
+          [field]: 'Only PDF, JPG, JPEG, and PNG files are allowed'
+        }));
+        return;
+      }
+
+      // Validate file size
+      if (!isValidFileSize(file)) {
+        setErrors(prev => ({ 
+          ...prev, 
+          [field]: 'File size must be less than 4MB. Please select a smaller file or compress it first.'
+        }));
+        return;
+      }
+      
+      try {
+        // Show loading indicator for files that need processing
+        if (file.size > 1 * 1024 * 1024 && file.type.startsWith('image/')) {
+          // Set a temporary loading state
+          setErrors(prev => ({
+            ...prev,
+            [field]: 'Compressing image, please wait...'
+          }));
+        }
+        
+        // Compress image if needed
+        const processedFile = file.type.startsWith('image/') 
+          ? await compressImageIfNeeded(file)
+          : file;
+          
+        // Store both file name and file object
+        const fileField = field.replace('_file_name', '_file') as keyof FormData;
+        setFormData(prev => ({ 
+          ...prev, 
+          [field]: file.name,
+          [fileField]: processedFile
+        }));
+        
+        // Clear error when user selects a valid file
+        if (errors[field]) {
+          setErrors(prev => ({ ...prev, [field]: false }));
+        }
+        
+        // Log file size information
+        console.log(`File ${field} - Original size: ${(file.size / 1024 / 1024).toFixed(2)}MB, ` + 
+                    `Processed size: ${(processedFile.size / 1024 / 1024).toFixed(2)}MB`);
+        
+      } catch (error) {
+        console.error('Error processing file:', error);
+        setErrors(prev => ({
+          ...prev,
+          [field]: 'Error processing file. Please try a different file.'
+        }));
       }
     }
   };
@@ -98,7 +279,9 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
     let isValid = true;
 
     requiredFields.forEach(field => {
-      if (!formData[field as keyof FormData].trim()) {
+      const value = formData[field as keyof FormData];
+      // Check if value is a string and if it's empty
+      if (typeof value === 'string' && !value.trim()) {
         newErrors[field] = true;
         isValid = false;
       }
@@ -123,21 +306,52 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
         // Get CSRF token from meta tag
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         
-        // Add user_id from authenticated user
-        const formDataWithUser = {
-          ...formData,
-          user_id: user?.id || 0
-        };
+        // Create FormData object for file uploads
+        const submitFormData = new FormData();
+        
+        // Add all text fields
+        Object.keys(formData).forEach(key => {
+          if (!key.includes('_file')) {
+            submitFormData.append(key, formData[key as keyof FormData] as string);
+          }
+        });
+        
+        // Add user_id
+        submitFormData.append('user_id', user.id.toString());
+        
+        // Add files with secure naming convention to private storage
+        if (formData.passport_file) {
+          const fileExt = formData.passport_file.name.split('.').pop() || 'pdf';
+          // Generate a more secure filename with random component
+          const secureFilename = `passport_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
+          submitFormData.append('passport_file', formData.passport_file);
+          submitFormData.append('passport_file_path', `client_${user.id}/passport/${secureFilename}`);
+        }
+        
+        if (formData.proof_address_file) {
+          const fileExt = formData.proof_address_file.name.split('.').pop() || 'pdf';
+          // Generate a more secure filename with random component
+          const secureFilename = `proof_address_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
+          submitFormData.append('proof_address_file', formData.proof_address_file);
+          submitFormData.append('proof_address_file_path', `client_${user.id}/proof_address/${secureFilename}`);
+        }
+        
+        if (formData.signature_file) {
+          const fileExt = formData.signature_file.name.split('.').pop() || 'pdf';
+          // Generate a more secure filename with random component
+          const secureFilename = `signature_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
+          submitFormData.append('signature_file', formData.signature_file);
+          submitFormData.append('signature_file_path', `client_${user.id}/signature/${secureFilename}`);
+        }
 
         const response = await fetch('/api/submit-form', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
             'X-CSRF-TOKEN': csrfToken || '',
             'X-Requested-With': 'XMLHttpRequest',
           },
           credentials: 'same-origin',
-          body: JSON.stringify(formDataWithUser),
+          body: submitFormData,
         });
 
         if (response.ok) {
@@ -256,10 +470,21 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
                     required
                   />
+                  {typeof errors.firstName === 'string' && (
+                    <div style={errorMessageStyle}>{errors.firstName}</div>
+                  )}
                 </div>
                 <div className={styles.personalDeetsInput}>
                   <h3 className={styles.h3Title}>Middle Name <span className="opt-tag">(Optional)</span></h3>
-                  <input className={styles.pdFn} type="text" name="" id="" />
+                  <input 
+                    className={`${styles.pdFn} ${errors.middleName ? styles.errorField : ''}`}
+                    type="text" 
+                    value={formData.middleName || ''}
+                    onChange={(e) => handleInputChange('middleName', e.target.value)}
+                  />
+                  {typeof errors.middleName === 'string' && (
+                    <div style={errorMessageStyle}>{errors.middleName}</div>
+                  )}
                 </div>
                 <div className={styles.personalDeetsInput}>
                   <h3 className={styles.h3Title}>Last Name</h3>
@@ -270,10 +495,21 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
                     onChange={(e) => handleInputChange('lastName', e.target.value)}
                     required
                   />
+                  {typeof errors.lastName === 'string' && (
+                    <div style={errorMessageStyle}>{errors.lastName}</div>
+                  )}
                 </div>
                 <div className={styles.personalDeetsInput}>
                   <h3 className={styles.h3Title}>Suffix Name <span className="opt-tag">(Optional)</span></h3>
-                  <input className={styles.pdFn} type="text" name="" id="" />
+                  <input 
+                    className={`${styles.pdFn} ${errors.suffixName ? styles.errorField : ''}`}
+                    type="text"
+                    value={formData.suffixName || ''}
+                    onChange={(e) => handleInputChange('suffixName', e.target.value)}
+                  />
+                  {typeof errors.suffixName === 'string' && (
+                    <div style={errorMessageStyle}>{errors.suffixName}</div>
+                  )}
                 </div>
               </div>
               <div className={styles.personalDeetsSection}>
@@ -296,6 +532,9 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
                     onChange={(e) => handleInputChange('contactNumber', e.target.value)}
                     required
                   />
+                  {typeof errors.contactNumber === 'string' && (
+                    <div style={errorMessageStyle}>{errors.contactNumber}</div>
+                  )}
                 </div>
               </div>
               <div className={styles.personalDeetsSection}>
@@ -361,6 +600,9 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
                     onChange={(e) => handleInputChange('city', e.target.value)}
                     required
                   />
+                  {typeof errors.city === 'string' && (
+                    <div style={errorMessageStyle}>{errors.city}</div>
+                  )}
                 </div>
                 <div className={styles.personalDeetsInput}>
                   <h3 className={styles.h3Title}>State / Province</h3>
@@ -371,6 +613,9 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
                     onChange={(e) => handleInputChange('state', e.target.value)}
                     required
                   />
+                  {typeof errors.state === 'string' && (
+                    <div style={errorMessageStyle}>{errors.state}</div>
+                  )}
                 </div>
                 <div className={styles.personalDeetsInput}>
                   <h3 className={styles.h3Title}>Postal / Zip Code</h3>
@@ -381,6 +626,9 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
                     onChange={(e) => handleInputChange('zipCode', e.target.value)}
                     required
                   />
+                  {typeof errors.zipCode === 'string' && (
+                    <div style={errorMessageStyle}>{errors.zipCode}</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -494,9 +742,16 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
                     type="file"
                     name="passport_file_name"
                     id="passport_file_name"
-                    onChange={(e) => handleFileChange('passport_file_name', e.target.files?.[0] || null)}
+                    onChange={async (e) => await handleFileChange('passport_file_name', e.target.files?.[0] || null)}
+                    accept=".pdf,.jpg,.jpeg,.png"
                     required
                   />
+                  {typeof errors.passport_file_name === 'string' && (
+                    <div style={errorMessageStyle}>{errors.passport_file_name}</div>
+                  )}
+                  <div style={fileRestrictionStyle}>
+                    Allowed file types: PDF, JPG, JPEG, PNG. Max size: 4MB (images will be automatically compressed)
+                  </div>
                 </div>
                 <div className={styles.personalDeetsInput}>
                   <h3 className={styles.h3Title}>Main Applicant's Proof of Address</h3>
@@ -505,9 +760,16 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
                     type="file"
                     name="proof_address_file_name"
                     id="proof_address_file_name"
-                    onChange={(e) => handleFileChange('proof_address_file_name', e.target.files?.[0] || null)}
+                    onChange={async (e) => await handleFileChange('proof_address_file_name', e.target.files?.[0] || null)}
+                    accept=".pdf,.jpg,.jpeg,.png"
                     required
                   />
+                  {typeof errors.proof_address_file_name === 'string' && (
+                    <div style={errorMessageStyle}>{errors.proof_address_file_name}</div>
+                  )}
+                  <div style={fileRestrictionStyle}>
+                    Allowed file types: PDF, JPG, JPEG, PNG. Max size: 4MB (images will be automatically compressed)
+                  </div>
                 </div>
                 <div className={styles.personalDeetsInput}>
                   <h3 className={styles.h3Title}>Main Applicant's Signature</h3>
@@ -516,9 +778,16 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
                     type="file"
                     name="signature_file_name"
                     id="signature_file_name"
-                    onChange={(e) => handleFileChange('signature_file_name', e.target.files?.[0] || null)}
+                    onChange={async (e) => await handleFileChange('signature_file_name', e.target.files?.[0] || null)}
+                    accept=".pdf,.jpg,.jpeg,.png"
                     required
                   />
+                  {typeof errors.signature_file_name === 'string' && (
+                    <div style={errorMessageStyle}>{errors.signature_file_name}</div>
+                  )}
+                  <div style={fileRestrictionStyle}>
+                    Allowed file types: PDF, JPG, JPEG, PNG. Max size: 4MB (images will be automatically compressed)
+                  </div>
                 </div>
               </div>
             </div>

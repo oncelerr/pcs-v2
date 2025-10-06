@@ -1,0 +1,182 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 450px;
+  padding: 0;
+  animation: slideIn 0.3s ease-out;
+}
+
+.modal-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.modal-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.modal-icon.confirm {
+  background-color: #faeded;
+  color: #FF2C2C;
+}
+
+.modal-icon.success {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+.modal-icon.error {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.modal-icon.info {
+  background-color: #eff6ff;
+  color: #106552;
+}
+
+.modal-title {
+  font-family: "DM Sans", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  text-align: center;
+}
+
+.modal-title.confirm {
+  color: #FF2C2C;
+}
+
+.modal-title.success {
+  color: #16a34a;
+}
+
+.modal-title.error {
+  color: #dc2626;
+}
+
+.modal-title.info {
+  color: #106552;
+}
+
+.modal-message {
+  font-family: "DM Sans", sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #4b5563;
+  margin: 0 0 24px 0;
+  text-align: center;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.modal-button {
+  font-family: "DM Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 10px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  min-width: 100px;
+}
+
+.modal-button.cancel {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.modal-button.cancel:hover {
+  background-color: #e5e7eb;
+}
+
+.modal-button.confirm {
+  background-color: #FF2C2C;
+  color: white;
+}
+
+.modal-button.confirm:hover {
+  background-color: #fa5454;
+}
+
+.modal-button.success {
+  background-color: #10b981;
+  color: white;
+}
+
+.modal-button.success:hover {
+  background-color: #059669;
+}
+
+.modal-button.error {
+  background-color: #ef4444;
+  color: white;
+}
+
+.modal-button.error:hover {
+  background-color: #dc2626;
+}
+
+.modal-button.primary {
+  background-color: #106552;
+  color: white;
+}
+
+.modal-button.primary:hover {
+  background-color: #106552;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

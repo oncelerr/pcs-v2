@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import styles from './CompletePaymentModal.module.css';
 import Modal from '../../../../Components/Modal/Modal';
+import LoadingSpinner from '../../../../Components/LoadingSpinner';
 
 const pricingPlans = [
   {
@@ -65,9 +66,18 @@ const pricingPlans = [
   },
 ];
 
+// Custom spinner wrapper for payment buttons
+const ButtonSpinner = () => (
+  <div className={styles.spinnerContainer}>
+    <LoadingSpinner size="small" color="#126654" />
+  </div>
+);
+
 export default function CompletePaymentModal() {
   const [showConfigErrorModal, setShowConfigErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
+  const [errorStates, setErrorStates] = useState<Record<string, boolean>>({});
 
   const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
   
@@ -79,11 +89,18 @@ export default function CompletePaymentModal() {
   const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : null;
 
   const handleCheckout = async (planTitle: string) => {
+    // Set loading state for this specific plan
+    setLoadingStates(prev => ({ ...prev, [planTitle]: true }));
+    // Reset error state if it was previously set
+    setErrorStates(prev => ({ ...prev, [planTitle]: false }));
+    
     try {
       // Check if Stripe is properly configured
       if (!stripePromise) {
         setErrorMessage('Payment system is not properly configured. Please contact support.');
         setShowConfigErrorModal(true);
+        setLoadingStates(prev => ({ ...prev, [planTitle]: false }));
+        setErrorStates(prev => ({ ...prev, [planTitle]: true }));
         return;
       }
 
@@ -106,6 +123,8 @@ export default function CompletePaymentModal() {
         console.error('Checkout session error:', errorData);
         setErrorMessage('Failed to create checkout session. Please try again.');
         setShowConfigErrorModal(true);
+        setLoadingStates(prev => ({ ...prev, [planTitle]: false }));
+        setErrorStates(prev => ({ ...prev, [planTitle]: true }));
         return;
       }
 
@@ -119,6 +138,8 @@ export default function CompletePaymentModal() {
       console.error("Checkout error:", err);
       setErrorMessage('An error occurred while processing your request. Please try again.');
       setShowConfigErrorModal(true);
+      setLoadingStates(prev => ({ ...prev, [planTitle]: false }));
+      setErrorStates(prev => ({ ...prev, [planTitle]: true }));
     }
   };
 
@@ -153,7 +174,19 @@ export default function CompletePaymentModal() {
                   <h1 className={styles.seventhTitle}>
                     {plan.price} <span>One Time</span>
                   </h1>
-                  <button className={styles.seventhBtn} onClick={() => handleCheckout(plan.title)}>Select & Continue</button>
+                  <button 
+                    className={`${styles.seventhBtn} ${errorStates[plan.title] ? styles.errorBtn : ''}`} 
+                    onClick={() => handleCheckout(plan.title)}
+                    disabled={loadingStates[plan.title]}
+                  >
+                    {loadingStates[plan.title] ? (
+                      <ButtonSpinner />
+                    ) : errorStates[plan.title] ? (
+                      'Try Again'
+                    ) : (
+                      'Select & Continue'
+                    )}
+                  </button>
                   <div className={styles.seventhHr}></div>
                   {plan.inclusions.map((inc, i) => (
                     <div className={styles.seventhInclusions} key={i}>

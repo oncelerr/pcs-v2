@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Stage;
+use App\Models\UserInformation;
+use App\Models\ComplianceUser;
 
 class User extends Authenticatable
 {
@@ -66,5 +68,21 @@ class User extends Authenticatable
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * Get the user's additional information.
+     */
+    public function information(): HasOne
+    {
+        return $this->hasOne(UserInformation::class);
+    }
+    
+    /**
+     * Get the user's compliance information.
+     */
+    public function compliance(): HasOne
+    {
+        return $this->hasOne(ComplianceUser::class);
     }
 }

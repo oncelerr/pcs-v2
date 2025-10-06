@@ -1,6 +1,7 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import LoadingSpinner from '../LoadingSpinner';
 
 interface PrivateRouteProps {
   children?: ReactNode;
@@ -24,24 +25,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
   }, [loading]);
 
   if (loading || !shouldRender) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#f5f5f5',
-      }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          border: '4px solid rgba(0, 0, 0, 0.1)',
-          borderLeftColor: '#106552',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-        }}></div>
-      </div>
-    );
+    return <LoadingSpinner fullPage size="medium" color="#126654" />;
   }
 
   if (!isAuthenticated) {
