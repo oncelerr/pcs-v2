@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ComplianceUser;
+use App\Models\ClientComplianceFile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -306,8 +307,9 @@ class ComplianceUserController extends Controller
         }
         
         $validator = Validator::make($request->all(), [
-            'document_type' => 'required|string|in:state_registration,boi_filing,ein_filing,bank_registration',
+            'document_type' => 'required|string|in:state_registration,boi_filing,ein_filing,bank_registration,registration_agent_service,business_license_research,trademark_registration,dba_registration,copyright_registration,brand_strategy_consultation,business_address,mail_forwarding,meeting_room_access,phone_answering_service,virtual_receptionist',
             'document' => 'required|file|max:10240', // Max 10MB
+            'naming' => 'nullable|string', // Optional title/name for the document
         ]);
         
         if ($validator->fails()) {
@@ -330,8 +332,19 @@ class ComplianceUserController extends Controller
             // Create client-specific folder name
             $folderName = 'client_' . $userId;
             
-            // Create filename based on document type and user ID
-            $fileName = $documentType . '_' . $userId . '.' . $extension;
+            // Create base filename based on document type and user ID
+            $baseFileName = $documentType . '_' . $userId;
+            
+            // Check if file already exists and add sequential numbering if needed
+            $counter = 0;
+            $fileName = $baseFileName . '.' . $extension;
+            $fullPath = storage_path('app/public/compliance_documents/' . $folderName . '/' . $fileName);
+            
+            while (file_exists($fullPath)) {
+                $counter++;
+                $fileName = $baseFileName . '(' . $counter . ').' . $extension;
+                $fullPath = storage_path('app/public/compliance_documents/' . $folderName . '/' . $fileName);
+            }
             
             // Store file in client-specific folder
             $filePath = $file->storeAs('compliance_documents/' . $folderName, $fileName, 'public');
@@ -341,12 +354,31 @@ class ComplianceUserController extends Controller
                 $documentType . '_document' => $filePath
             ]);
             
+            // Get the naming/title for the document (use filename if not provided)
+            $naming = $request->input('naming') ?? $file->getClientOriginalName();
+            
+            // Map document_type to column_for format
+            $columnFor = $documentType;
+            if ($documentType === 'boi_filing') {
+                $columnFor = 'bio_filing';
+            }
+            $columnFor .= '_status'; // Add _status suffix to match the column names in ComplianceUser
+            
+            // Save record to client_compliance_files table
+            $clientComplianceFile = ClientComplianceFile::create([
+                'user_id' => $userId,
+                'file_name' => $fileName,
+                'column_for' => $columnFor,
+                'naming' => $naming
+            ]);
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Document uploaded successfully',
                 'data' => [
                     'document_type' => $documentType,
-                    'file_path' => $filePath
+                    'file_path' => $filePath,
+                    'compliance_file' => $clientComplianceFile
                 ]
             ]);
         }
@@ -376,8 +408,10 @@ class ComplianceUserController extends Controller
         }
         
         $validator = Validator::make($request->all(), [
-            'annual_franchise_tax' => 'nullable|numeric',
-            'annual_irs_tax' => 'nullable|numeric',
+            'annual_franchise_tax' => 'nullable|string', // Changed to string to store date
+            'annual_irs_tax' => 'nullable|string', // Changed to string to store date
+            'franchise_tax_document' => 'nullable|file|max:10240', // Max 10MB
+            'irs_tax_document' => 'nullable|file|max:10240', // Max 10MB
         ]);
         
         if ($validator->fails()) {
@@ -388,12 +422,93 @@ class ComplianceUserController extends Controller
             ], 422);
         }
         
+        // Update tax dates
         $complianceUser->update($request->only(['annual_franchise_tax', 'annual_irs_tax']));
+        
+        $userId = $complianceUser->user_id;
+        $uploadedFiles = [];
+        
+        // Handle franchise tax document upload
+        if ($request->hasFile('franchise_tax_document')) {
+            $file = $request->file('franchise_tax_document');
+            $extension = $file->getClientOriginalExtension();
+            $folderName = 'client_' . $userId;
+            
+            // Create base filename
+            $baseFileName = 'franchise_tax_' . $userId;
+            
+            // Check if file already exists and add sequential numbering if needed
+            $counter = 0;
+            $fileName = $baseFileName . '.' . $extension;
+            $fullPath = storage_path('app/public/compliance_documents/' . $folderName . '/' . $fileName);
+            
+            while (file_exists($fullPath)) {
+                $counter++;
+                $fileName = $baseFileName . '(' . $counter . ').' . $extension;
+                $fullPath = storage_path('app/public/compliance_documents/' . $folderName . '/' . $fileName);
+            }
+            
+            // Store file
+            $filePath = $file->storeAs('compliance_documents/' . $folderName, $fileName, 'public');
+            
+            // Save to client_compliance_files table
+            $clientComplianceFile = ClientComplianceFile::create([
+                'user_id' => $userId,
+                'file_name' => $fileName,
+                'column_for' => 'annual_franchise_tax',
+                'naming' => 'Annual Franchise Tax Document'
+            ]);
+            
+            $uploadedFiles['franchise_tax'] = [
+                'file_path' => $filePath,
+                'compliance_file' => $clientComplianceFile
+            ];
+        }
+        
+        // Handle IRS tax document upload
+        if ($request->hasFile('irs_tax_document')) {
+            $file = $request->file('irs_tax_document');
+            $extension = $file->getClientOriginalExtension();
+            $folderName = 'client_' . $userId;
+            
+            // Create base filename
+            $baseFileName = 'irs_tax_' . $userId;
+            
+            // Check if file already exists and add sequential numbering if needed
+            $counter = 0;
+            $fileName = $baseFileName . '.' . $extension;
+            $fullPath = storage_path('app/public/compliance_documents/' . $folderName . '/' . $fileName);
+            
+            while (file_exists($fullPath)) {
+                $counter++;
+                $fileName = $baseFileName . '(' . $counter . ').' . $extension;
+                $fullPath = storage_path('app/public/compliance_documents/' . $folderName . '/' . $fileName);
+            }
+            
+            // Store file
+            $filePath = $file->storeAs('compliance_documents/' . $folderName, $fileName, 'public');
+            
+            // Save to client_compliance_files table
+            $clientComplianceFile = ClientComplianceFile::create([
+                'user_id' => $userId,
+                'file_name' => $fileName,
+                'column_for' => 'annual_irs_tax',
+                'naming' => 'IRS Annual Tax Return Document'
+            ]);
+            
+            $uploadedFiles['irs_tax'] = [
+                'file_path' => $filePath,
+                'compliance_file' => $clientComplianceFile
+            ];
+        }
         
         return response()->json([
             'success' => true,
             'message' => 'Tax information updated successfully',
-            'data' => $complianceUser
+            'data' => [
+                'compliance_user' => $complianceUser,
+                'uploaded_files' => $uploadedFiles
+            ]
         ]);
     }
     

@@ -451,3 +451,24 @@
   background-color: #dc3545;
   color: white;
 }
+
+/* Upload more button styles */
+.upload-more-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #126654;
+  padding: 0 5px;
+  transition: all 0.2s ease;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-more-btn:hover {
+  background-color: rgba(18, 102, 84, 0.1);
+}

@@ -8,6 +8,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserInformationController;
 use App\Http\Controllers\DocumentAccessController;
 use App\Http\Controllers\ComplianceUserController;
+use App\Http\Controllers\ClientComplianceFileController;
 
 // Secure document access with signed URLs
 Route::get('/document/view', [DocumentAccessController::class, 'viewDocument'])
@@ -62,6 +63,13 @@ Route::group(['prefix' => 'api'], function () {
         Route::delete('/{id}', [ComplianceUserController::class, 'destroy']);
         Route::post('/{id}/upload', [ComplianceUserController::class, 'uploadDocuments']);
         Route::post('/{id}/tax', [ComplianceUserController::class, 'addTaxInfo']);
+    });
+    
+    // Client Compliance Files routes
+    Route::prefix('compliance-files')->group(function () {
+        Route::post('/', [ClientComplianceFileController::class, 'store']);
+        Route::get('/user/{userId}', [ClientComplianceFileController::class, 'getByUser']);
+        Route::get('/user/{userId}/column/{column}', [ClientComplianceFileController::class, 'getByColumn']);
     });
     
     // Password reset route

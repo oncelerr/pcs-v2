@@ -5,6 +5,9 @@ import './Compliance.css'
 import LoadingSpinner from '../../Components/LoadingSpinner';
 import ConfirmationModal from '../../Components/ConfirmationModal';
 import UserDetailsModal from '../../Components/UserDetailsModal';
+import FileUploadModal from '../../Components/FileUploadModal/FileUploadModal';
+import TaxInfoModal from '../../Components/TaxInfoModal/TaxInfoModal';
+import ServiceUploadModal from '../../Components/ServiceUploadModal/ServiceUploadModal';
 
 // Define interface for compliance user information
 interface ComplianceUser {
@@ -52,6 +55,31 @@ const Compliance: React.FC = () => {
   const [showFileUpload, setShowFileUpload] = useState<{userId: number, field: StatusField} | null>(null);
   const [uploadingFile, setUploadingFile] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // State for file upload modal
+  const [fileUploadModal, setFileUploadModal] = useState<{
+    isOpen: boolean;
+    userId: number;
+    field: StatusField;
+  }>({ isOpen: false, userId: 0, field: 'compliance_status' });
+  
+  // State for tax info modal
+  const [taxInfoModal, setTaxInfoModal] = useState<{
+    isOpen: boolean;
+    userId: number;
+  }>({ isOpen: false, userId: 0 });
+  
+  // State for tax info submission
+  const [submittingTaxInfo, setSubmittingTaxInfo] = useState<boolean>(false);
+  
+  // State for service upload modal
+  const [serviceUploadModal, setServiceUploadModal] = useState<{
+    isOpen: boolean;
+    userId: number;
+  }>({ isOpen: false, userId: 0 });
+  
+  // State for service upload submission
+  const [uploadingService, setUploadingService] = useState<boolean>(false);
 
   // Modal state
   const [modalState, setModalState] = useState({
@@ -59,7 +87,25 @@ const Compliance: React.FC = () => {
     title: '',
     message: '',
     type: 'confirm' as 'confirm' | 'success' | 'error' | 'info',
-    onConfirm: () => { }
+    onConfirm: () => { },
+    onCancel: () => { }
+  });
+  
+  // Helper function to create modal state objects with all required properties
+  const createModalState = ({
+    isOpen = false,
+    title = '',
+    message = '',
+    type = 'info' as 'confirm' | 'success' | 'error' | 'info',
+    onConfirm = () => {},
+    onCancel = () => {}
+  }) => ({
+    isOpen,
+    title,
+    message,
+    type,
+    onConfirm,
+    onCancel
   });
 
   // User details modal state
@@ -215,23 +261,17 @@ const Compliance: React.FC = () => {
     // Perform action based on selection
     switch (action) {
       case 'upload':
-        // Show file upload modal
-        setModalState({
+        // Show service upload modal
+        setServiceUploadModal({
           isOpen: true,
-          title: 'Upload Document',
-          message: 'Select a document to upload',
-          type: 'info',
-          onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+          userId
         });
         break;
       case 'tax':
         // Show tax information modal
-        setModalState({
+        setTaxInfoModal({
           isOpen: true,
-          title: 'Add Tax Information',
-          message: 'Enter tax information',
-          type: 'info',
-          onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+          userId
         });
         break;
       default:
@@ -249,9 +289,13 @@ const Compliance: React.FC = () => {
       return;
     }
     
-    // If trying to set to 'done', show file upload first
+    // If trying to set to 'done', show file upload modal
     if (newStatus === 'done') {
-      setShowFileUpload({ userId, field });
+      setFileUploadModal({
+        isOpen: true,
+        userId,
+        field
+      });
       return;
     }
     
@@ -273,7 +317,7 @@ const Compliance: React.FC = () => {
     }
   };
   
-  // Handle file upload
+  // Handle file upload for a single file (legacy method)  
   const handleFileUpload = async (userId: number, field: StatusField, file: File) => {
     setUploadingFile(true);
     try {
@@ -330,35 +374,149 @@ const Compliance: React.FC = () => {
           );
           
           // Show enhanced notification that includes process completion
-          setModalState({
+          setModalState(createModalState({
             isOpen: true,
             title: 'Process Complete',
             message: 'File uploaded successfully and all requirements are now complete! Process status has been automatically updated to Complete.',
             type: 'success',
             onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
-          });
+          }));
         } else {
           // Show regular file upload success notification
-          setModalState({
+          setModalState(createModalState({
             isOpen: true,
             title: 'Success',
             message: 'File uploaded successfully and status updated to Done',
             type: 'success',
             onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
-          });
+          }));
         }
       } else {
         throw new Error(result.message || 'Failed to upload file');
       }
     } catch (err) {
       console.error('Error uploading file:', err);
-      setModalState({
+      setModalState(createModalState({
         isOpen: true,
         title: 'Error',
         message: err instanceof Error ? err.message : 'An unknown error occurred while uploading the file',
         type: 'error',
         onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
-      });
+      }));
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+  
+  // Handle multiple file uploads from modal
+  const handleMultipleFileUpload = async (fieldName: string, files: File[]) => {
+    if (files.length === 0 || !fileUploadModal.userId) return;
+    
+    setUploadingFile(true);
+    const field = fileUploadModal.field;
+    const userId = fileUploadModal.userId;
+    
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      
+      // Fix for bio_filing vs boi_filing mismatch
+      let documentType = field.replace('_status', '');
+      if (documentType === 'bio_filing') {
+        documentType = 'boi_filing';
+      }
+      
+      // Upload each file sequentially to ensure proper numbering
+      const results: any[] = [];
+      
+      // Process files one by one to ensure sequential numbering
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('document', file);
+        formData.append('document_type', documentType);
+        
+        // Use the title property if available (added by FileUploadModal)
+        // TypeScript doesn't know about our custom property, so we need to use any type
+        const anyFile = file as any;
+        const fileTitle = anyFile.title || file.name.split('.')[0];
+        formData.append('naming', fileTitle); // This will be saved to client_compliance_files table
+        
+        const response = await fetch(`/api/compliance-user/${userId}/upload`, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': csrfToken || '',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: formData,
+          credentials: 'same-origin'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to upload file ${file.name}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        results.push(result);
+      }
+      
+      // Check if all uploads were successful
+      const allSuccessful = results.every(result => result.success);
+      
+      if (allSuccessful) {
+        // After successful upload, update the status to 'done'
+        await updateStatus(userId, field, 'done');
+        
+        // Close the modal
+        setFileUploadModal(prev => ({ ...prev, isOpen: false }));
+        
+        // Find the user in the current state
+        const currentUser = userData.find(user => user.id === userId);
+        
+        // Check if all required statuses are now 'done' (including the one we just updated)
+        if (currentUser && 
+            areAllStatusesComplete(currentUser, field, 'done') && 
+            currentUser.process_status !== 'done') {
+          
+          // Automatically update process_status to 'done'
+          await updateProcessStatus(userId, 'done');
+          
+          // Update local state for process_status
+          setUserData(prevData => 
+            prevData.map(user => 
+              user.id === userId ? { ...user, process_status: 'done' } : user
+            )
+          );
+          
+          // Show enhanced notification that includes process completion
+          setModalState(createModalState({
+            isOpen: true,
+            title: 'Process Complete',
+            message: `${files.length} files uploaded successfully and all requirements are now complete! Process status has been automatically updated to Complete.`,
+            type: 'success',
+            onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+          }));
+        } else {
+          // Show regular file upload success notification
+          setModalState(createModalState({
+            isOpen: true,
+            title: 'Success',
+            message: `${files.length} files uploaded successfully and status updated to Done`,
+            type: 'success',
+            onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+          }));
+        }
+      } else {
+        throw new Error('One or more files failed to upload');
+      }
+    } catch (err) {
+      console.error('Error uploading files:', err);
+      setModalState(createModalState({
+        isOpen: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'An unknown error occurred while uploading the files',
+        type: 'error',
+        onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+      }));
     } finally {
       setUploadingFile(false);
     }
@@ -407,13 +565,13 @@ const Compliance: React.FC = () => {
             
             // Show notification that process status is now complete
             setTimeout(() => {
-              setModalState({
+              setModalState(createModalState({
                 isOpen: true,
                 title: 'Process Complete',
                 message: 'All requirements are now complete! Process status has been automatically updated to Complete.',
                 type: 'success',
                 onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
-              });
+              }));
             }, 500); // Small delay to ensure the status update is processed first
             
             // Update the local state immediately for a responsive UI
@@ -429,13 +587,13 @@ const Compliance: React.FC = () => {
       }
     } catch (err) {
       console.error('Error updating status:', err);
-      setModalState({
+      setModalState(createModalState({
         isOpen: true,
         title: 'Error',
         message: err instanceof Error ? err.message : 'An unknown error occurred while updating status',
         type: 'error',
         onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
-      });
+      }));
     } finally {
       setUpdatingStatus(false);
     }
@@ -458,6 +616,140 @@ const Compliance: React.FC = () => {
            bioFilingStatus === 'done' && 
            einFilingStatus === 'done' && 
            bankRegistrationStatus === 'done';
+  };
+  
+  // Handle service document upload
+  const handleServiceUpload = async (service: string, file: File | null) => {
+    if (!serviceUploadModal.userId || !file) return;
+    
+    setUploadingService(true);
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('document_type', service);
+      formData.append('naming', `${service.replace('_', ' ')} Document`);
+      
+      const response = await fetch(`/api/compliance-user/${serviceUploadModal.userId}/upload`, {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData,
+        credentials: 'same-origin'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to upload document: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Close the modal
+        setServiceUploadModal(prev => ({ ...prev, isOpen: false }));
+        
+        // Show success notification
+        setModalState(createModalState({
+          isOpen: true,
+          title: 'Success',
+          message: 'Document uploaded successfully',
+          type: 'success',
+          onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+        }));
+      } else {
+        throw new Error(result.message || 'Failed to upload document');
+      }
+    } catch (err) {
+      console.error('Error uploading document:', err);
+      setModalState(createModalState({
+        isOpen: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'An unknown error occurred while uploading the document',
+        type: 'error',
+        onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+      }));
+    } finally {
+      setUploadingService(false);
+    }
+  };
+  
+  // Handle tax information submission
+  const handleTaxInfoSubmit = async (franchiseTaxDate: string, irsTaxDate: string, franchiseTaxFile: File | null, irsTaxFile: File | null) => {
+    if (!taxInfoModal.userId) return;
+    
+    setSubmittingTaxInfo(true);
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      
+      const formData = new FormData();
+      formData.append('annual_franchise_tax', franchiseTaxDate);
+      formData.append('annual_irs_tax', irsTaxDate);
+      
+      if (franchiseTaxFile) {
+        formData.append('franchise_tax_document', franchiseTaxFile);
+      }
+      
+      if (irsTaxFile) {
+        formData.append('irs_tax_document', irsTaxFile);
+      }
+      
+      const response = await fetch(`/api/compliance-user/${taxInfoModal.userId}/tax`, {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData,
+        credentials: 'same-origin'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update tax information: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update local state with new tax information
+        setUserData(prevData => 
+          prevData.map(user => 
+            user.id === taxInfoModal.userId ? { 
+              ...user, 
+              annual_franchise_tax: franchiseTaxDate,
+              annual_irs_tax: irsTaxDate 
+            } : user
+          )
+        );
+        
+        // Close the modal
+        setTaxInfoModal(prev => ({ ...prev, isOpen: false }));
+        
+        // Show success notification
+        setModalState(createModalState({
+          isOpen: true,
+          title: 'Success',
+          message: 'Tax information updated successfully',
+          type: 'success',
+          onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+        }));
+      } else {
+        throw new Error(result.message || 'Failed to update tax information');
+      }
+    } catch (err) {
+      console.error('Error updating tax information:', err);
+      setModalState(createModalState({
+        isOpen: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'An unknown error occurred while updating tax information',
+        type: 'error',
+        onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+      }));
+    } finally {
+      setSubmittingTaxInfo(false);
+    }
   };
   
   // Helper function to update process_status specifically
@@ -550,11 +842,25 @@ const Compliance: React.FC = () => {
       );
     }
     
-    // If status is 'done', don't allow editing
+    // If status is 'done', show a button to upload more files
     if (normalizedStatus === 'done') {
       return (
-        <div style={cellStyle}>
-          {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
+        <div style={{...cellStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+          <span>{currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}</span>
+          {field !== 'process_status' as StatusField && (
+            <button 
+              className="upload-more-btn"
+              onClick={() => {
+                setFileUploadModal({
+                  isOpen: true,
+                  userId,
+                  field
+                });
+              }}
+            >
+              +
+            </button>
+          )}
         </div>
       );
     }
@@ -850,6 +1156,44 @@ const Compliance: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* File Upload Modal */}
+      <FileUploadModal
+        isOpen={fileUploadModal.isOpen}
+        onClose={() => setFileUploadModal(prev => ({ ...prev, isOpen: false }))}
+        onUpload={handleMultipleFileUpload}
+        userId={fileUploadModal.userId}
+        fieldName={fileUploadModal.field}
+        isUploading={uploadingFile}
+      />
+      
+      {/* Tax Info Modal */}
+      <TaxInfoModal
+        isOpen={taxInfoModal.isOpen}
+        onClose={() => setTaxInfoModal(prev => ({ ...prev, isOpen: false }))}
+        onSave={handleTaxInfoSubmit}
+        userId={taxInfoModal.userId}
+        isSubmitting={submittingTaxInfo}
+      />
+      
+      {/* Service Upload Modal */}
+      <ServiceUploadModal
+        isOpen={serviceUploadModal.isOpen}
+        onClose={() => setServiceUploadModal(prev => ({ ...prev, isOpen: false }))}
+        onUpload={handleServiceUpload}
+        userId={serviceUploadModal.userId}
+        isUploading={uploadingService}
+      />
+      
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={modalState.isOpen}
+        title={modalState.title}
+        message={modalState.message}
+        type={modalState.type}
+        onConfirm={modalState.onConfirm}
+        onCancel={modalState.onCancel}
+      />
     </div>
   );
 };

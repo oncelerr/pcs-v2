@@ -7,6 +7,7 @@ use Stripe\Stripe;
 use Stripe\Checkout\Session;
 use App\Models\UserStageItem;
 use App\Models\Stage;
+use App\Models\ComplianceUser;
 
 class PaymentController extends Controller
 {
@@ -95,6 +96,21 @@ class PaymentController extends Controller
             if ($session->payment_status !== 'paid') {
                 return response()->json(['error' => 'Payment not completed'], 400);
             }
+            
+            // Create or update compliance user record
+            ComplianceUser::updateOrCreate(
+                ['user_id' => $userId],
+                [
+                    'compliance_status' => ComplianceUser::STATUS_DONE,
+                    'state_registration_status' => ComplianceUser::STATUS_PENDING,
+                    'bio_filing_status' => ComplianceUser::STATUS_PENDING,
+                    'ein_filing_status' => ComplianceUser::STATUS_PENDING,
+                    'bank_registration_status' => ComplianceUser::STATUS_PENDING,
+                    'process_status' => ComplianceUser::STATUS_PENDING,
+                    'annual_franchise_tax' => '',
+                    'annual_irs_tax' => ''
+                ]
+            );
 
             // Update Payment stage item from active to completed
             $paymentStageCompleted = false;
@@ -159,7 +175,8 @@ class PaymentController extends Controller
                 'payment_stage_completed' => $paymentStageCompleted,
                 'next_payment_stage_activated' => $nextPaymentStageActivated,
                 'setup_stage_completed' => $setupStageCompleted,
-                'next_setup_stage_activated' => $nextSetupStageActivated
+                'next_setup_stage_activated' => $nextSetupStageActivated,
+                'compliance_record_created' => true
             ]);
 
         } catch (\Exception $e) {
