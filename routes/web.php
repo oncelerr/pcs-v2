@@ -9,6 +9,7 @@ use App\Http\Controllers\UserInformationController;
 use App\Http\Controllers\DocumentAccessController;
 use App\Http\Controllers\ComplianceUserController;
 use App\Http\Controllers\ClientComplianceFileController;
+use App\Http\Controllers\UserStageItemController;
 
 // Secure document access with signed URLs
 Route::get('/document/view', [DocumentAccessController::class, 'viewDocument'])
@@ -34,6 +35,15 @@ Route::group(['prefix' => 'api'], function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/progress', [UserProgressController::class, 'index']);
+        
+        // User Stage Item routes
+        Route::prefix('user-stage-items')->group(function () {
+            Route::get('/', [UserStageItemController::class, 'index']);
+            Route::get('/{id}', [UserStageItemController::class, 'show']);
+            Route::put('/{id}', [UserStageItemController::class, 'update']);
+            Route::patch('/{id}/complete', [UserStageItemController::class, 'markAsCompleted']);
+            Route::patch('/{id}/status', [UserStageItemController::class, 'updateStatus']);
+        });
     });
 
     // Contact Form

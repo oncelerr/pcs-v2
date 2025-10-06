@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Dashboard.css';
-import CompleteProfileModal from '../../Components/CompleteProfileModal';
-import CompletePaymentModal from '../../Components/CompletePaymentModal';
+import CompleteProfileModal from './Components/CompleteProfileModal/CompleteProfileModal';
+import CompletePaymentModal from './Components/CompletePaymentModal/CompletePaymentModal';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
 import { getStatusProgress } from './Components/StatusProgress';
+import ConfirmationModal from '../../Components/ConfirmationModal/ConfirmationModal';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -398,11 +399,124 @@ const Dashboard = () => {
     setCurrentPage(1);
   }, [formationDocuments.length]);
 
-  const additionalServices = [
-    { id: 1, fileName: 'CSTF Mandatory Training Certificate', validFrom: '10/11/2022', expiry: '10/11/2023' },
-    { id: 2, fileName: 'Fit to Work Annual Certificate', validFrom: '10/11/2022', expiry: '10/11/2023' },
-    { id: 3, fileName: 'CSTF Mandatory Training Certificate', validFrom: '10/11/2022', expiry: '10/11/2023' }
-  ];
+  // State for additional services
+  const [additionalServices, setAdditionalServices] = useState<Array<{
+    id: number;
+    fileName: string;
+    validFrom?: string;
+    expiry?: string;
+    type: string;
+    file_path?: string;
+  }>>([]);
+  const [loadingAdditionalServices, setLoadingAdditionalServices] = useState<boolean>(false);
+  
+  // Pagination state for additional services
+  const [additionalServicesPage, setAdditionalServicesPage] = useState<number>(1);
+  const servicesPerPage: number = 3;
+  
+  // Function to fetch additional services from client_compliance_files table
+  const fetchAdditionalServices = async () => {
+    if (!user?.id) return;
+    
+    setLoadingAdditionalServices(true);
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      
+      // Fetch documents from client_compliance_files for the current user
+      const response = await fetch(`/api/compliance-files/user/${user.id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch additional services');
+      }
+      
+      const result = await response.json();
+      const files = result.data || [];
+      
+      // Filter for additional service types
+      const serviceTypes = [
+        'registration_agent_service_status',
+        'business_license_research_status',
+        'trademark_registration_status',
+        'dba_registration_status',
+        'copyright_registration_status',
+        'brand_strategy_consultation_status',
+        'business_address_status',
+        'meeting_room_access_status',
+        'phone_answering_service_status',
+        'virtual_receptionist_status'
+      ];
+      
+      const serviceFiles = files
+        .filter((file: any) => serviceTypes.includes(file.column_for))
+        .map((file: any, index: number) => ({
+          id: file.id || index + 1,
+          fileName: file.naming || file.file_name || formatServiceLabel(file.column_for),
+          validFrom: file.created_at ? formatDate(file.created_at) : undefined,
+          expiry: file.expiry_date ? formatDate(file.expiry_date) : 'No Expiry',
+          type: file.column_for,
+          file_path: file.file_path || ''
+        }));
+      
+      setAdditionalServices(serviceFiles);
+    } catch (error) {
+      console.error('Error fetching additional services:', error);
+    } finally {
+      setLoadingAdditionalServices(false);
+    }
+  };
+  
+  // Helper function to format service labels
+  const formatServiceLabel = (serviceType: string): string => {
+    return serviceType
+      .replace('_status', '')
+      .replace('_service', '')
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+  
+  // Pagination functions for additional services
+  const getAdditionalServicesTotalPages = (): number => {
+    return Math.ceil(additionalServices.length / servicesPerPage);
+  };
+  
+  const getCurrentPageServices = () => {
+    const indexOfLastService = additionalServicesPage * servicesPerPage;
+    const indexOfFirstService = indexOfLastService - servicesPerPage;
+    return additionalServices.slice(indexOfFirstService, indexOfLastService);
+  };
+  
+  const handleServicesPageChange = (pageNumber: number): void => {
+    // Ensure page number is within valid range
+    const totalPages = getAdditionalServicesTotalPages();
+    if (pageNumber < 1) {
+      setAdditionalServicesPage(1);
+    } else if (pageNumber > totalPages) {
+      setAdditionalServicesPage(totalPages);
+    } else {
+      setAdditionalServicesPage(pageNumber);
+    }
+  };
+  
+  // Fetch additional services when component mounts or user changes
+  useEffect(() => {
+    if (user?.id) {
+      fetchAdditionalServices();
+    }
+  }, [user?.id]);
+  
+  // Reset to first page when services change
+  useEffect(() => {
+    setAdditionalServicesPage(1);
+  }, [additionalServices.length]);
 
   // State for tax information
   const [taxes, setTaxes] = useState<Array<{
@@ -519,11 +633,141 @@ const Dashboard = () => {
     }
   }, [user?.id]);
 
-  const userDocuments = [
-    { id: 1, title: 'IRS Annual Tax Return (2025)' },
-    { id: 2, title: 'Franchise Tax Notice' },
-    { id: 3, title: 'Mail Forwarding Receipt' }
-  ];
+  // State for user documents
+  const [userDocuments, setUserDocuments] = useState<Array<{
+    id: number;
+    title: string;
+    date?: string;
+    type: string;
+    file_path?: string;
+  }>>([]);
+  const [loadingUserDocuments, setLoadingUserDocuments] = useState<boolean>(false);
+  
+  // Function to fetch user documents from compliance_users table
+  const fetchUserDocuments = async () => {
+    if (!user?.id) return;
+    
+    setLoadingUserDocuments(true);
+    try {
+      // Reuse the same compliance user lookup logic from fetchTaxInformation
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      
+      // First check if compliance user exists for this user
+      const checkResponse = await fetch(`/api/compliance-user?user_id=${user.id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin'
+      });
+      
+      if (!checkResponse.ok) {
+        throw new Error('Failed to check compliance user');
+      }
+      
+      const checkResult = await checkResponse.json();
+      const complianceUsers = checkResult.data || [];
+      
+      // If no compliance user exists, set empty documents
+      if (!complianceUsers.length) {
+        setUserDocuments([]);
+        return;
+      }
+      
+      // Get the first compliance user (there should only be one per user)
+      const complianceUserId = complianceUsers[0].id;
+      
+      // Fetch specific compliance user data
+      const response = await fetch(`/api/compliance-user/${complianceUserId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user documents');
+      }
+      
+      const result = await response.json();
+      const complianceUser = result.data;
+      
+      // Format documents for display
+      const documentItems = [];
+      
+      // Also fetch client compliance files to get file paths
+      const filesResponse = await fetch(`/api/compliance-files/user/${user.id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin'
+      });
+      
+      let files = [];
+      if (filesResponse.ok) {
+        const filesResult = await filesResponse.json();
+        files = filesResult.data || [];
+      }
+      
+      // Helper function to find file path by column type
+      const getFilePath = (columnType: string): string => {
+        const file = files.find((f: { column_for: string; file_path?: string }) => f.column_for === columnType);
+        return file ? file.file_path || '' : '';
+      };
+      
+      if (complianceUser?.annual_franchise_tax) {
+        documentItems.push({
+          id: 1,
+          title: 'Annual Franchise Tax Document',
+          date: formatDate(complianceUser.annual_franchise_tax),
+          type: 'annual_franchise_tax',
+          file_path: getFilePath('annual_franchise_tax')
+        });
+      }
+      
+      if (complianceUser?.annual_irs_tax) {
+        documentItems.push({
+          id: 2,
+          title: 'IRS Annual Tax Return',
+          date: formatDate(complianceUser.annual_irs_tax),
+          type: 'annual_irs_tax',
+          file_path: getFilePath('annual_irs_tax')
+        });
+      }
+      
+      if (complianceUser?.mail_forwarding_status) {
+        documentItems.push({
+          id: 3,
+          title: 'Mail Forwarding Receipt',
+          date: complianceUser.mail_forwarding_status === 'active' ? 'Active' : 'Inactive',
+          type: 'mail_forwarding_status',
+          file_path: getFilePath('mail_forwarding_status')
+        });
+      }
+      
+      setUserDocuments(documentItems);
+    } catch (error) {
+      console.error('Error fetching user documents:', error);
+      setUserDocuments([]);
+    } finally {
+      setLoadingUserDocuments(false);
+    }
+  };
+  
+  // Fetch user documents when component mounts or user changes
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserDocuments();
+    }
+  }, [user?.id]);
 
   const mailForwarding = [
     { id: 1, title: 'IRS Letter - July 2025' },
@@ -619,58 +863,28 @@ const Dashboard = () => {
     }
   };
 
-  // Modal component
-  interface ModalProps {
-    modalType: 'success' | 'error';
-    paymentErrorMessage?: string;
-    setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
-  }
-
-  const Modal: React.FC<ModalProps> = ({ modalType, paymentErrorMessage, setShowModal }) => {
-    if (modalType === 'success') {
-      return (
-        <div className="modal-overlay">
-          <div className="success-modal">
-            <div className="success-icon">
-              <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="32" cy="32" r="32" fill="#106552" />
-                <path d="M20 32L28 40L44 24" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <h3 className="success-title">Payment Successful!</h3>
-            <p className="success-message">Your payment has been processed and your stages have been updated.</p>
-            <div className="success-actions">
-              <button className="success-button" onClick={() => setShowModal(false)}>Close</button>
-            </div>
-          </div>
-        </div>
-      );
-    } else {
-      return (
-        <div className="modal-overlay">
-          <div className="error-modal">
-            <div className="error-icon">
-              <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="32" cy="32" r="32" fill="#F44336" />
-                <path d="M32 20V36" stroke="white" strokeWidth="4" strokeLinecap="round" />
-                <circle cx="32" cy="44" r="2" fill="white" />
-              </svg>
-            </div>
-            <h3 className="error-title">Payment Error</h3>
-            <p className="error-message">{paymentErrorMessage || 'An error occurred while processing your payment.'}</p>
-            <div className="error-actions">
-              <button className="error-button" onClick={() => setShowModal(false)}>Close</button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-  };
+  // Payment modals are now handled by ConfirmationModal component
 
   return (
     <div className="dashboard-container">
-      {showPaymentSuccessModal && <Modal modalType="success" paymentErrorMessage={paymentErrorMessage} setShowModal={setShowPaymentSuccessModal} />}
-      {showPaymentErrorModal && <Modal modalType="error" paymentErrorMessage={paymentErrorMessage} setShowModal={setShowPaymentErrorModal} />}
+      <ConfirmationModal
+        isOpen={showPaymentSuccessModal}
+        title="Payment Successful!"
+        message="Your payment has been processed and your stages have been updated."
+        confirmText="Close"
+        type="success"
+        onConfirm={() => setShowPaymentSuccessModal(false)}
+        onCancel={() => setShowPaymentSuccessModal(false)}
+      />
+      <ConfirmationModal
+        isOpen={showPaymentErrorModal}
+        title="Payment Error"
+        message={paymentErrorMessage || 'An error occurred while processing your payment.'}
+        confirmText="Close"
+        type="error"
+        onConfirm={() => setShowPaymentErrorModal(false)}
+        onCancel={() => setShowPaymentErrorModal(false)}
+      />
       {/* Blocking Modal for Active Profile Setup - Only show for non-admin users */}
       {hasActiveProfileSetup && !isAdmin && (
         <CompleteProfileModal />
@@ -831,23 +1045,58 @@ const Dashboard = () => {
               <div className="card__header-title">Additional Service Document</div>
             </div>
             <div className="table-header">
-              <div className="table-header__col" style={{ width: 241 }}>File Name</div>
-              <div className="table-header__col">Valid From</div>
-              <div className="table-header__col" style={{ width: 69 }}>Expiry</div>
-              <div className="table-header__col">Action</div>
+              <div className="table-header__col">No.</div>
+              <div className="table-header__col" style={{ width: 168 }}>File Name</div>
+              <div className="table-header__col" style={{ width: 141 }}>Valid From</div>
+              <div className="table-header__col" style={{ width: 77 }}>Expiry</div>
+              <div className="table-header__col" style={{ width: 77 }}>Action</div>
             </div>
-            <div style={{ padding: '24px 32px' }}>
-              {additionalServices.map((service, idx) => (
-                <React.Fragment key={service.id}>
-                  <div className="table-row" style={{ padding: 0 }}>
-                    <div style={{ color: '#474747', fontSize: 14, fontWeight: 400, width: 241 }}>{service.fileName}</div>
-                    <div style={{ color: '#474747', fontSize: 14, fontWeight: 400 }}>{service.validFrom}</div>
-                    <div style={{ color: '#474747', fontSize: 14, fontWeight: 400 }}>{service.expiry}</div>
-                    <div className="action-link" style={{ width: 44, textAlign: 'center' }}>View</div>
+            <div style={{ padding: '24px 0' }}>
+              {loadingAdditionalServices ? (
+                <div className="loading-documents">
+                  <p style={{ textAlign: 'center', padding: '20px' }}>Loading services...</p>
+                </div>
+              ) : getCurrentPageServices().length > 0 ? (
+                <>
+                  {/* Current page services */}
+                  {getCurrentPageServices().map((doc, idx) => (
+                    <DocumentRow
+                      key={doc.id}
+                      number={(additionalServicesPage - 1) * servicesPerPage + idx + 1}
+                      fileName={doc.fileName}
+                      stage={`${doc.validFrom || 'N/A'} - ${doc.expiry || 'N/A'}`}
+                      onDownload={() => handleDownload(doc.file_path || doc.fileName)}
+                    />
+                  ))}
+                  
+                  {/* Pagination controls */}
+                  <div className="pagination-controls">
+                    <button 
+                      className="pagination-button"
+                      onClick={() => handleServicesPageChange(additionalServicesPage - 1)}
+                      disabled={additionalServicesPage === 1}
+                    >
+                      Previous
+                    </button>
+                    <span className="pagination-info">
+                      Page {additionalServicesPage} of {getAdditionalServicesTotalPages()}
+                    </span>
+                    <button 
+                      className="pagination-button"
+                      onClick={() => handleServicesPageChange(additionalServicesPage + 1)}
+                      disabled={additionalServicesPage >= getAdditionalServicesTotalPages()}
+                    >
+                      Next
+                    </button>
                   </div>
-                  {idx < additionalServices.length - 1 && <div className="table-divider" style={{ margin: '22px 0' }} />}
-                </React.Fragment>
-              ))}
+                </>
+              ) : (
+                <div className="no-documents">
+                  <p style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                    No additional services found.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -890,13 +1139,36 @@ const Dashboard = () => {
               <div className="card__header-title">User Documents</div>
             </div>
             <div className="card__body" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 22 }}>
-              {userDocuments.map((doc, idx) => (
-                <ListItem
-                  key={doc.id}
-                  title={doc.title}
-                  onAction={() => handleViewDetails(doc)}
-                />
-              ))}
+              {loadingUserDocuments ? (
+                <div className="loading-documents">
+                  <p style={{ textAlign: 'center', padding: '10px' }}>Loading documents...</p>
+                </div>
+              ) : userDocuments.length > 0 ? (
+                userDocuments.map((doc) => (
+                  <div key={doc.id} className="document-item">
+                    <div className="document-item__content">
+                      <div className="document-item__title">{doc.title}</div>
+                      {doc.date && <div className="document-item__date">{doc.date}</div>}
+                    </div>
+                    {doc.file_path && (
+                      <div className="document-item__action">
+                        <button 
+                          className="download-button"
+                          onClick={() => handleDownload(doc.file_path || '')}
+                        >
+                          Download
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="no-documents">
+                  <p style={{ textAlign: 'center', padding: '10px', color: '#666' }}>
+                    No user documents found.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

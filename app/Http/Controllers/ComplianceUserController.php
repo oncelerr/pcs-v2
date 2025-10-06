@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\ComplianceUser;
 use App\Models\ClientComplianceFile;
 use App\Models\User;
+use App\Models\UserStageItem;
+use App\Models\Stage;
+use App\Models\StageItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -254,13 +257,43 @@ class ComplianceUserController extends Controller
             ], 422);
         }
         
-        $complianceUser->update($request->all());
+        // Begin transaction to ensure data consistency
+        DB::beginTransaction();
         
-        return response()->json([
-            'success' => true,
-            'message' => 'Compliance user information updated successfully',
-            'data' => $complianceUser
-        ]);
+        try {
+            // Get the fields being updated
+            $updatedFields = $request->only([
+                'compliance_status',
+                'state_registration_status',
+                'bio_filing_status',
+                'ein_filing_status',
+                'bank_registration_status',
+                'process_status'
+            ]);
+            
+            // Update the compliance user record
+            $complianceUser->update($updatedFields);
+            
+            // Update corresponding user stage items based on the updated fields
+            $this->updateUserStageItems($complianceUser->user_id, $updatedFields);
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Compliance user information updated successfully',
+                'data' => $complianceUser
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating compliance user: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update compliance user information',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -550,6 +583,113 @@ class ComplianceUserController extends Controller
                 return '0%';
             default:
                 return 'N/A';
+        }
+    }
+    
+    /**
+     * Update user stage items based on compliance status changes.
+     *
+     * @param int $userId
+     * @param array $updatedFields
+     * @return void
+     */
+    private function updateUserStageItems(int $userId, array $updatedFields): void
+    {
+        // Map compliance fields to stage item IDs
+        $fieldToStageItemMap = [
+            'state_registration_status' => 3, // State Registration
+            'bio_filing_status' => 4,       // BOI Filing
+            'ein_filing_status' => 5,       // EIN Filing
+            'bank_registration_status' => 6, // Bank Registration
+        ];
+        
+        // Process each updated field
+        foreach ($updatedFields as $field => $status) {
+            // Skip if the field is not in our map
+            if (!array_key_exists($field, $fieldToStageItemMap)) {
+                continue;
+            }
+            
+            $stageItemId = $fieldToStageItemMap[$field];
+            
+            // Get the stage item to determine its stage
+            $stageItem = StageItem::find($stageItemId);
+            if (!$stageItem) {
+                continue;
+            }
+            
+            // Find or create the user stage item
+            $userStageItem = UserStageItem::firstOrCreate(
+                ['user_id' => $userId, 'stage_item_id' => $stageItemId],
+                ['stage_id' => $stageItem->stage_id, 'status' => UserStageItem::STATUS_PENDING]
+            );
+            
+            // Map ComplianceUser status to UserStageItem status
+            $userStageItemStatus = UserStageItem::STATUS_PENDING;
+            if ($status === ComplianceUser::STATUS_IN_PROGRESS) {
+                $userStageItemStatus = UserStageItem::STATUS_ACTIVE;
+            } elseif ($status === ComplianceUser::STATUS_DONE) {
+                $userStageItemStatus = UserStageItem::STATUS_DONE;
+            }
+            
+            // Update the user stage item status
+            $userStageItem->update([
+                'status' => $userStageItemStatus,
+                'completed_at' => $userStageItemStatus === UserStageItem::STATUS_DONE ? now() : null
+            ]);
+            
+            // If item is completed, check if all items in the stage are completed
+            if ($userStageItemStatus === UserStageItem::STATUS_DONE) {
+                $this->checkAndUpdateStageCompletion($userId, $stageItem->stage_id);
+            }
+        }
+    }
+    
+    /**
+     * Check if all items in a stage are completed and update next stage if needed.
+     *
+     * @param int $userId
+     * @param int $stageId
+     * @return void
+     */
+    private function checkAndUpdateStageCompletion(int $userId, int $stageId): void
+    {
+        // Get all stage items for this stage
+        $stageItems = StageItem::where('stage_id', $stageId)->get();
+        $stageItemIds = $stageItems->pluck('id')->toArray();
+        
+        // Get user stage items for these stage items
+        $userStageItems = UserStageItem::where('user_id', $userId)
+            ->whereIn('stage_item_id', $stageItemIds)
+            ->get();
+            
+        // Check if all items are completed
+        $allCompleted = $userStageItems->count() === $stageItems->count() &&
+            $userStageItems->every(function ($item) {
+                return $item->status === UserStageItem::STATUS_DONE;
+            });
+            
+        if ($allCompleted) {
+            // Find the next stage
+            $nextStage = Stage::where('id', '>', $stageId)->orderBy('id')->first();
+            
+            if ($nextStage) {
+                // Get the first item of the next stage
+                $nextStageFirstItem = StageItem::where('stage_id', $nextStage->id)
+                    ->orderBy('id')
+                    ->first();
+                    
+                if ($nextStageFirstItem) {
+                    // Find or create user stage item for the first item of the next stage
+                    $nextUserStageItem = UserStageItem::firstOrCreate(
+                        ['user_id' => $userId, 'stage_item_id' => $nextStageFirstItem->id],
+                        ['stage_id' => $nextStage->id, 'status' => UserStageItem::STATUS_PENDING]
+                    );
+                    
+                    // Set it to active
+                    $nextUserStageItem->update(['status' => UserStageItem::STATUS_ACTIVE]);
+                }
+            }
         }
     }
 }

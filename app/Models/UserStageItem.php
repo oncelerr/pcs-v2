@@ -24,6 +24,7 @@ class UserStageItem extends Model
         'stage_id',
         'stage_item_id',
         'status',
+        'completed_at',
     ];
 
     /**
@@ -34,6 +35,7 @@ class UserStageItem extends Model
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     /**
