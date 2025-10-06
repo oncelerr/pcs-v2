@@ -50,9 +50,16 @@ class ClientComplianceFileController extends Controller
     {
         $files = ClientComplianceFile::where('user_id', $userId)->get();
         
+        // Add file_path for each file
+        $filesWithPaths = $files->map(function ($file) {
+            // Assuming files are stored in compliance_documents/client_{user_id}/{file_name}
+            $file->file_path = 'compliance_documents/client_' . $file->user_id . '/' . $file->file_name;
+            return $file;
+        });
+        
         return response()->json([
             'success' => true,
-            'data' => $files
+            'data' => $filesWithPaths
         ]);
     }
 
@@ -69,9 +76,16 @@ class ClientComplianceFileController extends Controller
             ->where('column_for', $column)
             ->get();
         
+        // Add file_path for each file
+        $filesWithPaths = $files->map(function ($file) {
+            // Assuming files are stored in compliance_documents/client_{user_id}/{file_name}
+            $file->file_path = 'compliance_documents/client_' . $file->user_id . '/' . $file->file_name;
+            return $file;
+        });
+        
         return response()->json([
             'success' => true,
-            'data' => $files
+            'data' => $filesWithPaths
         ]);
     }
 }

@@ -397,8 +397,19 @@ body {
   border-radius: 50%;
 }
 
+.stage-item__indicator--completed {
+  display: flex;
+  align-items: center;
+  background-color: #126654;
+}
+
+.stage-item__indicator--active {
+  background-color: #126654;
+}
+
 .stage-item__indicator--pending {
   border: 1px solid #AABEBD;
+  background-color: #BDBDBD;
 }
 
 .stage-item__text {
@@ -567,6 +578,156 @@ body {
   color: #475569;
   font-size: 16px;
   line-height: 24px;
+}
+
+/* Admin Stats Styles */
+.admin-stats {
+  padding: 20px;
+}
+
+.loading-stats {
+  text-align: center;
+  padding: 40px 0;
+  font-family: "DM Sans", sans-serif;
+  color: #666;
+}
+
+.stats-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pie-chart-container {
+  position: relative;
+  margin: 0 auto;
+  max-width: 400px;
+}
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.stats-item {
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.stats-label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.stats-value {
+  font-family: "DM Sans", sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Color coding for stats items */
+.stats-item:nth-child(1) {
+  border-top: 3px solid #126654;
+}
+
+.stats-item:nth-child(2) {
+  border-top: 3px solid #4CAF50;
+}
+
+.stats-item:nth-child(3) {
+  border-top: 3px solid #FFC107;
+}
+
+.stats-item:nth-child(4) {
+  border-top: 3px solid #F44336;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  margin-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.pagination-button {
+  padding: 8px 16px;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Tax Item Styles */
+.tax-item {
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border-left: 4px solid #126654;
+  margin-bottom: 12px;
+}
+
+.tax-item:last-child {
+  margin-bottom: 0;
+}
+
+.tax-item__content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tax-item__title {
+  font-family: "DM Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.tax-item__date {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.loading-taxes,
+.no-taxes {
+  width: 100%;
+  padding: 20px 0;
+  text-align: center;
+  font-family: "DM Sans", sans-serif;
 }
 
 /* Responsive */
