@@ -55,6 +55,9 @@ Route::group(['prefix' => 'api'], function () {
     // ✅ Handle payment success
     Route::post('/payment-success', [PaymentController::class, 'handlePaymentSuccess']);
     
+    // ✅ Verify Stripe configuration
+    Route::get('/verify-stripe-config', [PaymentController::class, 'verifyStripeConfig']);
+    
     // User Information routes with pagination
     Route::prefix('user-information')->group(function () {
         Route::get('/', [UserInformationController::class, 'index']);

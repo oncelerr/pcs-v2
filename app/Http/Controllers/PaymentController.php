@@ -11,6 +11,65 @@ use App\Models\ComplianceUser;
 
 class PaymentController extends Controller
 {
+    /**
+     * Verify Stripe configuration
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function verifyStripeConfig()
+    {
+        try {
+            $stripeKey = env('STRIPE_SECRET');
+            $appUrl = env('APP_URL');
+            $stripeKeyMasked = !empty($stripeKey) ? substr($stripeKey, 0, 4) . '...' . substr($stripeKey, -4) : null;
+            
+            // Check if Stripe key is set
+            if (empty($stripeKey)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Stripe secret key is not configured',
+                    'config' => [
+                        'stripe_key_set' => false,
+                        'app_url' => $appUrl
+                    ]
+                ]);
+            }
+            
+            // Try to initialize Stripe
+            Stripe::setApiKey($stripeKey);
+            
+            // Try to make a simple API call to verify the key works
+            $balance = \Stripe\Balance::retrieve();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Stripe configuration is valid',
+                'config' => [
+                    'stripe_key_set' => true,
+                    'stripe_key_prefix' => substr($stripeKeyMasked, 0, 6),
+                    'app_url' => $appUrl,
+                    'available_balance' => $balance->available[0]->amount ?? 0
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Stripe Config Verification Error', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Stripe configuration error: ' . $e->getMessage(),
+                'config' => [
+                    'stripe_key_set' => !empty(env('STRIPE_SECRET')),
+                    'app_url' => env('APP_URL'),
+                    'error' => $e->getMessage()
+                ]
+            ], 500);
+        }
+    }
     public function createCheckoutSession(Request $request)
     {
         try {
@@ -19,7 +78,14 @@ class PaymentController extends Controller
                 'plan' => 'required|string'
             ]);
 
-            Stripe::setApiKey(env('STRIPE_SECRET'));
+            // Check if Stripe secret key is set
+            $stripeKey = env('STRIPE_SECRET');
+            if (empty($stripeKey)) {
+                \Log::error('Stripe secret key is not set in environment');
+                return response()->json(['error' => 'Payment configuration error. Please contact support.'], 500);
+            }
+            
+            Stripe::setApiKey($stripeKey);
 
             $plan = $request->plan;
 
@@ -36,39 +102,58 @@ class PaymentController extends Controller
             }
 
             // Get the base URL from environment configuration
-            $baseUrl = env('APP_URL', 'http://localhost:8000');
+            $baseUrl = env('APP_URL', 'https://test.premiumcorpsolutions.com');
+            
+            // Log the base URL for debugging
+            \Log::info('Creating checkout session', [
+                'base_url' => $baseUrl,
+                'amount' => $pricing[$plan]
+            ]);
         
-        $session = Session::create([
-            'payment_method_types' => ['card'],
-            'line_items' => [[
-                'price_data' => [
-                    'currency' => 'usd',
-                    'product_data' => [
-                        'name' => $plan,
+            $session = Session::create([
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'usd',
+                        'product_data' => [
+                            'name' => $plan,
+                        ],
+                        'unit_amount' => $pricing[$plan],
                     ],
-                    'unit_amount' => $pricing[$plan],
-                ],
-                'quantity' => 1,
-            ]],
-            'mode' => 'payment',
-            'success_url' => $baseUrl . '/dashboard?status=success&session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => $baseUrl . '/payment-cancel',
-        ]);
+                    'quantity' => 1,
+                ]],
+                'mode' => 'payment',
+                'success_url' => $baseUrl . '/dashboard?status=success&session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => $baseUrl . '/payment-cancel',
+            ]);
 
             return response()->json([
                 'id' => $session->id,
                 'url' => $session->url
             ]);
-            
         } catch (\Stripe\Exception\ApiErrorException $e) {
-            \Log::error('Stripe API Error: ' . $e->getMessage());
+            \Log::error('Stripe API Error', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'http_status' => $e->getHttpStatus(),
+                'request_id' => $e->getRequestId(),
+                'stripe_code' => $e->getStripeCode()
+            ]);
             return response()->json([
-                'error' => 'Payment processing error. Please try again.'
+                'error' => 'Payment processing error. Please try again.',
+                'debug_info' => env('APP_DEBUG', false) ? $e->getMessage() : null
             ], 500);
         } catch (\Exception $e) {
-            \Log::error('Payment Controller Error: ' . $e->getMessage());
+            \Log::error('Payment Controller Error', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => env('APP_DEBUG', false) ? $e->getTraceAsString() : null
+            ]);
             return response()->json([
-                'error' => 'An unexpected error occurred. Please try again.'
+                'error' => 'An unexpected error occurred. Please try again.',
+                'debug_info' => env('APP_DEBUG', false) ? $e->getMessage() : null
             ], 500);
         }
     }
@@ -89,9 +174,25 @@ class PaymentController extends Controller
                 return response()->json(['error' => 'Missing required parameters'], 400);
             }
 
+            // Check if Stripe secret key is set
+            $stripeKey = env('STRIPE_SECRET');
+            if (empty($stripeKey)) {
+                \Log::error('Stripe secret key is not set in environment');
+                return response()->json(['error' => 'Payment configuration error. Please contact support.'], 500);
+            }
+            
             // Verify the session with Stripe
-            Stripe::setApiKey(env('STRIPE_SECRET'));
-            $session = Session::retrieve($sessionId);
+            Stripe::setApiKey($stripeKey);
+            
+            try {
+                $session = Session::retrieve($sessionId);
+            } catch (\Exception $e) {
+                \Log::error('Failed to retrieve Stripe session', [
+                    'session_id' => $sessionId,
+                    'error' => $e->getMessage()
+                ]);
+                return response()->json(['error' => 'Invalid payment session'], 400);
+            }
             
             if ($session->payment_status !== 'paid') {
                 return response()->json(['error' => 'Payment not completed'], 400);
@@ -180,9 +281,18 @@ class PaymentController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Payment Success Handler Error: ' . $e->getMessage());
+            \Log::error('Payment Success Handler Error', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => env('APP_DEBUG', false) ? $e->getTraceAsString() : null,
+                'session_id' => $sessionId ?? null,
+                'user_id' => $userId ?? null
+            ]);
             return response()->json([
-                'error' => 'An error occurred while processing payment success.'
+                'error' => 'An error occurred while processing payment success.',
+                'debug_info' => env('APP_DEBUG', false) ? $e->getMessage() : null
             ], 500);
         }
     }
