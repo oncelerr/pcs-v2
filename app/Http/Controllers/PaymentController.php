@@ -19,8 +19,9 @@ class PaymentController extends Controller
     public function verifyStripeConfig()
     {
         try {
-            $stripeKey = env('STRIPE_SECRET');
-            $appUrl = env('APP_URL');
+            // Use config() instead of env()
+            $stripeKey = config('services.stripe.secret');
+            $appUrl = config('app.url');
             $stripeKeyMasked = !empty($stripeKey) ? substr($stripeKey, 0, 4) . '...' . substr($stripeKey, -4) : null;
             
             // Check if Stripe key is set
@@ -63,13 +64,14 @@ class PaymentController extends Controller
                 'success' => false,
                 'message' => 'Stripe configuration error: ' . $e->getMessage(),
                 'config' => [
-                    'stripe_key_set' => !empty(env('STRIPE_SECRET')),
-                    'app_url' => env('APP_URL'),
+                    'stripe_key_set' => !empty(config('services.stripe.secret')),
+                    'app_url' => config('app.url'),
                     'error' => $e->getMessage()
                 ]
             ], 500);
         }
     }
+    
     public function createCheckoutSession(Request $request)
     {
         try {
@@ -78,10 +80,10 @@ class PaymentController extends Controller
                 'plan' => 'required|string'
             ]);
 
-            // Check if Stripe secret key is set
-            $stripeKey = env('STRIPE_SECRET');
+            // Check if Stripe secret key is set - use config() instead of env()
+            $stripeKey = config('services.stripe.secret');
             if (empty($stripeKey)) {
-                \Log::error('Stripe secret key is not set in environment');
+                \Log::error('Stripe secret key is not set in configuration');
                 return response()->json(['error' => 'Payment configuration error. Please contact support.'], 500);
             }
             
@@ -101,8 +103,8 @@ class PaymentController extends Controller
                 return response()->json(['error' => 'Invalid plan selected'], 400);
             }
 
-            // Get the base URL from environment configuration
-            $baseUrl = env('APP_URL', 'https://test.premiumcorpsolutions.com');
+            // Get the base URL from configuration
+            $baseUrl = config('app.url', 'https://test.premiumcorpsolutions.com');
             
             // Log the base URL for debugging
             \Log::info('Creating checkout session', [
@@ -141,7 +143,7 @@ class PaymentController extends Controller
             ]);
             return response()->json([
                 'error' => 'Payment processing error. Please try again.',
-                'debug_info' => env('APP_DEBUG', false) ? $e->getMessage() : null
+                'debug_info' => config('app.debug', false) ? $e->getMessage() : null
             ], 500);
         } catch (\Exception $e) {
             \Log::error('Payment Controller Error', [
@@ -149,11 +151,11 @@ class PaymentController extends Controller
                 'code' => $e->getCode(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => env('APP_DEBUG', false) ? $e->getTraceAsString() : null
+                'trace' => config('app.debug', false) ? $e->getTraceAsString() : null
             ]);
             return response()->json([
                 'error' => 'An unexpected error occurred. Please try again.',
-                'debug_info' => env('APP_DEBUG', false) ? $e->getMessage() : null
+                'debug_info' => config('app.debug', false) ? $e->getMessage() : null
             ], 500);
         }
     }
@@ -174,10 +176,10 @@ class PaymentController extends Controller
                 return response()->json(['error' => 'Missing required parameters'], 400);
             }
 
-            // Check if Stripe secret key is set
-            $stripeKey = env('STRIPE_SECRET');
+            // Check if Stripe secret key is set - use config() instead of env()
+            $stripeKey = config('services.stripe.secret');
             if (empty($stripeKey)) {
-                \Log::error('Stripe secret key is not set in environment');
+                \Log::error('Stripe secret key is not set in configuration');
                 return response()->json(['error' => 'Payment configuration error. Please contact support.'], 500);
             }
             
@@ -286,13 +288,13 @@ class PaymentController extends Controller
                 'code' => $e->getCode(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => env('APP_DEBUG', false) ? $e->getTraceAsString() : null,
+                'trace' => config('app.debug', false) ? $e->getTraceAsString() : null,
                 'session_id' => $sessionId ?? null,
                 'user_id' => $userId ?? null
             ]);
             return response()->json([
                 'error' => 'An error occurred while processing payment success.',
-                'debug_info' => env('APP_DEBUG', false) ? $e->getMessage() : null
+                'debug_info' => config('app.debug', false) ? $e->getMessage() : null
             ], 500);
         }
     }
