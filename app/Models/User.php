@@ -85,4 +85,15 @@ class User extends Authenticatable
     {
         return $this->hasOne(ComplianceUser::class);
     }
+    
+    /**
+     * Check if the user has a specific role
+     *
+     * @param string $roleName
+     * @return bool
+     */
+    public function hasRole(string $roleName): bool
+    {
+        return $this->role && $this->role->name === $roleName;
+    }
 }

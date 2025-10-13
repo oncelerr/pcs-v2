@@ -83,7 +83,9 @@ const Dashboard = () => {
   const { user, hasRole } = useAuth();
   const [showPaymentSuccessModal, setShowPaymentSuccessModal] = useState(false);
   const [showPaymentErrorModal, setShowPaymentErrorModal] = useState(false);
+  const [showPaymentCancelModal, setShowPaymentCancelModal] = useState(false);
   const [paymentErrorMessage, setPaymentErrorMessage] = useState('');
+  const [paymentCancelMessage, setPaymentCancelMessage] = useState('');
 
   // Check if user is admin
   const isAdmin = hasRole('Admin');
@@ -112,7 +114,8 @@ const Dashboard = () => {
     try {
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-      const response = await fetch('/api/user-information', {
+      // Request all users by setting a high per_page value
+      const response = await fetch('/api/user-information?per_page=1000', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -127,9 +130,11 @@ const Dashboard = () => {
       }
 
       const allUsers = await response.json();
+      console.log('User information response:', allUsers);
 
       // Fetch compliance users
-      const complianceResponse = await fetch('/api/compliance-user', {
+      // Request all compliance users by setting a high per_page value
+      const complianceResponse = await fetch('/api/compliance-user?per_page=1000', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -144,6 +149,7 @@ const Dashboard = () => {
       }
 
       const complianceData = await complianceResponse.json();
+      console.log('Compliance users response:', complianceData);
       const complianceUsers = complianceData.data || [];
 
       // Calculate statistics
@@ -151,6 +157,16 @@ const Dashboard = () => {
       const completedUsers = complianceUsers.filter((user: { process_status: string }) => user.process_status === 'done').length;
       const ongoingUsers = complianceUsers.filter((user: { process_status: string }) => user.process_status !== 'done').length;
       const unprocessedUsers = totalUsers - complianceUsers.length;
+      
+      console.log('User statistics calculated:', {
+        total: totalUsers,
+        completed: completedUsers,
+        ongoing: ongoingUsers,
+        unprocessed: unprocessedUsers,
+        allUsersCount: allUsers.data?.length,
+        complianceUsersCount: complianceUsers.length,
+        pagination: allUsers.pagination
+      });
 
       setUserStats({
         completed: completedUsers,
@@ -201,15 +217,50 @@ const Dashboard = () => {
     fetchProgress();
   }, []);
 
-  // Handle payment success
+  // Handle payment success and cancellation
   useEffect(() => {
-    const handlePaymentSuccess = async () => {
+    const handlePaymentStatus = async () => {
       const urlParams = new URLSearchParams(location.search);
       const status = urlParams.get('status');
       const sessionId = urlParams.get('session_id');
 
-      console.log('Payment success check:', { status, sessionId, userId: user?.id });
+      console.log('Payment status check:', { status, sessionId, userId: user?.id });
 
+      // Handle payment cancellation
+      if (status === 'canceled' || status === 'cancelled') {
+        // Clean up URL parameters
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+        
+        // Show cancellation modal with appropriate message
+        setPaymentCancelMessage('Your payment was canceled. If you experienced any issues, please try again or contact support.');
+        setShowPaymentCancelModal(true);
+        
+        // Auto-hide cancel modal after 5 seconds
+        setTimeout(() => {
+          setShowPaymentCancelModal(false);
+        }, 5000);
+        return;
+      }
+      
+      // Handle payment failure
+      if (status === 'failed') {
+        // Clean up URL parameters
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+        
+        // Show error modal
+        setPaymentErrorMessage('Your payment could not be processed. Please try again or contact support.');
+        setShowPaymentErrorModal(true);
+        
+        // Auto-hide error modal after 5 seconds
+        setTimeout(() => {
+          setShowPaymentErrorModal(false);
+        }, 5000);
+        return;
+      }
+      
+      // Handle payment success
       if (status === 'success' && sessionId && user?.id) {
         try {
           console.log('Processing payment success:', { sessionId, userId: user.id });
@@ -277,7 +328,7 @@ const Dashboard = () => {
       }
     };
 
-    handlePaymentSuccess();
+    handlePaymentStatus();
   }, [location.search, user?.id, CACHE_KEY]);
 
   // State for formation documents
@@ -884,6 +935,15 @@ const Dashboard = () => {
         type="error"
         onConfirm={() => setShowPaymentErrorModal(false)}
         onCancel={() => setShowPaymentErrorModal(false)}
+      />
+      <ConfirmationModal
+        isOpen={showPaymentCancelModal}
+        title="Payment Canceled"
+        message={paymentCancelMessage || 'Your payment process was canceled.'}
+        confirmText="Close"
+        type="info"
+        onConfirm={() => setShowPaymentCancelModal(false)}
+        onCancel={() => setShowPaymentCancelModal(false)}
       />
       {/* Blocking Modal for Active Profile Setup - Only show for non-admin users */}
       {hasActiveProfileSetup && !isAdmin && (

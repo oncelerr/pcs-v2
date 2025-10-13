@@ -340,7 +340,7 @@ class ComplianceUserController extends Controller
         }
         
         $validator = Validator::make($request->all(), [
-            'document_type' => 'required|string|in:state_registration,boi_filing,ein_filing,bank_registration,registration_agent_service,business_license_research,trademark_registration,dba_registration,copyright_registration,brand_strategy_consultation,business_address,mail_forwarding,meeting_room_access,phone_answering_service,virtual_receptionist',
+            'document_type' => 'required|string|in:compliance,state_registration,boi_filing,bio_filing,ein_filing,bank_registration,registration_agent_service,business_license_research,trademark_registration,dba_registration,copyright_registration,brand_strategy_consultation,business_address,mail_forwarding,meeting_room_access,phone_answering_service,virtual_receptionist',
             'document' => 'required|file|max:10240', // Max 10MB
             'naming' => 'nullable|string', // Optional title/name for the document
         ]);
@@ -392,10 +392,16 @@ class ComplianceUserController extends Controller
             
             // Map document_type to column_for format
             $columnFor = $documentType;
-            if ($documentType === 'boi_filing') {
+            
+            // Handle special cases
+            if ($documentType === 'boi_filing' || $documentType === 'bio_filing') {
                 $columnFor = 'bio_filing';
+            } elseif ($documentType === 'compliance') {
+                $columnFor = 'compliance';
             }
-            $columnFor .= '_status'; // Add _status suffix to match the column names in ComplianceUser
+            
+            // Add _status suffix to match the column names in ComplianceUser
+            $columnFor .= '_status';
             
             // Save record to client_compliance_files table
             $clientComplianceFile = ClientComplianceFile::create([
@@ -595,13 +601,25 @@ class ComplianceUserController extends Controller
      */
     private function updateUserStageItems(int $userId, array $updatedFields): void
     {
-        // Map compliance fields to stage item IDs
+        // Map compliance fields to stage item names
+        // Instead of hardcoding IDs, let's find the stage items by name
+        $stateRegistrationItem = StageItem::where('name', 'State Registration')->first();
+        $boiFilingItem = StageItem::where('name', 'BOI Filing')->first();
+        $einFilingItem = StageItem::where('name', 'EIN Filing')->first();
+        $bankRegistrationItem = StageItem::where('name', 'Bank Registration')->first();
+        $complianceItem = StageItem::where('name', 'Compliance')->first();
+        
+        // Map fields to stage item IDs (if found)
         $fieldToStageItemMap = [
-            'state_registration_status' => 3, // State Registration
-            'bio_filing_status' => 4,       // BOI Filing
-            'ein_filing_status' => 5,       // EIN Filing
-            'bank_registration_status' => 6, // Bank Registration
+            'compliance_status' => $complianceItem ? $complianceItem->id : null,
+            'state_registration_status' => $stateRegistrationItem ? $stateRegistrationItem->id : null,
+            'bio_filing_status' => $boiFilingItem ? $boiFilingItem->id : null, // Maps to BOI Filing
+            'ein_filing_status' => $einFilingItem ? $einFilingItem->id : null,
+            'bank_registration_status' => $bankRegistrationItem ? $bankRegistrationItem->id : null,
         ];
+        
+        // Filter out null values (stage items not found)
+        $fieldToStageItemMap = array_filter($fieldToStageItemMap);
         
         // Process each updated field
         foreach ($updatedFields as $field => $status) {

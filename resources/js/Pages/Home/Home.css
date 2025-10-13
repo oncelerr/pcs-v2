@@ -68,6 +68,7 @@
   letter-spacing: 0%;
   vertical-align: middle;
   transition: all 0.3s ease-in-out;
+  cursor: pointer;
 }
 
 .get-started-btn:hover {

@@ -629,7 +629,16 @@ const Compliance: React.FC = () => {
       const formData = new FormData();
       formData.append('document', file);
       formData.append('document_type', service);
-      formData.append('naming', `${service.replace('_', ' ')} Document`);
+      
+      // Create a proper display name for the document
+      let displayName = service.replace(/_/g, ' ');
+      
+      // Special case for BOI filing
+      if (service === 'boi_filing') {
+        displayName = 'BOI Filing';
+      }
+      
+      formData.append('naming', `${displayName} Document`);
       
       const response = await fetch(`/api/compliance-user/${serviceUploadModal.userId}/upload`, {
         method: 'POST',
@@ -641,11 +650,18 @@ const Compliance: React.FC = () => {
         credentials: 'same-origin'
       });
       
-      if (!response.ok) {
-        throw new Error(`Failed to upload document: ${response.statusText}`);
-      }
-      
       const result = await response.json();
+      
+      if (!response.ok) {
+        // Handle validation errors specifically
+        if (response.status === 422 && result.errors) {
+          const errorMessages = Object.values(result.errors)
+            .flat()
+            .join('\n');
+          throw new Error(`Validation failed: ${errorMessages}`);
+        }
+        throw new Error(`Failed to upload document: ${result.message || response.statusText}`);
+      }
       
       if (result.success) {
         // Close the modal

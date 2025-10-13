@@ -12,10 +12,16 @@ interface ServiceUploadModalProps {
 
 // Service options for dropdown
 const SERVICE_OPTIONS = [
+  // Business Formation stage items
+  { value: 'compliance', label: 'Compliance' },
   { value: 'state_registration', label: 'State Registration' },
-  { value: 'bio_filing', label: 'BIO Filing' },
+  { value: 'boi_filing', label: 'BOI Filing' },
+  
+  // Finalization stage items
   { value: 'ein_filing', label: 'EIN Filing' },
   { value: 'bank_registration', label: 'Bank Registration' },
+  
+  // Additional services
   { value: 'registration_agent_service', label: 'Registration Agent Service' },
   { value: 'business_license_research', label: 'Business License Research' },
   { value: 'trademark_registration', label: 'Trademark Registration' },

@@ -57,7 +57,7 @@ export const getStatusProgress = async (): Promise<{
 
   // 🔹 Compute percentage
   const setup = stages.find((s) => s.name === 'Setup')?.status;
-  const compliance = stages.find((s) => s.name === 'Compliance')?.status;
+  const compliance = stages.find((s) => s.name === 'Business Formation')?.status;
   const finalization = stages.find((s) => s.name === 'Finalization')?.status;
 
   let percentage = 0;

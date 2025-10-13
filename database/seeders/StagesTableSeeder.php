@@ -28,7 +28,7 @@ class StagesTableSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Compliance',
+                'name' => 'Business Formation',
                 'created_at' => now()->addDay(),
                 'updated_at' => now()->addDay(),
             ],
@@ -62,6 +62,12 @@ class StagesTableSeeder extends Seeder
                 'updated_at' => now()->addDays(4),
             ],
             // Compliance stage items
+            [
+                'stage_id' => $stageIds[1],
+                'name' => 'Compliance',
+                'created_at' => now()->addDays(5),
+                'updated_at' => now()->addDays(5),
+            ],
             [
                 'stage_id' => $stageIds[1],
                 'name' => 'State Registration',

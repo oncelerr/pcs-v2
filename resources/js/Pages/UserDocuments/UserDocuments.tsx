@@ -1,0 +1,519 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import './UserDocuments.css';
+import LoadingSpinner from '../../Components/LoadingSpinner/LoadingSpinner';
+import ConfirmationModal from '../../Components/ConfirmationModal/ConfirmationModal';
+import UserDetailsModal from '../../Components/UserDetailsModal';
+
+// Define interface for user document information
+interface UserDocument {
+  id: number;
+  user_id: number;
+  company_name: string;
+  document_type: string;
+  file_name: string;
+  file_path: string;
+  uploaded_at: string;
+  uploaded_by: string;
+}
+
+// Define interface for pagination data
+interface PaginationData {
+  total: number;
+  per_page: number;
+  current_page: number;
+  last_page: number;
+  from: number;
+  to: number;
+}
+
+// Define interface for user information
+interface UserInformation {
+  id: number;
+  user_id: number;
+  company_name: string;
+  first_name: string;
+  last_name: string;
+  email_address?: string;
+  contact_number?: string;
+  // Add other fields as needed
+}
+
+const UserDocuments: React.FC = () => {
+  const { user, hasRole } = useAuth();
+  const navigate = useNavigate();
+  const isAdmin = hasRole('Admin');
+
+  const [documents, setDocuments] = useState<UserDocument[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Modal state
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'confirm' as 'confirm' | 'success' | 'error' | 'info',
+    onConfirm: () => { },
+    onCancel: () => { }
+  });
+
+  // User details modal state
+  const [userDetailsModal, setUserDetailsModal] = useState({
+    isOpen: false,
+    userData: null as UserInformation | null
+  });
+
+  // Document viewer modal state
+  const [documentViewerModal, setDocumentViewerModal] = useState({
+    isOpen: false,
+    documentUrl: '',
+    documentName: ''
+  });
+
+  // Pagination state
+  const [pagination, setPagination] = useState<PaginationData>({
+    total: 0,
+    per_page: 10,
+    current_page: 1,
+    last_page: 1,
+    from: 0,
+    to: 0
+  });
+
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterDocumentType, setFilterDocumentType] = useState<string>('');
+
+  // Helper function to create modal state objects with all required properties
+  const createModalState = ({
+    isOpen = false,
+    title = '',
+    message = '',
+    type = 'info' as 'confirm' | 'success' | 'error' | 'info',
+    onConfirm = () => {},
+    onCancel = () => {}
+  }) => ({
+    isOpen,
+    title,
+    message,
+    type,
+    onConfirm,
+    onCancel
+  });
+
+  // Fetch user documents
+  const fetchUserDocuments = useCallback(async (page = 1) => {
+    if (!isAdmin) {
+      navigate('/dashboard');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', page.toString());
+      queryParams.append('per_page', pagination.per_page.toString());
+      
+      if (searchTerm) {
+        queryParams.append('search', searchTerm);
+      }
+      
+      if (filterDocumentType) {
+        queryParams.append('document_type', filterDocumentType);
+      }
+
+      // Get the auth token from localStorage
+      const token = localStorage.getItem('auth_token');
+      
+      const response = await fetch(`/api/user-documents?${queryParams.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        // Try to get detailed error information
+        try {
+          const errorData = await response.json();
+          throw new Error(errorData.message || errorData.error || `Failed to fetch user documents: ${response.status}`);
+        } catch (jsonError) {
+          throw new Error(`Failed to fetch user documents: ${response.status}`);
+        }
+      }
+
+      const data = await response.json();
+      setDocuments(data.data);
+      setPagination({
+        total: data.total,
+        per_page: data.per_page,
+        current_page: data.current_page,
+        last_page: data.last_page,
+        from: data.from,
+        to: data.to
+      });
+    } catch (error: any) {
+      console.error('Error fetching user documents:', error);
+      setError(error.message || 'Failed to load user documents. Please try again later.');
+      
+      // If unauthorized, check token and redirect to login if needed
+      if (error.message?.includes('401') || error.message?.includes('Unauthenticated')) {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.error('No auth token found, redirecting to login');
+          navigate('/login');
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [isAdmin, navigate, pagination.per_page]);
+
+  // Check authentication status
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      console.error('No auth token found, redirecting to login');
+      navigate('/login');
+      return;
+    }
+    
+    if (!user) {
+      console.error('No user data found, may need to refresh auth state');
+      // You might want to trigger a refresh of the auth state here
+    }
+  }, [navigate, user]);
+  
+  // Initial data fetch
+  useEffect(() => {
+    if (isAdmin) {
+      fetchUserDocuments();
+    } else {
+      navigate('/dashboard');
+    }
+  }, [isAdmin, navigate]);
+
+  // Handle search and filter changes
+  useEffect(() => {
+    if (isAdmin) {
+      const timer = setTimeout(() => {
+        fetchUserDocuments(1);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [searchTerm, filterDocumentType, fetchUserDocuments, isAdmin]);
+
+  // Handle pagination change
+  const handlePageChange = (page: number) => {
+    fetchUserDocuments(page);
+  };
+
+  // View user details
+  const handleViewUserDetails = (userId: number) => {
+    const userToView = documents.find(doc => doc.user_id === userId);
+    
+    if (userToView) {
+      setUserDetailsModal({
+        isOpen: true,
+        userData: {
+          id: userToView.id,
+          user_id: userToView.user_id,
+          company_name: userToView.company_name,
+          first_name: userToView.uploaded_by.split(' ')[0] || '',
+          last_name: userToView.uploaded_by.split(' ')[1] || '',
+          email_address: ''
+        }
+      });
+    }
+  };
+
+  // View document
+  const handleViewDocument = (document: UserDocument) => {
+    setDocumentViewerModal({
+      isOpen: true,
+      documentUrl: document.file_path,
+      documentName: document.file_name
+    });
+  };
+
+  // Close document viewer
+  const closeDocumentViewer = () => {
+    setDocumentViewerModal({
+      isOpen: false,
+      documentUrl: '',
+      documentName: ''
+    });
+  };
+
+  // Document type options - matching column_for values in ClientComplianceFile model
+  const documentTypeOptions = [
+    { value: '', label: 'All Document Types' },
+    { value: 'state_registration', label: 'State Registration' },
+    { value: 'boi_filing', label: 'BOI Filing' },
+    { value: 'ein_filing', label: 'EIN Filing' },
+    { value: 'bank_registration', label: 'Bank Registration' },
+    { value: 'annual_franchise_tax', label: 'Annual Franchise Tax' },
+    { value: 'annual_irs_tax', label: 'Annual IRS Tax' },
+    { value: 'passport', label: 'Passport' },
+    { value: 'proof_address', label: 'Proof of Address' },
+    { value: 'signature', label: 'Signature' }
+  ];
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Render pagination controls
+  const renderPagination = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, pagination.current_page - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(pagination.last_page, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    // Previous button
+    pages.push(
+      <button 
+        key="prev" 
+        className={`pagination-button ${pagination.current_page === 1 ? 'disabled' : ''}`}
+        onClick={() => pagination.current_page > 1 && handlePageChange(pagination.current_page - 1)}
+        disabled={pagination.current_page === 1}
+      >
+        &laquo;
+      </button>
+    );
+    
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button 
+          key={i} 
+          className={`pagination-button ${pagination.current_page === i ? 'active' : ''}`}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </button>
+      );
+    }
+    
+    // Next button
+    pages.push(
+      <button 
+        key="next" 
+        className={`pagination-button ${pagination.current_page === pagination.last_page ? 'disabled' : ''}`}
+        onClick={() => pagination.current_page < pagination.last_page && handlePageChange(pagination.current_page + 1)}
+        disabled={pagination.current_page === pagination.last_page}
+      >
+        &raquo;
+      </button>
+    );
+    
+    return (
+      <div className="pagination-container">
+        <div className="pagination-info">
+          Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total} entries
+        </div>
+        <div className="pagination-controls">
+          {pages}
+        </div>
+      </div>
+    );
+  };
+
+  // Document Viewer Modal
+  const DocumentViewerModal = () => {
+    if (!documentViewerModal.isOpen) return null;
+
+    const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(documentViewerModal.documentName);
+    const isPdf = /\.pdf$/i.test(documentViewerModal.documentName);
+
+    return (
+      <div className="modal-overlay">
+        <div className="document-viewer-modal">
+          <div className="document-viewer-header">
+            <h3>{documentViewerModal.documentName}</h3>
+            <button className="close-button" onClick={closeDocumentViewer}>&times;</button>
+          </div>
+          <div className="document-viewer-content">
+            {isImage && (
+              <img 
+                src={documentViewerModal.documentUrl} 
+                alt={documentViewerModal.documentName} 
+                className="document-image"
+              />
+            )}
+            {isPdf && (
+              <iframe 
+                src={`${documentViewerModal.documentUrl}#toolbar=0`} 
+                title={documentViewerModal.documentName}
+                className="document-pdf"
+              />
+            )}
+            {!isImage && !isPdf && (
+              <div className="document-download">
+                <p>This document type cannot be previewed.</p>
+                <a 
+                  href={documentViewerModal.documentUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="download-button"
+                >
+                  Download Document
+                </a>
+              </div>
+            )}
+          </div>
+          <div className="document-viewer-footer">
+            <a 
+              href={documentViewerModal.documentUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="download-button"
+            >
+              Download
+            </a>
+            <button className="close-button" onClick={closeDocumentViewer}>Close</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="user-documents-container">
+      <h1 className="page-title">User Documents</h1>
+      
+      {/* Search and filter controls */}
+      <div className="controls-container">
+        <div className="search-container">
+          <input
+            type="text"
+            placeholder="Search by company name or user..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+        </div>
+        
+        <div className="filter-container">
+          <select
+            value={filterDocumentType}
+            onChange={(e) => setFilterDocumentType(e.target.value)}
+            className="filter-select"
+          >
+            {documentTypeOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      
+      {/* Main content */}
+      <div className="content-container">
+        {loading ? (
+          <div className="loading-container">
+            <LoadingSpinner size="large" color="#126654" />
+          </div>
+        ) : error ? (
+          <div className="error-message">{error}</div>
+        ) : documents.length === 0 ? (
+          <div className="no-data-message">No documents found.</div>
+        ) : (
+          <div className="table-container">
+            <table className="documents-table">
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Document Type</th>
+                  <th>File Name</th>
+                  <th>Uploaded By</th>
+                  <th>Upload Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {documents.map((document) => (
+                  <tr key={document.id}>
+                    <td>{document.company_name}</td>
+                    <td>
+                      <span className="document-type-badge">
+                        {document.document_type.replace(/_/g, ' ')}
+                      </span>
+                    </td>
+                    <td>{document.file_name}</td>
+                    <td>{document.uploaded_by}</td>
+                    <td>{formatDate(document.uploaded_at)}</td>
+                    <td>
+                      <div className="action-buttons">
+                        <button 
+                          className="view-button"
+                          onClick={() => handleViewDocument(document)}
+                        >
+                          View Document
+                        </button>
+                        <button 
+                          className="details-button"
+                          onClick={() => handleViewUserDetails(document.user_id)}
+                        >
+                          User Details
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+            {/* Pagination */}
+            {pagination.last_page > 1 && renderPagination()}
+          </div>
+        )}
+      </div>
+      
+      {/* Modals */}
+      <ConfirmationModal
+        isOpen={modalState.isOpen}
+        title={modalState.title}
+        message={modalState.message}
+        type={modalState.type}
+        onConfirm={modalState.onConfirm}
+        onCancel={modalState.onCancel}
+      />
+      
+      {userDetailsModal.isOpen && userDetailsModal.userData && (
+        <UserDetailsModal
+          isOpen={userDetailsModal.isOpen}
+          onClose={() => setUserDetailsModal({ isOpen: false, userData: null })}
+          userData={userDetailsModal.userData}
+        />
+      )}
+      
+      {/* Document Viewer Modal */}
+      <DocumentViewerModal />
+    </div>
+  );
+};
+
+export default UserDocuments;

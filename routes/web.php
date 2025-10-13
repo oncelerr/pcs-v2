@@ -10,6 +10,7 @@ use App\Http\Controllers\DocumentAccessController;
 use App\Http\Controllers\ComplianceUserController;
 use App\Http\Controllers\ClientComplianceFileController;
 use App\Http\Controllers\UserStageItemController;
+use App\Http\Controllers\UserDocumentController;
 
 // Secure document access with signed URLs
 Route::get('/document/view', [DocumentAccessController::class, 'viewDocument'])
@@ -44,6 +45,11 @@ Route::group(['prefix' => 'api'], function () {
             Route::patch('/{id}/complete', [UserStageItemController::class, 'markAsCompleted']);
             Route::patch('/{id}/status', [UserStageItemController::class, 'updateStatus']);
         });
+        
+        // User Documents Routes
+        Route::get('/user-documents', [UserDocumentController::class, 'index']);
+        Route::get('/user-documents/{id}', [UserDocumentController::class, 'show']);
+        Route::get('/user/{userId}/documents', [UserDocumentController::class, 'getUserDocuments']);
     });
 
     // Contact Form
@@ -111,6 +117,7 @@ Route::middleware('web')->group(function () {
     Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');
 });
+
 
 // SPA catch-all route - must be the last route
 Route::get('/{path?}', function () {

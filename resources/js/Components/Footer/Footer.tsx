@@ -12,8 +12,7 @@ export default function Footer() {
             <div className="pcs">
               <img className="abt-img" src="/assets/logo-wht.png" alt="" />
               <p className="abt-pcs">Premium Corporate Solutions is not a law firm and does not provide legal advice. Please refer to our Terms & Conditions and Privacy & Data Protection for more information.</p>
-              <p className="email">admin@premiumcorpsolutions.com</p>
-              <p className="phone-num">+1 3204297403</p>
+              <p className="email">support@premiumcorpsolutions.com</p>
               <p className="address">30 North Gould Street, Sheridan, WY, United States, Wyoming</p>
               <button className="get-in-touch" onClick={() => navigate('/contact')}>Get in touch</button>
               <div className="socials">

@@ -126,7 +126,7 @@ class PaymentController extends Controller
                 ]],
                 'mode' => 'payment',
                 'success_url' => $baseUrl . '/dashboard?status=success&session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => $baseUrl . '/payment-cancel',
+                'cancel_url' => $baseUrl . '/dashboard?status=failed',
             ]);
 
             return response()->json([
@@ -204,7 +204,7 @@ class PaymentController extends Controller
             ComplianceUser::updateOrCreate(
                 ['user_id' => $userId],
                 [
-                    'compliance_status' => ComplianceUser::STATUS_DONE,
+                    'compliance_status' => ComplianceUser::STATUS_PENDING,
                     'state_registration_status' => ComplianceUser::STATUS_PENDING,
                     'bio_filing_status' => ComplianceUser::STATUS_PENDING,
                     'ein_filing_status' => ComplianceUser::STATUS_PENDING,

@@ -25,6 +25,7 @@ const Dashboard = lazy(() => import('./Pages/Dashboard/Dashboard'));
 const MyProfile = lazy(() => import('./Pages/MyProfile/MyProfile'));
 const AllUsers = lazy(() => import('./Pages/AllUsers/AllUsers'))
 const Compliance = lazy(() => import('./Pages/Compliance/Compliance'))
+const UserDocuments = lazy(() => import('./Pages/UserDocuments/UserDocuments'))
 const AccountSetting = lazy(() => import('./Pages/AccountSetting/AccountSetting'));
 
 const PageWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -70,7 +71,8 @@ const AppContent: React.FC = () => {
       '/compliance', 
       '/compliance-success', 
       '/compliance-uploads', 
-      '/blog-management'
+      '/blog-management',
+      '/user-documents'
     ];
     return privateRoutes.some(route => pathname.startsWith(route));
   };
@@ -108,6 +110,7 @@ const AppContent: React.FC = () => {
           <Route path="/all-users" element={<DashboardPage title="Dashboard"><AllUsers /></DashboardPage>} />
           <Route path="/pending" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
           <Route path="/compliance" element={<DashboardPage title="Dashboard"><Compliance /></DashboardPage>} />
+          <Route path="/user-documents" element={<DashboardPage title="User Documents"><UserDocuments /></DashboardPage>} />
           <Route path="/compliance-success" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
           <Route path="/compliance-uploads" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
           <Route path="/blog-management" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
