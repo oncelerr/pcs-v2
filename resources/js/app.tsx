@@ -8,6 +8,7 @@ import Navbar from './Components/Navbar/Navbar';
 import Footer from './Components/Footer/Footer';
 import PrivateRoute from './Components/PrivateRoute/PrivateRoute';
 import DashboardLayout from './layouts/DashboardLayout';
+import LoadingSpinner from './Components/LoadingSpinner/LoadingSpinner';
 import './layouts/DashboardLayout.css';
 
 const Home = lazy(() => import('./Pages/Home/Home'));
@@ -30,7 +31,7 @@ const AccountSetting = lazy(() => import('./Pages/AccountSetting/AccountSetting'
 
 const PageWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <PageTitle title={title}>
-    <Suspense>
+    <Suspense fallback={<div className="loading-container"><LoadingSpinner size="medium" fullPage={true} /></div>}>
       {children}
     </Suspense>
   </PageTitle>
@@ -38,7 +39,7 @@ const PageWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({ t
 
 const DashboardPage: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <PageTitle title={title}>
-    <Suspense>
+    <Suspense fallback={<div className="loading-container"><LoadingSpinner size="medium" fullPage={true} /></div>}>
       <div className="dashboard-page">
         {children}
       </div>

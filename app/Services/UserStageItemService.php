@@ -20,6 +20,7 @@ class UserStageItemService
             ['stage_id' => null, 'stage_item_id' => 4, 'status' => UserStageItem::STATUS_PENDING],
             ['stage_id' => null, 'stage_item_id' => 5, 'status' => UserStageItem::STATUS_PENDING],
             ['stage_id' => null, 'stage_item_id' => 6, 'status' => UserStageItem::STATUS_PENDING],
+            ['stage_id' => null, 'stage_item_id' => 7, 'status' => UserStageItem::STATUS_PENDING],
         ];
 
         foreach ($defaults as $row) {

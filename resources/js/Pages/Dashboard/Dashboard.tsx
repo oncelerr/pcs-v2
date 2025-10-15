@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Dashboard.css';
+import './pagination.css';
 import CompleteProfileModal from './Components/CompleteProfileModal/CompleteProfileModal';
 import CompletePaymentModal from './Components/CompletePaymentModal/CompletePaymentModal';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
 import { getStatusProgress } from './Components/StatusProgress';
 import ConfirmationModal from '../../Components/ConfirmationModal/ConfirmationModal';
+import LoadingSpinner from '../../Components/LoadingSpinner/LoadingSpinner';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -106,6 +108,44 @@ const Dashboard = () => {
   const CACHE_KEY = 'statusProgress';
   const CACHE_EXPIRY = 1000 * 60 * 60; // 1 hour
 
+  // Function to fetch all pages of data from a paginated API
+  const fetchAllPages = async (url: string, csrfToken: string | null) => {
+    let currentPage = 1;
+    let hasMorePages = true;
+    let allData: any[] = [];
+    
+    while (hasMorePages) {
+      const pageUrl = `${url}?page=${currentPage}&per_page=100`; // Use maximum allowed per_page
+      const response = await fetch(pageUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data from ${pageUrl}`);
+      }
+      
+      const result = await response.json();
+      const data = result.data || [];
+      allData = [...allData, ...data];
+      
+      // Check if there are more pages
+      const pagination = result.pagination;
+      if (pagination && pagination.current_page < pagination.last_page) {
+        currentPage++;
+      } else {
+        hasMorePages = false;
+      }
+    }
+    
+    return allData;
+  };
+
   // Function to fetch user statistics for admin dashboard
   const fetchUserStats = async () => {
     if (!isAdmin) return;
@@ -114,58 +154,62 @@ const Dashboard = () => {
     try {
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-      // Request all users by setting a high per_page value
-      const response = await fetch('/api/user-information?per_page=1000', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        credentials: 'same-origin'
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user information');
-      }
-
-      const allUsers = await response.json();
-      console.log('User information response:', allUsers);
-
-      // Fetch compliance users
-      // Request all compliance users by setting a high per_page value
-      const complianceResponse = await fetch('/api/compliance-user?per_page=1000', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        credentials: 'same-origin'
-      });
-
-      if (!complianceResponse.ok) {
-        throw new Error('Failed to fetch compliance users');
-      }
-
-      const complianceData = await complianceResponse.json();
-      console.log('Compliance users response:', complianceData);
-      const complianceUsers = complianceData.data || [];
-
-      // Calculate statistics
-      const totalUsers = allUsers.data ? allUsers.data.length : 0;
-      const completedUsers = complianceUsers.filter((user: { process_status: string }) => user.process_status === 'done').length;
-      const ongoingUsers = complianceUsers.filter((user: { process_status: string }) => user.process_status !== 'done').length;
-      const unprocessedUsers = totalUsers - complianceUsers.length;
+      // Fetch all users using pagination
+      const allUsersData = await fetchAllPages('/api/user-information', csrfToken || null);
+      console.log('All users fetched:', allUsersData.length);
       
+      // Fetch all compliance users using pagination
+      const complianceUsers = await fetchAllPages('/api/compliance-user', csrfToken || null);
+      console.log('All compliance users fetched:', complianceUsers.length);
+
+      /**
+       * Calculate statistics based on ComplianceUser model status fields
+       * 
+       * Categories hierarchy (in order of precedence):
+       * 1. Unprocessed: Users with compliance_status = 'pending'
+       * 2. On-Going: Users with process_status = 'pending' (and NOT already counted as Unprocessed)
+       * 3. Completed: Users with process_status = 'done'
+       * 
+       * These categories match the constants defined in the ComplianceUser model:
+       * - STATUS_DONE = 'done'
+       * - STATUS_PENDING = 'pending'
+       * - STATUS_IN_PROGRESS = 'in progress' (not currently used in this categorization)
+       */
+      const totalUsers = allUsersData.length;
+      
+      // First identify unprocessed users (highest precedence)
+      const unprocessedUserIds = new Set(
+        complianceUsers
+          .filter((user: { compliance_status: string }) => user.compliance_status === 'pending')
+          .map((user: { id: number }) => user.id)
+      );
+      const unprocessedUsers = unprocessedUserIds.size;
+      
+      // On-Going: users with process_status = 'pending' but NOT already counted as unprocessed
+      const ongoingUsers = complianceUsers.filter((user: { process_status: string; id: number }) => 
+        user.process_status === 'pending' && !unprocessedUserIds.has(user.id)
+      ).length;
+      
+      // Completed: users with process_status = 'done'
+      const completedUsers = complianceUsers.filter((user: { process_status: string }) => 
+        user.process_status === 'done'
+      ).length;
+      
+      // Log detailed categorization information for debugging
       console.log('User statistics calculated:', {
         total: totalUsers,
         completed: completedUsers,
         ongoing: ongoingUsers,
         unprocessed: unprocessedUsers,
-        allUsersCount: allUsers.data?.length,
+        allUsersCount: allUsersData.length,
         complianceUsersCount: complianceUsers.length,
-        pagination: allUsers.pagination
+        unprocessedUserIds: Array.from(unprocessedUserIds),
+        categoryCounts: {
+          unprocessed: unprocessedUsers,
+          ongoing: ongoingUsers,
+          completed: completedUsers,
+          total: unprocessedUsers + ongoingUsers + completedUsers
+        }
       });
 
       setUserStats({
@@ -183,12 +227,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     // Debug isAdmin flag
-    console.log('isAdmin value:', isAdmin);
-    console.log('user object:', user);
+    // console.log('isAdmin value:', isAdmin);
+    // console.log('user object:', user);
 
     // Fetch user stats if admin
     if (isAdmin) {
-      console.log('Fetching user stats for admin');
+      // console.log('Fetching user stats for admin');
       fetchUserStats();
     }
   }, [isAdmin, user, hasRole]);
@@ -224,7 +268,7 @@ const Dashboard = () => {
       const status = urlParams.get('status');
       const sessionId = urlParams.get('session_id');
 
-      console.log('Payment status check:', { status, sessionId, userId: user?.id });
+      // console.log('Payment status check:', { status, sessionId, userId: user?.id });
 
       // Handle payment cancellation
       if (status === 'canceled' || status === 'cancelled') {
@@ -603,7 +647,7 @@ const Dashboard = () => {
       const checkResult = await checkResponse.json();
       const complianceUsers = checkResult.data || [];
 
-      console.log('Compliance users found:', complianceUsers);
+      // console.log('Compliance users found:', complianceUsers);
 
       // If no compliance user exists, set empty taxes
       if (!complianceUsers.length) {
@@ -633,7 +677,7 @@ const Dashboard = () => {
       const result = await response.json();
       const complianceUser = result.data;
 
-      console.log('Compliance user details:', complianceUser);
+      // console.log('Compliance user details:', complianceUser);
 
       // Format tax dates for display
       const taxItems = [];
@@ -678,7 +722,7 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    console.log(user?.id)
+    // console.log(user?.id)
     if (user?.id) {
       fetchTaxInformation();
     }
@@ -867,17 +911,21 @@ const Dashboard = () => {
     console.log('View details:', item);
   };
 
-  const handleLogout = () => {
-    console.log('Logging out...');
-  };
-
   // Create a pie chart data from user stats
   const createPieChartData = () => {
+    // Check if all values are zero
+    const allZero = userStats.completed === 0 && userStats.ongoing === 0 && userStats.unprocessed === 0;
+    
+    // If all values are zero, provide a placeholder value for visualization
+    const data = allZero 
+      ? [1, 1, 1] // Equal placeholder values when all are zero
+      : [userStats.completed, userStats.ongoing, userStats.unprocessed];
+    
     return {
-      labels: ['Completed', 'Ongoing', 'Unprocessed'],
+      labels: ['Completed', 'On-Going', 'Unprocessed'],
       datasets: [
         {
-          data: [userStats.completed, userStats.ongoing, userStats.unprocessed],
+          data: data,
           backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
           borderColor: ['#388E3C', '#FFB300', '#D32F2F'],
           borderWidth: 1,
@@ -890,14 +938,22 @@ const Dashboard = () => {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    cutout: '65%', // Make the chart more like a donut for modern look
     plugins: {
       legend: {
-        position: 'bottom' as const,
+        position: 'right' as const,
+        align: 'center' as const,
         labels: {
+          boxWidth: 12,
+          boxHeight: 12,
+          padding: 15,
           font: {
             family: '"DM Sans", sans-serif',
-            size: 14
-          }
+            size: 12,
+            weight: 'normal' as const
+          },
+          usePointStyle: true,
+          pointStyle: 'circle'
         }
       },
       tooltip: {
@@ -906,6 +962,14 @@ const Dashboard = () => {
             const label = context.label || '';
             const value = context.raw || 0;
             const total = userStats.total;
+            
+            // Check if we're using placeholder data (all zeros)
+            const allZero = userStats.completed === 0 && userStats.ongoing === 0 && userStats.unprocessed === 0;
+            
+            if (allZero) {
+              return `${label}: 0 (0%)`;
+            }
+            
             const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
             return `${label}: ${value} (${percentage}%)`;
           }
@@ -968,29 +1032,50 @@ const Dashboard = () => {
                 // Admin view - Show pie chart
                 <div className="admin-stats">
                   {loadingStats ? (
-                    <div className="loading-stats">Loading user statistics...</div>
+                    <div className="loading-stats">
+                      <LoadingSpinner size="small" color="#126654" />
+                    </div>
                   ) : (
                     <div className="stats-container">
-                      <div className="pie-chart-container" style={{ height: '300px', width: '100%' }}>
-                        <Pie data={createPieChartData()} options={chartOptions} />
-                      </div>
-                      <div className="stats-summary">
-                        <div className="stats-item">
-                          <div className="stats-label">Total Users:</div>
-                          <div className="stats-value">{userStats.total}</div>
+                      <div className="pie-chart-container" style={{width: '100%', position: 'relative'}}>
+                        <div style={{ position: 'relative', width: '80%', margin: '0 auto' }}>
+                          <Pie data={createPieChartData()} options={chartOptions} />
                         </div>
-                        <div className="stats-item">
-                          <div className="stats-label">Completed:</div>
-                          <div className="stats-value">{userStats.completed}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '20px', width: '80%', margin: '20px auto 0' }}>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#4CAF50' }}>{userStats.completed}</div>
+                            <div style={{ fontSize: '12px', color: '#666' }}>Completed</div>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#FFC107' }}>{userStats.ongoing}</div>
+                            <div style={{ fontSize: '12px', color: '#666' }}>On-Going</div>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#F44336' }}>{userStats.unprocessed}</div>
+                            <div style={{ fontSize: '12px', color: '#666' }}>Unprocessed</div>
+                          </div>
                         </div>
-                        <div className="stats-item">
-                          <div className="stats-label">Ongoing:</div>
-                          <div className="stats-value">{userStats.ongoing}</div>
-                        </div>
-                        <div className="stats-item">
-                          <div className="stats-label">Unprocessed:</div>
-                          <div className="stats-value">{userStats.unprocessed}</div>
-                        </div>
+                        {userStats.total === 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            width: '80%',
+                            height: '80%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexDirection: 'column',
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            borderRadius: '8px',
+                            zIndex: 5,
+                            padding: '20px'
+                          }}>
+                            <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#126654', marginBottom: '8px' }}>No Data Available</div>
+                            <div style={{ fontSize: '14px', color: '#666', textAlign: 'center' }}>There are currently no users in the system.</div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1052,7 +1137,7 @@ const Dashboard = () => {
             <div style={{ padding: '24px 0' }}>
               {loadingDocuments ? (
                 <div className="loading-documents">
-                  <p style={{ textAlign: 'center', padding: '20px' }}>Loading documents...</p>
+                  <LoadingSpinner size="small" color="#126654" />
                 </div>
               ) : formationDocuments.length > 0 ? (
                 <>
@@ -1074,7 +1159,7 @@ const Dashboard = () => {
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
                     >
-                      Previous
+                      ← Previous
                     </button>
                     <span className="pagination-info">
                       Page {currentPage} of {getTotalPages()}
@@ -1084,7 +1169,7 @@ const Dashboard = () => {
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage >= getTotalPages()}
                     >
-                      Next
+                      Next →
                     </button>
                   </div>
                 </>
@@ -1114,7 +1199,7 @@ const Dashboard = () => {
             <div style={{ padding: '24px 0' }}>
               {loadingAdditionalServices ? (
                 <div className="loading-documents">
-                  <p style={{ textAlign: 'center', padding: '20px' }}>Loading services...</p>
+                  <LoadingSpinner size="small" color="#126654" />
                 </div>
               ) : getCurrentPageServices().length > 0 ? (
                 <>
@@ -1136,7 +1221,7 @@ const Dashboard = () => {
                       onClick={() => handleServicesPageChange(additionalServicesPage - 1)}
                       disabled={additionalServicesPage === 1}
                     >
-                      Previous
+                      ← Previous
                     </button>
                     <span className="pagination-info">
                       Page {additionalServicesPage} of {getAdditionalServicesTotalPages()}
@@ -1146,7 +1231,7 @@ const Dashboard = () => {
                       onClick={() => handleServicesPageChange(additionalServicesPage + 1)}
                       disabled={additionalServicesPage >= getAdditionalServicesTotalPages()}
                     >
-                      Next
+                      Next →
                     </button>
                   </div>
                 </>
@@ -1171,7 +1256,7 @@ const Dashboard = () => {
             <div className="card__body" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 22 }}>
               {loadingTaxes ? (
                 <div className="loading-taxes">
-                  <p style={{ textAlign: 'center', padding: '10px' }}>Loading tax information...</p>
+                  <LoadingSpinner size="small" color="#126654" />
                 </div>
               ) : taxes.length > 0 ? (
                 taxes.map((tax) => (
@@ -1201,7 +1286,7 @@ const Dashboard = () => {
             <div className="card__body" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 22 }}>
               {loadingUserDocuments ? (
                 <div className="loading-documents">
-                  <p style={{ textAlign: 'center', padding: '10px' }}>Loading documents...</p>
+                  <LoadingSpinner size="small" color="#126654" />
                 </div>
               ) : userDocuments.length > 0 ? (
                 userDocuments.map((doc) => (

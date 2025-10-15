@@ -40,7 +40,7 @@ interface UserInformation {
   // Add other fields as needed
 }
 
-const UserDocuments: React.FC = () => {
+const UserDocuments = () => {
   const { user, hasRole } = useAuth();
   const navigate = useNavigate();
   const isAdmin = hasRole('Admin');
@@ -237,13 +237,184 @@ const UserDocuments: React.FC = () => {
     }
   };
 
+  // Generate secure document URL
+  const getSecureDocumentUrl = async (doc: UserDocument): Promise<string> => {
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      const token = localStorage.getItem('auth_token');
+      
+      // Map document types to the expected backend values
+      // Backend only accepts: 'passport', 'proof_address', 'signature'
+      let documentType = 'passport'; // Default to passport
+      
+      // Check file extension to determine document type
+      const fileName = doc.file_name.toLowerCase();
+      const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileName);
+      const isPdf = /\.pdf$/i.test(fileName);
+      
+      if (!isImage && !isPdf) {
+        throw new Error('Only image files and PDFs are supported');
+      }
+      
+      // Map document types based on the document_type field
+      // This is a simplified mapping - adjust based on your actual document types
+      if (doc.document_type.toLowerCase().includes('passport')) {
+        documentType = 'passport';
+      } else if (doc.document_type.toLowerCase().includes('address') || 
+                doc.document_type.toLowerCase().includes('proof')) {
+        documentType = 'proof_address';
+      } else if (doc.document_type.toLowerCase().includes('signature')) {
+        documentType = 'signature';
+      }
+      
+      // Use the document-access-token endpoint which is designed for this purpose
+      const response = await fetch('/api/document-access-token', {
+        method: 'POST', // This endpoint expects POST, not GET
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: doc.user_id,
+          documentType: documentType
+        }),
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        // Try to get detailed error information
+        const errorData = await response.json();
+        if (errorData.errors && errorData.errors.documentType) {
+          throw new Error('Invalid document type: ' + errorData.errors.documentType[0]);
+        } else {
+          throw new Error('Failed to get document URL: ' + (errorData.message || 'Unknown error'));
+        }
+      }
+
+      const data = await response.json();
+      return data.downloadUrl; // The endpoint returns downloadUrl, not url
+    } catch (error: any) {
+      console.error('Error getting document URL:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to access document. Please try again later.';
+      
+      if (error.message) {
+        if (error.message.includes('Only image files and PDFs are supported')) {
+          errorMessage = 'Only image files (JPG, PNG, etc.) and PDF documents are supported.';
+        } else if (error.message.includes('Invalid document type')) {
+          errorMessage = 'This document type is not supported. Only passport, proof of address, and signature documents are allowed.';
+        }
+      }
+      
+      setModalState(createModalState({
+        isOpen: true,
+        title: 'Document Error',
+        message: errorMessage,
+        type: 'error'
+      }));
+      return '';
+    }
+  };
+
+  // Check if file is a supported type (image or PDF)
+  const isSupportedFileType = (fileName: string): boolean => {
+    const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileName);
+    const isPdf = /\.pdf$/i.test(fileName);
+    return isImage || isPdf;
+  };
+  
   // View document
-  const handleViewDocument = (document: UserDocument) => {
-    setDocumentViewerModal({
-      isOpen: true,
-      documentUrl: document.file_path,
-      documentName: document.file_name
-    });
+  const handleViewDocument = async (doc: UserDocument) => {
+    setLoading(true);
+    try {
+      // Check if file type is supported before making API call
+      if (!isSupportedFileType(doc.file_name)) {
+        throw new Error('Only image files and PDFs are supported');
+      }
+      
+      const secureUrl = await getSecureDocumentUrl(doc);
+      
+      if (secureUrl) {
+        setDocumentViewerModal({
+          isOpen: true,
+          documentUrl: secureUrl,
+          documentName: doc.file_name
+        });
+      }
+    } catch (error: any) {
+      console.error('Error viewing document:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to view document. Please try again later.';
+      
+      if (error.message) {
+        if (error.message.includes('Only image files and PDFs are supported')) {
+          errorMessage = 'Only image files (JPG, PNG, etc.) and PDF documents are supported.';
+        } else if (error.message.includes('Invalid document type')) {
+          errorMessage = 'This document type is not supported. Only passport, proof of address, and signature documents are allowed.';
+        }
+      }
+      
+      setModalState(createModalState({
+        isOpen: true,
+        title: 'Document Error',
+        message: errorMessage,
+        type: 'error'
+      }));
+    } finally {
+      setLoading(false);
+    }
+  };
+  // Download document
+  const handleDownloadDocument = async (doc: UserDocument) => {
+    setLoading(true);
+    try {
+      // Check if file type is supported before making API call
+      if (!isSupportedFileType(doc.file_name)) {
+        throw new Error('Only image files and PDFs are supported');
+      }
+      
+      const secureUrl = await getSecureDocumentUrl(doc);
+      
+      if (secureUrl) {
+        // Create a temporary anchor element to trigger download
+        const link = window.document.createElement('a');
+        link.href = secureUrl;
+        link.download = doc.file_name;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        window.document.body.appendChild(link);
+        link.click();
+        window.document.body.removeChild(link);
+      } else {
+        throw new Error('Failed to download document. Please try again later.');
+      }
+    } catch (error: any) {
+      console.error('Error downloading document:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to download document. Please try again later.';
+      
+      if (error.message) {
+        if (error.message.includes('Only image files and PDFs are supported')) {
+          errorMessage = 'Only image files (JPG, PNG, etc.) and PDF documents are supported.';
+        } else if (error.message.includes('Invalid document type')) {
+          errorMessage = 'This document type is not supported. Only passport, proof of address, and signature documents are allowed.';
+        }
+      }
+      
+      setModalState(createModalState({
+        isOpen: true,
+        title: 'Document Error',
+        message: errorMessage,
+        type: 'error'
+      }));
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Close document viewer
@@ -338,7 +509,7 @@ const UserDocuments: React.FC = () => {
         </div>
       </div>
     );
-  };
+  }
 
   // Document Viewer Modal
   const DocumentViewerModal = () => {
@@ -364,34 +535,50 @@ const UserDocuments: React.FC = () => {
             )}
             {isPdf && (
               <iframe 
-                src={`${documentViewerModal.documentUrl}#toolbar=0`} 
+                src={documentViewerModal.documentUrl} 
                 title={documentViewerModal.documentName}
                 className="document-pdf"
+                width="100%"
+                height="500px"
               />
             )}
             {!isImage && !isPdf && (
               <div className="document-download">
                 <p>This document type cannot be previewed.</p>
-                <a 
-                  href={documentViewerModal.documentUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
+                <button 
+                  onClick={() => {
+                    const link = window.document.createElement('a');
+                    link.href = documentViewerModal.documentUrl;
+                    link.download = documentViewerModal.documentName;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    window.document.body.appendChild(link);
+                    link.click();
+                    window.document.body.removeChild(link);
+                  }}
                   className="download-button"
                 >
                   Download Document
-                </a>
+                </button>
               </div>
             )}
           </div>
           <div className="document-viewer-footer">
-            <a 
-              href={documentViewerModal.documentUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
+            <button 
+              onClick={() => {
+                const link = window.document.createElement('a');
+                link.href = documentViewerModal.documentUrl;
+                link.download = documentViewerModal.documentName;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                window.document.body.appendChild(link);
+                link.click();
+                window.document.body.removeChild(link);
+              }}
               className="download-button"
             >
-              Download
-            </a>
+              Download Document
+            </button>
             <button className="close-button" onClick={closeDocumentViewer}>Close</button>
           </div>
         </div>
@@ -402,8 +589,6 @@ const UserDocuments: React.FC = () => {
   return (
     <div className="user-documents-container">
       <h1 className="page-title">User Documents</h1>
-      
-      {/* Search and filter controls */}
       <div className="controls-container">
         <div className="search-container">
           <input
@@ -472,6 +657,12 @@ const UserDocuments: React.FC = () => {
                           onClick={() => handleViewDocument(document)}
                         >
                           View Document
+                        </button>
+                        <button 
+                          className="download-button"
+                          onClick={() => handleDownloadDocument(document)}
+                        >
+                          Download
                         </button>
                         <button 
                           className="details-button"

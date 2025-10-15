@@ -11,7 +11,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  background-color: rgba(245, 245, 245, 0.8);
+  background-color: rgba(245, 245, 245);
   z-index: 9999;
 }
 

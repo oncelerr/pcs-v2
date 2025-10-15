@@ -100,84 +100,85 @@ class FormSubmitController extends Controller
             'proof_address_file_name' => null,
             'signature_file_name' => null,
         ];
-        
+
         // We'll use Laravel's private storage instead of public directory
-        
+
         // Handle passport file
         if ($request->hasFile('passport_file')) {
             $file = $request->file('passport_file');
             $filePath = $request->input('passport_file_path'); // Contains the full path with user ID
-            
+
             // Make sure the directory exists
             $directory = dirname(storage_path('app/private/client_upload/' . $filePath));
             if (!file_exists($directory)) {
                 mkdir($directory, 0755, true);
                 Log::info("Created directory: {$directory}");
             }
-            
+
             // Store the file in private storage with the secure path
             $storedPath = Storage::disk('private')->putFileAs(
                 'client_upload', // Base directory in private storage
                 $file,
                 $filePath // Already includes client_ID/document_type/filename
             );
-            
+
             $fileData['passport_file_name'] = $filePath; // Store the full path
             Log::info("Passport file saved to private storage: {$storedPath}");
         }
-        
+
         // Handle proof of address file
         if ($request->hasFile('proof_address_file')) {
             $file = $request->file('proof_address_file');
             $filePath = $request->input('proof_address_file_path');
-            
+
             // Make sure the directory exists
             $directory = dirname(storage_path('app/private/client_upload/' . $filePath));
             if (!file_exists($directory)) {
                 mkdir($directory, 0755, true);
                 Log::info("Created directory: {$directory}");
             }
-            
+
             // Store the file in private storage with the secure path
             $storedPath = Storage::disk('private')->putFileAs(
                 'client_upload',
                 $file,
                 $filePath
             );
-            
+
             $fileData['proof_address_file_name'] = $filePath;
             Log::info("Proof of address file saved to private storage: {$storedPath}");
         }
-        
+
         // Handle signature file
         if ($request->hasFile('signature_file')) {
             $file = $request->file('signature_file');
             $filePath = $request->input('signature_file_path');
-            
+
             // Make sure the directory exists
             $directory = dirname(storage_path('app/private/client_upload/' . $filePath));
             if (!file_exists($directory)) {
                 mkdir($directory, 0755, true);
                 Log::info("Created directory: {$directory}");
             }
-            
+
             // Store the file in private storage with the secure path
             $storedPath = Storage::disk('private')->putFileAs(
                 'client_upload',
                 $file,
                 $filePath
             );
-            
+
             $fileData['signature_file_name'] = $filePath;
             Log::info("Signature file saved to private storage: {$storedPath}");
         }
-        
+
         // Save file information to database
         $uploadedFiles = ClientUploadedFile::create($fileData);
 
         // Update Profile Setup stage status to completed and activate next stage
         $profileSetupCompleted = false;
         $nextStageActivated = false;
+        // Update Profile Setup stage status to completed and activate next stage
         try {
             $profileSetupStage = UserStageItem::where('user_id', $validated['user_id'])
                 ->whereHas('stageItem', function ($query) {
@@ -188,18 +189,48 @@ class FormSubmitController extends Controller
 
             if ($profileSetupStage) {
                 $profileSetupCompleted = $profileSetupStage->markAsCompleted();
-                
-                // Find and activate the next stage item
-                $currentStageItemId = $profileSetupStage->stage_item_id;
+
+                // Specifically target and activate the Payment stage item (stage_item_id = 2)
                 $nextStageItem = UserStageItem::where('user_id', $validated['user_id'])
-                    ->where('stage_item_id', $currentStageItemId + 1)
+                    ->whereHas('stageItem', function ($query) {
+                        $query->where('name', 'Payment');
+                    })
                     ->where('status', UserStageItem::STATUS_PENDING)
                     ->first();
                 
+                // If we can't find it by name, try to find it by ID
+                if (!$nextStageItem) {
+                    $nextStageItem = UserStageItem::where('user_id', $validated['user_id'])
+                        ->where('stage_item_id', 2) // Payment stage item ID
+                        ->where('status', UserStageItem::STATUS_PENDING)
+                        ->first();
+                }
+                
+                // Log for debugging
+                Log::info('Next stage item search result:', [
+                    'found' => $nextStageItem ? true : false,
+                    'stage_item_id' => $nextStageItem ? $nextStageItem->stage_item_id : null,
+                    'status' => $nextStageItem ? $nextStageItem->status : null
+                ]);
+
                 if ($nextStageItem) {
                     $nextStageActivated = $nextStageItem->update([
                         'status' => UserStageItem::STATUS_ACTIVE
                     ]);
+                    
+                    Log::info('Payment stage activated successfully:', [
+                        'stage_item_id' => $nextStageItem->stage_item_id,
+                        'new_status' => UserStageItem::STATUS_ACTIVE,
+                        'success' => $nextStageActivated
+                    ]);
+                } else {
+                    Log::warning('Could not find Payment stage item to activate for user:', [
+                        'user_id' => $validated['user_id']
+                    ]);
+                    
+                    // Let's log all user's stage items for debugging
+                    $allUserStageItems = UserStageItem::where('user_id', $validated['user_id'])->get();
+                    Log::info('All user stage items:', $allUserStageItems->toArray());
                 }
             }
         } catch (\Exception $e) {
@@ -210,7 +241,7 @@ class FormSubmitController extends Controller
         // Generate secure URLs for the uploaded files
         $fileUrls = [];
         $userId = $validated['user_id'];
-        
+
         if ($fileData['passport_file_name']) {
             $fileUrls['passport_url'] = $this->getSecureFileUrl($fileData['passport_file_name'], $userId, 'passport');
         }
@@ -220,7 +251,7 @@ class FormSubmitController extends Controller
         if ($fileData['signature_file_name']) {
             $fileUrls['signature_url'] = $this->getSecureFileUrl($fileData['signature_file_name'], $userId, 'signature');
         }
-        
+
         return response()->json([
             'message' => 'Form submitted successfully',
             'user_information' => $userInfo,

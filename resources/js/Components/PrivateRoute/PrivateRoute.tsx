@@ -42,8 +42,8 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
     }
   }
 
-  console.log('user:', user);
-  console.log('requiredRoles:', requiredRoles);
+  // console.log('user:', user);
+  // console.log('requiredRoles:', requiredRoles);
 
   return children ? <>{children}</> : <Outlet />;
 };

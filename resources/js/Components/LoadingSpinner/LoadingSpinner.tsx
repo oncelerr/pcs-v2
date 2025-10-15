@@ -12,7 +12,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'medium',
   color = '#126654',
   fullPage = false,
-  backgroundColor = 'rgba(245, 245, 245, 0.8)'
+  backgroundColor = 'rgba(245, 245, 245)'
 }) => {
   // Size mapping in pixels
   const sizeMap = {
