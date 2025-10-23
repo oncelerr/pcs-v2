@@ -267,9 +267,10 @@ const UserDocuments = () => {
         documentType = 'signature';
       }
       
-      // Use the document-access-token endpoint which is designed for this purpose
-      const response = await fetch('/api/document-access-token', {
-        method: 'POST', // This endpoint expects POST, not GET
+      // Create a custom endpoint to handle file retrieval directly
+      // We'll use the actual file path from the document record
+      const response = await fetch('/api/get-document-url', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRF-TOKEN': csrfToken || '',
@@ -278,7 +279,8 @@ const UserDocuments = () => {
         },
         body: JSON.stringify({
           userId: doc.user_id,
-          documentType: documentType
+          filePath: doc.file_path, // Use the actual file path from the document
+          fileName: doc.file_name
         }),
         credentials: 'same-origin'
       });
@@ -377,12 +379,39 @@ const UserDocuments = () => {
         throw new Error('Only image files and PDFs are supported');
       }
       
-      const secureUrl = await getSecureDocumentUrl(doc);
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      const token = localStorage.getItem('auth_token');
       
-      if (secureUrl) {
+      // Create a direct download URL with the download parameter
+      const response = await fetch('/api/get-document-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: doc.user_id,
+          filePath: doc.file_path, // Use the actual file path from the document
+          fileName: doc.file_name,
+          download: true // Specify that this is a download request
+        }),
+        credentials: 'same-origin'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error('Failed to get download URL: ' + (errorData.message || 'Unknown error'));
+      }
+      
+      const data = await response.json();
+      const downloadUrl = data.downloadUrl;
+      
+      if (downloadUrl) {
         // Create a temporary anchor element to trigger download
         const link = window.document.createElement('a');
-        link.href = secureUrl;
+        link.href = downloadUrl;
         link.download = doc.file_name;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
@@ -588,7 +617,6 @@ const UserDocuments = () => {
 
   return (
     <div className="user-documents-container">
-      <h1 className="page-title">User Documents</h1>
       <div className="controls-container">
         <div className="search-container">
           <input

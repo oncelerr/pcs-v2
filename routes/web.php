@@ -11,14 +11,21 @@ use App\Http\Controllers\ComplianceUserController;
 use App\Http\Controllers\ClientComplianceFileController;
 use App\Http\Controllers\UserStageItemController;
 use App\Http\Controllers\UserDocumentController;
+use App\Http\Controllers\ActivityLogController;
 
 // Secure document access with signed URLs
 Route::get('/document/view', [DocumentAccessController::class, 'viewDocument'])
     ->middleware(['signed'])
     ->name('document.view');
+    
+// Direct document viewing with file path
+Route::get('/document/direct-view', [DocumentAccessController::class, 'viewDirectDocument'])
+    ->middleware(['signed'])
+    ->name('document.direct-view');
 
 Route::post('/api/secure-document-urls', [DocumentAccessController::class, 'getSecureUrls']);
 Route::post('/api/document-access-token', [DocumentAccessController::class, 'getAccessToken']);
+Route::post('/api/get-document-url', [DocumentAccessController::class, 'getDocumentUrl']);
 
 // API Routes
 Route::group(['prefix' => 'api'], function () {
@@ -111,6 +118,9 @@ Route::get('/test-email', function () {
 Route::group(['prefix' => 'api'], function () {
     Route::post('/submit-form', [\App\Http\Controllers\FormSubmitController::class, 'store']);
 });
+
+// Admin dashboard activity log route
+Route::get('/admin/activities', [ActivityLogController::class, 'getRecentActivities']);
 
 // Google OAuth routes with web middleware for session handling
 Route::middleware('web')->group(function () {
