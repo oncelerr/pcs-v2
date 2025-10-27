@@ -11,10 +11,11 @@ interface FileRow {
 interface FileUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (title: string, files: File[]) => void;
+  onUpload: (title: string, files: File[], skipUpload?: boolean) => void;
   userId: number;
   fieldName: string;
   isUploading: boolean;
+  isAdmin?: boolean;
 }
 
 const FileUploadModal: React.FC<FileUploadModalProps> = ({
@@ -23,11 +24,13 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   onUpload,
   userId,
   fieldName,
-  isUploading
+  isUploading,
+  isAdmin = false
 }) => {
   const [fileRows, setFileRows] = useState<FileRow[]>([
     { id: '1', title: '', file: null }
   ]);
+  const [skipFileUpload, setSkipFileUpload] = useState<boolean>(false);
 
   const handleTitleChange = (id: string, value: string) => {
     setFileRows(prev => 
@@ -57,6 +60,12 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
   };
 
   const handleSubmit = () => {
+    // If admin is skipping file upload
+    if (skipFileUpload && isAdmin) {
+      onUpload(fieldName, [], true);
+      return;
+    }
+    
     // Filter out rows with no files
     const validFiles = fileRows
       .filter(row => row.file !== null)
@@ -146,16 +155,32 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
         </div>
         
         <div className="file-upload-modal-footer">
-          <button className="cancel-button" onClick={onClose} disabled={isUploading}>
-            Cancel
-          </button>
-          <button 
-            className="upload-button" 
-            onClick={handleSubmit}
-            disabled={isUploading || fileRows.every(row => !row.file)}
-          >
-            {isUploading ? <LoadingSpinner size="small" color="#ffffff" /> : 'Upload Files'}
-          </button>
+          {isAdmin && (
+            <div className="admin-skip-upload">
+              <input
+                type="checkbox"
+                id="skip-upload-checkbox"
+                checked={skipFileUpload}
+                onChange={(e) => setSkipFileUpload(e.target.checked)}
+              />
+              <label htmlFor="skip-upload-checkbox">Continue without uploading files</label>
+            </div>
+          )}
+          <div className="modal-buttons">
+            <button className="cancel-button" onClick={onClose} disabled={isUploading}>
+              Cancel
+            </button>
+            <button 
+              className="upload-button" 
+              onClick={handleSubmit}
+              disabled={isUploading || (!skipFileUpload && fileRows.every(row => !row.file))}
+            >
+              {isUploading ? 
+                <LoadingSpinner size="small" color="#ffffff" /> : 
+                (skipFileUpload ? 'Continue' : 'Upload Files')
+              }
+            </button>
+          </div>
         </div>
       </div>
     </div>

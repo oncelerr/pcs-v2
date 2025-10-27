@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Dashboard.css';
-import './pagination.css';
 import LoadingSpinner from '../../Components/LoadingSpinner/LoadingSpinner';
 import ConfirmationModal from '../../Components/ConfirmationModal/ConfirmationModal';
 import CompleteProfileModal from './Components/CompleteProfileModal/CompleteProfileModal';

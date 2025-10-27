@@ -153,10 +153,36 @@
 
 .file-upload-modal-footer {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  flex-direction: column;
   padding: 16px 24px;
   border-top: 1px solid #e5e7eb;
+  gap: 12px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.admin-skip-upload {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.admin-skip-upload input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.admin-skip-upload label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 14px;
+  color: #4b5563;
+  cursor: pointer;
 }
 
 .cancel-button {

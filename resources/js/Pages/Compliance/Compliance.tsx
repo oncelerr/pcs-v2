@@ -41,7 +41,8 @@ interface PaginationData {
 }
 
 const Compliance: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, hasRole } = useAuth();
+  const isAdmin = hasRole('Admin');
   const navigate = useNavigate();
 
   const [userData, setUserData] = useState<ComplianceUser[]>([]);
@@ -409,7 +410,24 @@ const Compliance: React.FC = () => {
   };
   
   // Handle multiple file uploads from modal
-  const handleMultipleFileUpload = async (fieldName: string, files: File[]) => {
+  const handleMultipleFileUpload = async (fieldName: string, files: File[], skipUpload?: boolean) => {
+    // If admin is skipping upload, just update the status
+    if (skipUpload && isAdmin && fileUploadModal.userId) {
+      try {
+        // Update the status to 'done' without requiring files
+        await updateStatus(fileUploadModal.userId, fieldName as StatusField, 'done');
+        // Close the modal
+        setFileUploadModal(prev => ({ ...prev, isOpen: false }));
+        // Refresh the user data
+        fetchUserData();
+        return;
+      } catch (error) {
+        console.error('Error updating status:', error);
+        return;
+      }
+    }
+    
+    // Regular file upload flow
     if (files.length === 0 || !fileUploadModal.userId) return;
     
     setUploadingFile(true);
@@ -1181,6 +1199,7 @@ const Compliance: React.FC = () => {
         userId={fileUploadModal.userId}
         fieldName={fileUploadModal.field}
         isUploading={uploadingFile}
+        isAdmin={isAdmin}
       />
       
       {/* Tax Info Modal */}
