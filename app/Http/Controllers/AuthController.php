@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
+use App\Http\Controllers\NotificationController;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use App\Services\UserStageItemService;
 
 class AuthController extends Controller
@@ -46,6 +48,28 @@ class AuthController extends Controller
                 'remember_token' => Str::random(10),
             ]);
 
+            // Notify admins about new user registration
+            try {
+                $notificationController = new NotificationController();
+                $notificationController->notifyAdmins(
+                    'New User Registration',
+                    "A new user {$user->name} ({$user->email}) has registered.",
+                    [
+                        'type' => 'user_registration',
+                        'data' => [
+                            'user_id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'username' => $user->username,
+                            'registered_at' => now()->toDateTimeString()
+                        ]
+                    ]
+                );
+            } catch (\Exception $e) {
+                // Log error but continue with registration process
+                Log::error('Failed to send admin notification about new user', ['error' => $e->getMessage()]);
+            }
+            
             // Send OTP to user's email directly (no queue)
             try {
                 Mail::send([], [], function ($message) use ($user, $otp) {

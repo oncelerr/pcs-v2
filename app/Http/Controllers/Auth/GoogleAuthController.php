@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\NotificationController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -53,7 +54,31 @@ class GoogleAuthController extends Controller
                     'remember_token' => Str::random(10),
                 ]);
 
+                // Initialize user stage items
                 UserStageItemService::initializeFor($user);
+                
+                // Notify admins about new user registration via Google
+                try {
+                    $notificationController = new NotificationController();
+                    $notificationController->notifyAdmins(
+                        'New Google User Registration',
+                        "A new user {$user->name} ({$user->email}) has registered via Google OAuth.",
+                        [
+                            'type' => 'google_user_registration',
+                            'data' => [
+                                'user_id' => $user->id,
+                                'name' => $user->name,
+                                'email' => $user->email,
+                                'username' => $user->username,
+                                'registered_at' => now()->toDateTimeString(),
+                                'auth_provider' => 'google'
+                            ]
+                        ]
+                    );
+                } catch (\Exception $e) {
+                    // Log error but continue with registration process
+                    Log::error('Failed to send admin notification about new Google user', ['error' => $e->getMessage()]);
+                }
             } else {
                 // Ensure verified if coming from Google
                 if (!$user->email_verified_at) {

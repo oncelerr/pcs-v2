@@ -122,6 +122,13 @@ Route::group(['prefix' => 'api'], function () {
 // Admin dashboard activity log route
 Route::get('/admin/activities', [ActivityLogController::class, 'getRecentActivities']);
 
+// Notification routes
+Route::prefix('api/notifications')->group(function () {
+    Route::get('/user/{userId}', [\App\Http\Controllers\NotificationController::class, 'getUserNotifications']);
+    Route::post('/{notificationId}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead']);
+    Route::post('/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
+});
+
 // Google OAuth routes with web middleware for session handling
 Route::middleware('web')->group(function () {
     Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');

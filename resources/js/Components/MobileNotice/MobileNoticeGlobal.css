@@ -1,0 +1,13 @@
+/* Global styles to prevent scrolling when mobile notice is active */
+html.mobile-notice-active,
+body.mobile-notice-active {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+  touch-action: none !important;
+  -webkit-overflow-scrolling: none !important;
+  overscroll-behavior: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
+use App\Http\Controllers\NotificationController;
+use App\Models\User;
 use App\Models\UserStageItem;
 use App\Models\Stage;
 use App\Models\ComplianceUser;
@@ -141,6 +143,41 @@ class PaymentController extends Controller
                 'request_id' => $e->getRequestId(),
                 'stripe_code' => $e->getStripeCode()
             ]);
+            
+            // Notify admins about Stripe API error
+            try {
+                // Get user ID if available
+                $userId = $request->input('user_id') ?? $request->query('user_id') ?? auth()->id();
+                $userInfo = '';
+                
+                if ($userId) {
+                    $user = User::find($userId);
+                    if ($user) {
+                        $userInfo = " for user {$user->name} ({$user->email})";
+                    }
+                }
+                
+                $notificationController = new NotificationController();
+                $notificationController->notifyAdmins(
+                    'Stripe API Error',
+                    "A Stripe API error occurred{$userInfo}. Error: {$e->getMessage()}",
+                    [
+                        'type' => 'stripe_api_error',
+                        'data' => [
+                            'user_id' => $userId ?? null,
+                            'error_message' => $e->getMessage(),
+                            'http_status' => $e->getHttpStatus(),
+                            'request_id' => $e->getRequestId(),
+                            'stripe_code' => $e->getStripeCode(),
+                            'error_time' => now()->toDateTimeString(),
+                            'plan' => $request->plan ?? null
+                        ]
+                    ]
+                );
+            } catch (\Exception $notifyError) {
+                \Log::error('Failed to send admin notification about Stripe API error', ['error' => $notifyError->getMessage()]);
+            }
+            
             return response()->json([
                 'error' => 'Payment processing error. Please try again.',
                 'debug_info' => config('app.debug', false) ? $e->getMessage() : null
@@ -273,6 +310,38 @@ class PaymentController extends Controller
                 }
             }
 
+            // Get user details for notification
+            $user = User::find($userId);
+            
+            // Notify admins about successful payment
+            try {
+                $notificationController = new NotificationController();
+                
+                // Get plan name and amount from session
+                $planName = $session->display_items[0]->custom->name ?? 'Unknown Plan';
+                $amount = $session->amount_total ? number_format($session->amount_total / 100, 2) : 'Unknown';
+                
+                $notificationController->notifyAdmins(
+                    'Payment Successful',
+                    "User {$user->name} ({$user->email}) has successfully made a payment of \${$amount} for {$planName}.",
+                    [
+                        'type' => 'payment_successful',
+                        'data' => [
+                            'user_id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'plan' => $planName,
+                            'amount' => $amount,
+                            'session_id' => $sessionId,
+                            'payment_time' => now()->toDateTimeString()
+                        ]
+                    ]
+                );
+            } catch (\Exception $e) {
+                // Log error but continue with the process
+                \Log::error('Failed to send admin notification about payment success', ['error' => $e->getMessage()]);
+            }
+            
             return response()->json([
                 'message' => 'Payment processed successfully',
                 'payment_stage_completed' => $paymentStageCompleted,
@@ -292,8 +361,104 @@ class PaymentController extends Controller
                 'session_id' => $sessionId ?? null,
                 'user_id' => $userId ?? null
             ]);
+            
+            // Notify admins about payment processing error
+            if ($userId) {
+                try {
+                    $user = User::find($userId);
+                    if ($user) {
+                        $notificationController = new NotificationController();
+                        $notificationController->notifyAdmins(
+                            'Payment Processing Error',
+                            "An error occurred while processing payment for user {$user->name} ({$user->email}). Error: {$e->getMessage()}",
+                            [
+                                'type' => 'payment_error',
+                                'data' => [
+                                    'user_id' => $user->id,
+                                    'name' => $user->name,
+                                    'email' => $user->email,
+                                    'session_id' => $sessionId ?? null,
+                                    'error_message' => $e->getMessage(),
+                                    'error_time' => now()->toDateTimeString()
+                                ]
+                            ]
+                        );
+                    }
+                } catch (\Exception $notifyError) {
+                    \Log::error('Failed to send admin notification about payment error', ['error' => $notifyError->getMessage()]);
+                }
+            }
+            
             return response()->json([
                 'error' => 'An error occurred while processing payment success.',
+                'debug_info' => config('app.debug', false) ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+    
+    /**
+     * Handle payment cancellation
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function handlePaymentCancellation(Request $request)
+    {
+        try {
+            // Get parameters from request
+            $userId = $request->input('user_id') ?? $request->query('user_id');
+            
+            if (!$userId) {
+                \Log::error('Payment Cancellation - Missing user ID', [
+                    'request_data' => $request->all()
+                ]);
+                return response()->json(['error' => 'Missing user ID parameter'], 400);
+            }
+            
+            // Get user details
+            $user = User::find($userId);
+            if (!$user) {
+                return response()->json(['error' => 'User not found'], 404);
+            }
+            
+            // Notify admins about payment cancellation
+            try {
+                $notificationController = new NotificationController();
+                $notificationController->notifyAdmins(
+                    'Payment Cancelled',
+                    "User {$user->name} ({$user->email}) has cancelled their payment process.",
+                    [
+                        'type' => 'payment_cancelled',
+                        'data' => [
+                            'user_id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'cancelled_at' => now()->toDateTimeString()
+                        ]
+                    ]
+                );
+            } catch (\Exception $e) {
+                // Log error but continue with the process
+                \Log::error('Failed to send admin notification about payment cancellation', ['error' => $e->getMessage()]);
+            }
+            
+            return response()->json([
+                'message' => 'Payment cancellation recorded',
+                'status' => 'cancelled'
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Payment Cancellation Handler Error', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => config('app.debug', false) ? $e->getTraceAsString() : null,
+                'user_id' => $request->input('user_id') ?? $request->query('user_id') ?? null
+            ]);
+            
+            return response()->json([
+                'error' => 'An error occurred while processing payment cancellation.',
                 'debug_info' => config('app.debug', false) ? $e->getMessage() : null
             ], 500);
         }

@@ -9,6 +9,8 @@ import Footer from './Components/Footer/Footer';
 import PrivateRoute from './Components/PrivateRoute/PrivateRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import LoadingSpinner from './Components/LoadingSpinner/LoadingSpinner';
+import MobileNotice from './Components/MobileNotice/MobileNotice';
+import useIsMobile from './hooks/useIsMobile';
 import './layouts/DashboardLayout.css';
 
 const Home = lazy(() => import('./Pages/Home/Home'));
@@ -59,6 +61,7 @@ const App: React.FC = () => {
 
 const AppContent: React.FC = () => {
   const location = useLocation();
+  const isMobile = useIsMobile();
 
   const isPrivateRoute = (pathname: string): boolean => {
     const privateRoutes = [
@@ -85,6 +88,7 @@ const AppContent: React.FC = () => {
 
   return (
     <>
+      {isMobile && <MobileNotice />}
       {showNavbarFooter && <Navbar />}
       <Routes>
         {/* Public Routes */}

@@ -1,0 +1,42 @@
+.mobile-notice {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #ffffff;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #333;
+  overflow: hidden;
+  box-sizing: border-box;
+  touch-action: none;
+  -webkit-overflow-scrolling: none;
+  overscroll-behavior: none;
+}
+
+.mobile-notice-content {
+  text-align: center;
+  padding: 5vh 5vw;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.mobile-notice h2 {
+  margin-bottom: 4vh;
+  font-size: 5vw;
+}
+
+.mobile-notice p {
+  font-size: 3.5vw;
+  margin-bottom: 4vh;
+}
+
+@media (min-width: 768px) {
+  .mobile-notice {
+    display: none;
+  }
+}

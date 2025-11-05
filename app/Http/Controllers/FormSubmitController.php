@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\NotificationController;
+use App\Models\User;
 use App\Models\UserInformation;
 use App\Models\ClientUploadedFile;
 use App\Models\UserStageItem;
@@ -174,11 +176,47 @@ class FormSubmitController extends Controller
 
         // Save file information to database
         $uploadedFiles = ClientUploadedFile::create($fileData);
+        
+        // Get user details for notification
+        $user = User::find($validated['user_id']);
+        
+        // Notify admins about profile completion and document uploads
+        try {
+            $notificationController = new NotificationController();
+            
+            // Prepare list of uploaded documents for notification
+            $uploadedDocuments = [];
+            if ($fileData['passport_file_name']) $uploadedDocuments[] = 'Passport';
+            if ($fileData['proof_address_file_name']) $uploadedDocuments[] = 'Proof of Address';
+            if ($fileData['signature_file_name']) $uploadedDocuments[] = 'Signature';
+            
+            $uploadedDocumentsText = !empty($uploadedDocuments) ? 
+                'Uploaded documents: ' . implode(', ', $uploadedDocuments) : 
+                'No documents uploaded';
+                
+            $notificationController->notifyAdmins(
+                'User Profile Completed',
+                "User {$user->name} ({$user->email}) has completed their profile and uploaded supporting documents. {$uploadedDocumentsText}",
+                [
+                    'type' => 'profile_completion',
+                    'data' => [
+                        'user_id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'company_name' => $validated['companyName'] ?? null,
+                        'uploaded_documents' => $uploadedDocuments,
+                        'completed_at' => now()->toDateTimeString()
+                    ]
+                ]
+            );
+        } catch (\Exception $e) {
+            // Log error but continue with the process
+            Log::error('Failed to send admin notification about profile completion', ['error' => $e->getMessage()]);
+        }
 
         // Update Profile Setup stage status to completed and activate next stage
         $profileSetupCompleted = false;
         $nextStageActivated = false;
-        // Update Profile Setup stage status to completed and activate next stage
         try {
             $profileSetupStage = UserStageItem::where('user_id', $validated['user_id'])
                 ->whereHas('stageItem', function ($query) {
