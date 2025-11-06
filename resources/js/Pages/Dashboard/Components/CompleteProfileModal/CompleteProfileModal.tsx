@@ -209,16 +209,47 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
     }
     
     try {
-      // Get signature as data URL
+      // Get signature as data URL with proper MIME type
       const dataURL = signaturePad.current.toDataURL('image/png');
       
-      // Convert data URL to blob
-      const res = await fetch(dataURL);
-      const blob = await res.blob();
+      // Create a canvas element to properly convert the signature
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
       
-      // Create a File object from the blob
+      // Create a promise to handle the image loading
+      const imageLoaded = new Promise<void>((resolve) => {
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx?.drawImage(img, 0, 0);
+          resolve();
+        };
+      });
+      
+      // Set the image source and wait for it to load
+      img.src = dataURL;
+      await imageLoaded;
+      
+      // Convert canvas to blob with proper MIME type
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((b) => {
+          if (b) resolve(b);
+          else resolve(new Blob([], { type: 'image/png' }));
+        }, 'image/png');
+      });
+      
+      // Create a File object from the blob with proper MIME type
       const fileName = `signature_${Date.now()}.png`;
-      return new File([blob], fileName, { type: 'image/png' });
+      const file = new File([blob], fileName, { type: 'image/png' });
+      
+      console.log('Created signature file:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+      
+      return file;
     } catch (error) {
       console.error('Error converting signature to file:', error);
       return null;
@@ -324,12 +355,27 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
           ? await compressImageIfNeeded(file)
           : file;
           
+        // Create a proper File object to ensure it has the right type
+        let finalFile: File;
+        if (processedFile instanceof Blob && !(processedFile instanceof File)) {
+          finalFile = new File([processedFile], file.name, { type: file.type });
+        } else {
+          finalFile = processedFile as File;
+        }
+        
+        // Log file details for debugging
+        console.log(`Processing ${field}:`, {
+          name: finalFile.name,
+          type: finalFile.type,
+          size: finalFile.size
+        });
+          
         // Store both file name and file object
         const fileField = field.replace('_file_name', '_file') as keyof FormData;
         setFormData(prev => ({ 
           ...prev, 
-          [field]: file.name,
-          [fileField]: processedFile
+          [field]: finalFile.name,
+          [fileField]: finalFile
         }));
         
         // Clear error when user selects a valid file
@@ -339,7 +385,7 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
         
         // Log file size information
         console.log(`File ${field} - Original size: ${(file.size / 1024 / 1024).toFixed(2)}MB, ` + 
-                    `Processed size: ${(processedFile.size / 1024 / 1024).toFixed(2)}MB`);
+                    `Processed size: ${(finalFile.size / 1024 / 1024).toFixed(2)}MB`);
         
       } catch (error) {
         console.error('Error processing file:', error);
@@ -348,6 +394,14 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
           [field]: 'Error processing file. Please try a different file.'
         }));
       }
+    } else {
+      // Clear the file field if no file is selected
+      const fileField = field.replace('_file_name', '_file') as keyof FormData;
+      setFormData(prev => ({ 
+        ...prev, 
+        [field]: '',
+        [fileField]: null
+      }));
     }
   };
 
@@ -408,7 +462,14 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
           const signatureFile = await getSignatureAsFile();
           if (signatureFile) {
             // Update formData with the signature file
-            formData.signature_file = signatureFile;
+            // We need to create a new object to trigger React state update
+            setFormData(prevData => ({
+              ...prevData,
+              signature_file: signatureFile
+            }));
+            
+            // Wait a moment for state to update
+            await new Promise(resolve => setTimeout(resolve, 100));
           } else {
             setErrors(prev => ({
               ...prev,
@@ -439,25 +500,88 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
           const fileExt = formData.passport_file.name.split('.').pop() || 'pdf';
           // Generate a more secure filename with random component
           const secureFilename = `passport_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
-          submitFormData.append('passport_file', formData.passport_file);
-          submitFormData.append('passport_file_path', `client_${user.id}/passport/${secureFilename}`);
+          
+          // Log file type for debugging
+          console.log('Passport file type:', formData.passport_file.type);
+          console.log('Passport file size:', formData.passport_file.size);
+          
+          // Check if it's a valid file
+          if (formData.passport_file && typeof formData.passport_file === 'object') {
+            submitFormData.append('passport_file', formData.passport_file);
+            submitFormData.append('passport_file_path', `client_${user.id}/passport/${secureFilename}`);
+          } else {
+            console.error('Passport file is not a valid File object');
+            setErrors(prev => ({
+              ...prev,
+              passport_file_name: 'Invalid file format. Please try again.'
+            }));
+            return;
+          }
         }
         
         if (formData.proof_address_file) {
           const fileExt = formData.proof_address_file.name.split('.').pop() || 'pdf';
           // Generate a more secure filename with random component
           const secureFilename = `proof_address_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
-          submitFormData.append('proof_address_file', formData.proof_address_file);
-          submitFormData.append('proof_address_file_path', `client_${user.id}/proof_address/${secureFilename}`);
+          
+          // Log file type for debugging
+          console.log('Proof address file type:', formData.proof_address_file.type);
+          console.log('Proof address file size:', formData.proof_address_file.size);
+          
+          // Check if it's a valid file
+          if (formData.proof_address_file && typeof formData.proof_address_file === 'object') {
+            submitFormData.append('proof_address_file', formData.proof_address_file);
+            submitFormData.append('proof_address_file_path', `client_${user.id}/proof_address/${secureFilename}`);
+          } else {
+            console.error('Proof address file is not a valid File object');
+            setErrors(prev => ({
+              ...prev,
+              proof_address_file_name: 'Invalid file format. Please try again.'
+            }));
+            return;
+          }
         }
         
         // Handle signature file (either uploaded or drawn)
         if (formData.signature_file) {
+          // Ensure the file has the correct type
           const fileExt = formData.signature_file.name.split('.').pop() || 'png';
           // Generate a more secure filename with random component
           const secureFilename = `signature_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
-          submitFormData.append('signature_file', formData.signature_file);
-          submitFormData.append('signature_file_path', `client_${user.id}/signature/${secureFilename}`);
+          
+          // Log the file type for debugging
+          console.log('Signature file type:', formData.signature_file.type);
+          console.log('Signature file size:', formData.signature_file.size);
+          
+          // Check if it's a valid file
+          if (formData.signature_file && typeof formData.signature_file === 'object') {
+            // Append the file to the form data
+            submitFormData.append('signature_file', formData.signature_file);
+            submitFormData.append('signature_file_path', `client_${user.id}/signature/${secureFilename}`);
+          } else {
+            console.error('Signature file is not a valid File object');
+            setErrors(prev => ({
+              ...prev,
+              signature_file_name: 'Invalid file format. Please try again.'
+            }));
+            return;
+          }
+        } else if (isDrawSignature) {
+          // If we're in draw mode but somehow don't have a file, try to get it again
+          const signatureFile = await getSignatureAsFile();
+          if (signatureFile) {
+            const secureFilename = `signature_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.png`;
+            console.log('Generated signature file type:', signatureFile.type);
+            console.log('Generated signature file size:', signatureFile.size);
+            submitFormData.append('signature_file', signatureFile);
+            submitFormData.append('signature_file_path', `client_${user.id}/signature/${secureFilename}`);
+          } else {
+            setErrors(prev => ({
+              ...prev,
+              signature_file_name: 'Failed to process signature. Please try again.'
+            }));
+            return;
+          }
         }
 
         const response = await fetch('/api/submit-form', {
