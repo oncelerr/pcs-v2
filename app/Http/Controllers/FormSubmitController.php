@@ -58,6 +58,7 @@ class FormSubmitController extends Controller
                 'companyIndustry' => 'nullable|string|max:255',
                 'companyDesignator' => 'nullable|string|max:255',
                 'stateRegistration' => 'nullable|string|max:255',
+                'businessDescription' => 'nullable|string|min:50',
                 'passport_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:4096',
                 'passport_file_path' => 'nullable|string',
                 'proof_address_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:4096',
@@ -93,6 +94,7 @@ class FormSubmitController extends Controller
             'company_industry' => $validated['companyIndustry'] ?? null,
             'company_designator' => $validated['companyDesignator'] ?? null,
             'state_registration' => $validated['stateRegistration'] ?? null,
+            'business_description' => $validated['businessDescription'] ?? null,
         ]);
 
         // Handle file uploads and save to client_uploaded_files

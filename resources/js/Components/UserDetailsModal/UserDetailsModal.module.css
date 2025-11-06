@@ -230,6 +230,29 @@
   font-weight: 500;
 }
 
+.fullWidthDetail {
+  margin-top: 20px;
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.businessDescriptionTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.businessDescriptionText {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4b5563;
+  white-space: pre-wrap;
+}
+
 .userDetailsModalFooter {
   padding: 16px 24px;
   border-top: 1px solid #e5e7eb;

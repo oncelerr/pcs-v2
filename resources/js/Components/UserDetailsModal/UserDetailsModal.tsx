@@ -23,6 +23,7 @@ interface UserInformation {
   company_type?: string;
   company_industry?: string;
   company_website?: string;
+  business_description?: string;
   ssn?: string;
   created_at?: string;
   updated_at?: string;
@@ -180,6 +181,14 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>IRS Date:</span>
                 <span className={styles.detailValue}>{userData.irs || 'Not provided'}</span>
+              </div>
+            </div>
+            
+            {/* Business Description - Full width section */}
+            <div className={styles.fullWidthDetail}>
+              <h4 className={styles.businessDescriptionTitle}>Business Description</h4>
+              <div className={styles.businessDescriptionText}>
+                {userData.business_description || 'Not provided'}
               </div>
             </div>
           </div>

@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styles from './CompleteProfileModal.module.css';
 import { useAuth } from '../../../../contexts/AuthContext';
 import Modal from '../../../../Components/Modal/Modal';
 import { COUNTRIES } from '../../../../data/countries';
+// @ts-ignore - SignaturePad doesn't have TypeScript definitions
+import SignaturePad from 'signature_pad';
 
 interface FormData {
   firstName: string;
@@ -23,6 +25,7 @@ interface FormData {
   companyIndustry: string;
   companyDesignator: string;
   stateRegistration: string;
+  businessDescription: string;
   streetAddressLine2: string;
   passport_file_name: string;
   proof_address_file_name: string;
@@ -65,6 +68,9 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isDrawSignature, setIsDrawSignature] = useState(false);
+  const signaturePadRef = useRef<HTMLDivElement>(null);
+  const signaturePad = useRef<any>(null);
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     middleName: '',
@@ -85,6 +91,7 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
     companyIndustry: '',
     companyDesignator: '',
     stateRegistration: '',
+    businessDescription: '',
     passport_file_name: '',
     proof_address_file_name: '',
     signature_file_name: '',
@@ -95,7 +102,7 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
   const requiredFields = [
     'firstName', 'lastName', 'emailAddress', 'contactNumber', 'ssn', 'country',
     'streetAddress', 'city', 'state', 'zipCode', 'companyName', 'companyType', 'companyWebsite',
-    'passport_file_name', 'proof_address_file_name', 'signature_file_name'
+    'businessDescription', 'passport_file_name', 'proof_address_file_name'
   ];
 
   // Validation functions
@@ -105,6 +112,11 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
 
   const isNumbersOnly = (value: string): boolean => {
     return /^[0-9]+$/.test(value);
+  };
+
+  // Function to count words in a string
+  const countWords = (text: string): number => {
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -127,6 +139,14 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
         setErrors(prev => ({ ...prev, [field]: 'Only numbers allowed' }));
         return;
       }
+    } else if (field === 'businessDescription') {
+      // For business description, check word count
+      const wordCount = countWords(value);
+      if (wordCount < 50) {
+        setErrors(prev => ({ ...prev, [field]: `Please provide at least 50 words. Current count: ${wordCount} words` }));
+      } else {
+        setErrors(prev => ({ ...prev, [field]: false }));
+      }
     }
 
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -146,6 +166,63 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
   const isValidFileSize = (file: File): boolean => {
     const maxSizeInBytes = 4 * 1024 * 1024; // 4MB
     return file.size <= maxSizeInBytes;
+  };
+  
+  // Initialize signature pad when component mounts or drawing mode changes
+  useEffect(() => {
+    if (isDrawSignature && signaturePadRef.current) {
+      // Create a canvas element for the signature pad
+      const canvas = document.createElement('canvas');
+      canvas.width = signaturePadRef.current.clientWidth;
+      canvas.height = 200; // Fixed height for the signature pad
+      canvas.style.width = '100%';
+      canvas.style.height = '200px';
+      canvas.style.backgroundColor = '#fff';
+      
+      // Clear any existing content
+      if (signaturePadRef.current.firstChild) {
+        signaturePadRef.current.removeChild(signaturePadRef.current.firstChild);
+      }
+      
+      // Append the canvas to the container
+      signaturePadRef.current.appendChild(canvas);
+      
+      // Initialize SignaturePad
+      signaturePad.current = new SignaturePad(canvas, {
+        backgroundColor: '#fff',
+        penColor: '#000'
+      });
+    }
+  }, [isDrawSignature]);
+  
+  // Clear the signature pad
+  const clearSignature = () => {
+    if (signaturePad.current) {
+      signaturePad.current.clear();
+    }
+  };
+  
+  // Convert signature to file when form is submitted
+  const getSignatureAsFile = async (): Promise<File | null> => {
+    if (!isDrawSignature || !signaturePad.current || signaturePad.current.isEmpty()) {
+      return null;
+    }
+    
+    try {
+      // Get signature as data URL
+      const dataURL = signaturePad.current.toDataURL('image/png');
+      
+      // Convert data URL to blob
+      const res = await fetch(dataURL);
+      const blob = await res.blob();
+      
+      // Create a File object from the blob
+      const fileName = `signature_${Date.now()}.png`;
+      return new File([blob], fileName, { type: 'image/png' });
+    } catch (error) {
+      console.error('Error converting signature to file:', error);
+      return null;
+    }
   };
   
   // Function to compress image files if they're too large
@@ -282,10 +359,32 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
       const value = formData[field as keyof FormData];
       // Check if value is a string and if it's empty
       if (typeof value === 'string' && !value.trim()) {
-        newErrors[field] = true;
+        newErrors[field] = field === 'businessDescription' ? 'Business description is required' : true;
         isValid = false;
       }
     });
+    
+    // Special validation for business description word count
+    if (formData.businessDescription.trim() && countWords(formData.businessDescription) < 50) {
+      const wordCount = countWords(formData.businessDescription);
+      newErrors.businessDescription = `Please provide at least 50 words. Current count: ${wordCount} words`;
+      isValid = false;
+    }
+    
+    // Special validation for signature based on the selected method
+    if (isDrawSignature) {
+      // For drawn signature, check if signature pad is empty
+      if (!signaturePad.current || signaturePad.current.isEmpty()) {
+        newErrors.signature_file_name = 'Please draw your signature';
+        isValid = false;
+      }
+    } else {
+      // For file upload, check if a file is selected
+      if (!formData.signature_file) {
+        newErrors.signature_file_name = 'Please upload a signature file';
+        isValid = false;
+      }
+    }
 
     setErrors(newErrors);
     return isValid;
@@ -303,6 +402,22 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
 
     if (validateForm()) {
       try {
+        // Handle drawn signature if needed
+        if (isDrawSignature) {
+          // Convert signature to file
+          const signatureFile = await getSignatureAsFile();
+          if (signatureFile) {
+            // Update formData with the signature file
+            formData.signature_file = signatureFile;
+          } else {
+            setErrors(prev => ({
+              ...prev,
+              signature_file_name: 'Failed to process signature. Please try again.'
+            }));
+            return;
+          }
+        }
+        
         // Get CSRF token from meta tag
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         
@@ -336,8 +451,9 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
           submitFormData.append('proof_address_file_path', `client_${user.id}/proof_address/${secureFilename}`);
         }
         
+        // Handle signature file (either uploaded or drawn)
         if (formData.signature_file) {
-          const fileExt = formData.signature_file.name.split('.').pop() || 'pdf';
+          const fileExt = formData.signature_file.name.split('.').pop() || 'png';
           // Generate a more secure filename with random component
           const secureFilename = `signature_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
           submitFormData.append('signature_file', formData.signature_file);
@@ -672,7 +788,7 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
                 <div className={styles.personalDeetsInput}>
                   <h3 className={styles.h3Title}>Company Website</h3>
                   <input
-                    className={`${styles.pdFn} ${errors.companyName ? styles.errorField : ''}`}
+                    className={`${styles.pdFn} ${errors.companyWebsite ? styles.errorField : ''}`}
                     type="text"
                     value={formData.companyWebsite}
                     onChange={(e) => handleInputChange('companyWebsite', e.target.value)}
@@ -682,12 +798,30 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
                 <div className={styles.personalDeetsInput}>
                   <h3 className={styles.h3Title}>Company Industry</h3>
                   <input
-                    className={`${styles.pdFn} ${errors.companyName ? styles.errorField : ''}`}
+                    className={`${styles.pdFn} ${errors.companyIndustry ? styles.errorField : ''}`}
                     type="text"
                     value={formData.companyIndustry}
                     onChange={(e) => handleInputChange('companyIndustry', e.target.value)}
                     required
                   />
+                </div>
+              </div>
+              
+              {/* Business Description Field */}
+              <div className={styles.personalDeetsSection} style={{ flexDirection: 'column', width: '100%' }}>
+                <div className={styles.personalDeetsInput} style={{ width: '100%' }}>
+                  <h3 className={styles.h3Title}>Business Description</h3>
+                  <textarea
+                    className={`${styles.pdFn} ${errors.businessDescription ? styles.errorField : ''}`}
+                    value={formData.businessDescription}
+                    onChange={(e) => handleInputChange('businessDescription', e.target.value)}
+                    placeholder="Tell me about your business in minimum 50 words"
+                    style={{ minHeight: '120px', width: 'calc(100% - 42px)', resize: 'vertical' }}
+                    required
+                  />
+                  {errors.businessDescription && (
+                    <div style={errorMessageStyle}>{errors.businessDescription}</div>
+                  )}
                 </div>
               </div>
               <div className={styles.personalDeetsSection}>
@@ -773,21 +907,67 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
                 </div>
                 <div className={styles.personalDeetsInput}>
                   <h3 className={styles.h3Title}>Main Applicant's Signature</h3>
-                  <input
-                    className={`${styles.pdFn} ${errors.signature_file_name ? styles.errorField : ''}`}
-                    type="file"
-                    name="signature_file_name"
-                    id="signature_file_name"
-                    onChange={async (e) => await handleFileChange('signature_file_name', e.target.files?.[0] || null)}
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    required
-                  />
+                  
+                  {/* Signature Options Toggle */}
+                  <div className={styles.signatureOptions}>
+                    <button 
+                      type="button" 
+                      className={`${styles.signatureOptionBtn} ${!isDrawSignature ? styles.signatureOptionActive : ''}`}
+                      onClick={() => setIsDrawSignature(false)}
+                    >
+                      Upload File
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`${styles.signatureOptionBtn} ${isDrawSignature ? styles.signatureOptionActive : ''}`}
+                      onClick={() => setIsDrawSignature(true)}
+                    >
+                      Draw/Write Signature
+                    </button>
+                  </div>
+                  
+                  {/* Upload File Option */}
+                  {!isDrawSignature && (
+                    <>
+                      <input
+                        className={`${styles.pdFn} ${errors.signature_file_name ? styles.errorField : ''}`}
+                        type="file"
+                        name="signature_file_name"
+                        id="signature_file_name"
+                        onChange={async (e) => await handleFileChange('signature_file_name', e.target.files?.[0] || null)}
+                        accept=".pdf,.jpg,.jpeg,.png"
+                      />
+                      <div style={fileRestrictionStyle}>
+                        Allowed file types: PDF, JPG, JPEG, PNG. Max size: 4MB (images will be automatically compressed)
+                      </div>
+                    </>
+                  )}
+                  
+                  {/* Draw Signature Option */}
+                  {isDrawSignature && (
+                    <div className={styles.signaturePadContainer}>
+                      <div 
+                        ref={signaturePadRef} 
+                        className={styles.signaturePad}
+                        style={errors.signature_file_name ? {borderColor: '#f44336'} : {}}
+                      >
+                        {/* Canvas will be inserted here by useEffect */}
+                      </div>
+                      <div className={styles.signaturePadControls}>
+                        <button 
+                          type="button" 
+                          className={styles.clearSignatureBtn} 
+                          onClick={clearSignature}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
                   {typeof errors.signature_file_name === 'string' && (
                     <div style={errorMessageStyle}>{errors.signature_file_name}</div>
                   )}
-                  <div style={fileRestrictionStyle}>
-                    Allowed file types: PDF, JPG, JPEG, PNG. Max size: 4MB (images will be automatically compressed)
-                  </div>
                 </div>
               </div>
             </div>

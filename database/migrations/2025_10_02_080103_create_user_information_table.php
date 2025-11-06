@@ -35,6 +35,7 @@ return new class extends Migration
             $table->string('company_designator')->nullable();
             $table->string('state_registration')->nullable();
             $table->string('company_website')->nullable();
+            $table->text('business_description')->nullable();
             $table->timestamps();
 
             $table->foreign('user_id')

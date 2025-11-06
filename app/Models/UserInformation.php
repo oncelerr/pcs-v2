@@ -34,6 +34,7 @@ class UserInformation extends Model
         'company_designator',
         'state_registration',
         'company_website',
+        'business_description',
     ];
 
     /**
