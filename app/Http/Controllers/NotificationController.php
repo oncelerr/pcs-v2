@@ -60,8 +60,8 @@ class NotificationController extends Controller
         
         // Send email notification to the email address specified in MAIL_NOTIF env variable
         try {
-            // $notificationEmail = "filings@premiumcorpsolutions.com";
-            $notificationEmail = "markjonathan368@gmail.com";
+            $notificationEmail = "filings@premiumcorpsolutions.com";
+            // $notificationEmail = "markjonathan368@gmail.com";
             
             if ($notificationEmail) {
                 Mail::send([], [], function ($mailMessage) use ($notificationEmail, $title, $message, $options) {
