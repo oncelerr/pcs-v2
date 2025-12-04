@@ -50,11 +50,7 @@ class UserDocumentController extends Controller
 
         // Apply search filter
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('user_information.company_name', 'like', "%{$search}%")
-                  ->orWhere('users.name', 'like', "%{$search}%")
-                  ->orWhere('client_compliance_files.file_name', 'like', "%{$search}%");
-            });
+            $query->where('user_information.company_name', 'LIKE', "%{$search}%");
         }
 
         // Apply document type filter

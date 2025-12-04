@@ -142,13 +142,7 @@ const UserDocuments = () => {
       });
 
       if (!response.ok) {
-        // Try to get detailed error information
-        try {
-          const errorData = await response.json();
-          throw new Error(errorData.message || errorData.error || `Failed to fetch user documents: ${response.status}`);
-        } catch (jsonError) {
-          throw new Error(`Failed to fetch user documents: ${response.status}`);
-        }
+        throw new Error(`Failed to fetch user documents: ${response.status}`);
       }
 
       const data = await response.json();
@@ -164,19 +158,10 @@ const UserDocuments = () => {
     } catch (error: any) {
       console.error('Error fetching user documents:', error);
       setError(error.message || 'Failed to load user documents. Please try again later.');
-      
-      // If unauthorized, check token and redirect to login if needed
-      if (error.message?.includes('401') || error.message?.includes('Unauthenticated')) {
-        const token = localStorage.getItem('auth_token');
-        if (!token) {
-          console.error('No auth token found, redirecting to login');
-          navigate('/login');
-        }
-      }
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, navigate, pagination.per_page]);
+  }, [isAdmin, navigate, pagination.per_page, searchTerm, filterDocumentType]);
 
   // Check authentication status
   useEffect(() => {
@@ -645,14 +630,8 @@ const UserDocuments = () => {
       
       {/* Main content */}
       <div className="content-container">
-        {loading ? (
-          <div className="loading-container">
-            <LoadingSpinner size="large" color="#126654" />
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="error-message">{error}</div>
-        ) : documents.length === 0 ? (
-          <div className="no-data-message">No documents found.</div>
         ) : (
           <div className="table-container">
             <table className="documents-table">
@@ -667,46 +646,62 @@ const UserDocuments = () => {
                 </tr>
               </thead>
               <tbody>
-                {documents.map((document) => (
-                  <tr key={document.id}>
-                    <td>{document.company_name}</td>
-                    <td>
-                      <span className="document-type-badge">
-                        {document.document_type.replace(/_/g, ' ')}
-                      </span>
-                    </td>
-                    <td>{document.file_name}</td>
-                    <td>{document.uploaded_by}</td>
-                    <td>{formatDate(document.uploaded_at)}</td>
-                    <td>
-                      <div className="action-buttons">
-                        <button 
-                          className="view-button"
-                          onClick={() => handleViewDocument(document)}
-                        >
-                          View Document
-                        </button>
-                        <button 
-                          className="download-button"
-                          onClick={() => handleDownloadDocument(document)}
-                        >
-                          Download
-                        </button>
-                        <button 
-                          className="details-button"
-                          onClick={() => handleViewUserDetails(document.user_id)}
-                        >
-                          User Details
-                        </button>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="table-loading-container">
+                        <LoadingSpinner size="large" color="#126654" />
                       </div>
                     </td>
                   </tr>
-                ))}
+                ) : documents.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="no-data-message">No documents found.</div>
+                    </td>
+                  </tr>
+                ) : (
+                  documents.map((document) => (
+                    <tr key={document.id}>
+                      <td>{document.company_name}</td>
+                      <td>
+                        <span className="document-type-badge">
+                          {document.document_type.replace(/_/g, ' ')}
+                        </span>
+                      </td>
+                      <td>{document.file_name}</td>
+                      <td>{document.uploaded_by}</td>
+                      <td>{formatDate(document.uploaded_at)}</td>
+                      <td>
+                        <div className="action-buttons">
+                          <button 
+                            className="view-button"
+                            onClick={() => handleViewDocument(document)}
+                          >
+                            View Document
+                          </button>
+                          <button 
+                            className="download-button"
+                            onClick={() => handleDownloadDocument(document)}
+                          >
+                            Download
+                          </button>
+                          <button 
+                            className="details-button"
+                            onClick={() => handleViewUserDetails(document.user_id)}
+                          >
+                            User Details
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
             
-            {/* Pagination */}
-            {pagination.last_page > 1 && renderPagination()}
+            {/* Pagination - only show when not loading and has multiple pages */}
+            {!loading && pagination.last_page > 1 && renderPagination()}
           </div>
         )}
       </div>
