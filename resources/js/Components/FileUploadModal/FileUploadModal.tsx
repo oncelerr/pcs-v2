@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './FileUploadModal.css';
 import LoadingSpinner from '../../Components/LoadingSpinner';
 
@@ -11,7 +11,7 @@ interface FileRow {
 interface FileUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (title: string, files: File[], skipUpload?: boolean) => void;
+  onUpload: (title: string, files: File[], skipUpload?: boolean) => Promise<void> | void;
   userId: number;
   fieldName: string;
   isUploading: boolean;
@@ -31,6 +31,22 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     { id: '1', title: '', file: null }
   ]);
   const [skipFileUpload, setSkipFileUpload] = useState<boolean>(false);
+
+  // Reset modal state to initial values
+  const resetModal = () => {
+    setFileRows([{ id: '1', title: '', file: null }]);
+    setSkipFileUpload(false);
+  };
+
+  // Reset modal when it opens (only when transitioning from closed to open)
+  useEffect(() => {
+    if (isOpen) {
+      // Only reset if we're not currently uploading
+      if (!isUploading) {
+        resetModal();
+      }
+    }
+  }, [isOpen, isUploading]);
 
   const handleTitleChange = (id: string, value: string) => {
     setFileRows(prev => 
@@ -59,51 +75,63 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
     }
   };
 
-  const handleSubmit = () => {
-    // If admin is skipping file upload
-    if (skipFileUpload && isAdmin) {
-      onUpload(fieldName, [], true);
-      return;
-    }
-    
-    // Filter out rows with no files
-    const validFiles = fileRows
-      .filter(row => row.file !== null)
-      .map(row => {
-        // If a file exists, rename it with the title
-        if (row.file) {
-          const fileExtension = row.file.name.split('.').pop();
-          const newFileName = `${row.title || 'document'}.${fileExtension}`;
-          
-          // Create a new File object with the title in the name
-          const newFile = new File([row.file], newFileName, { type: row.file.type });
-          
-          // Add a custom property to store the title
-          Object.defineProperty(newFile, 'title', {
-            value: row.title || 'document',
-            writable: true,
-            enumerable: true
-          });
-          
-          return newFile;
-        }
-        return null;
-      })
-      .filter(Boolean) as File[];
+  const handleSubmit = async () => {
+    try {
+      // If admin is skipping file upload
+      if (skipFileUpload && isAdmin) {
+        await onUpload(fieldName, [], true);
+        resetModal(); // Reset after successful skip
+        return;
+      }
+      
+      // Filter out rows with no files
+      const validFiles = fileRows
+        .filter(row => row.file !== null)
+        .map(row => {
+          // If a file exists, rename it with the title
+          if (row.file) {
+            const fileExtension = row.file.name.split('.').pop();
+            const newFileName = `${row.title || 'document'}.${fileExtension}`;
+            
+            // Create a new File object with the title in the name
+            const newFile = new File([row.file], newFileName, { type: row.file.type });
+            
+            // Add a custom property to store the title
+            Object.defineProperty(newFile, 'title', {
+              value: row.title || 'document',
+              writable: true,
+              enumerable: true
+            });
+            
+            return newFile;
+          }
+          return null;
+        })
+        .filter(Boolean) as File[];
 
-    if (validFiles.length > 0) {
-      onUpload(fieldName, validFiles);
+      if (validFiles.length > 0) {
+        await onUpload(fieldName, validFiles);
+        resetModal(); // Reset after successful upload
+      }
+    } catch (error) {
+      // Don't reset on error - let user retry or manually close
+      console.error('Upload failed:', error);
     }
+  };
+
+  const handleClose = () => {
+    resetModal(); // Reset when closing
+    onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="file-upload-modal-overlay" onClick={onClose}>
+    <div className="file-upload-modal-overlay" onClick={handleClose}>
       <div className="file-upload-modal" onClick={(e) => e.stopPropagation()}>
         <div className="file-upload-modal-header">
           <h2>Upload Documents for {fieldName.replace('_status', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h2>
-          <button className="close-button" onClick={onClose}>&times;</button>
+          <button className="close-button" onClick={handleClose}>&times;</button>
         </div>
         
         <div className="file-upload-modal-content">
@@ -167,7 +195,7 @@ const FileUploadModal: React.FC<FileUploadModalProps> = ({
             </div>
           )}
           <div className="modal-buttons">
-            <button className="cancel-button" onClick={onClose} disabled={isUploading}>
+            <button className="cancel-button" onClick={handleClose} disabled={isUploading}>
               Cancel
             </button>
             <button 
