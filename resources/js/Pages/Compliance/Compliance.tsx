@@ -8,6 +8,7 @@ import UserDetailsModal from '../../Components/UserDetailsModal';
 import FileUploadModal from '../../Components/FileUploadModal/FileUploadModal';
 import TaxInfoModal from '../../Components/TaxInfoModal/TaxInfoModal';
 import ServiceUploadModal from '../../Components/ServiceUploadModal/ServiceUploadModal';
+import AddCandidateButton from '../../Components/AddCandidateButton/AddCandidateButton';
 
 // Define interface for compliance user information
 interface ComplianceUser {
@@ -1016,7 +1017,7 @@ const Compliance: React.FC = () => {
             {showPendingOnly ? 'Showing Pending Only' : 'Show All Records'}
           </button>
           <input className="status-bar" type="text" placeholder="Status" />
-          <button className="add-candidate">Add Candidate</button>
+          <AddCandidateButton onCandidateAdded={fetchUserData} />
         </div>
         <table className="all-users-table">
           <thead>

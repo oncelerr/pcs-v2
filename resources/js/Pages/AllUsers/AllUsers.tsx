@@ -6,8 +6,7 @@ import { COUNTRIES } from '../../data/countries';
 import LoadingSpinner from '../../Components/LoadingSpinner';
 import ConfirmationModal from '../../Components/ConfirmationModal';
 import UserDetailsModal from '../../Components/UserDetailsModal';
-import AddCandidateModal from '../../Components/AddCandidateModal/AddCandidateModal';
-import CompleteProfileModal from '../Dashboard/Components/CompleteProfileModal/CompleteProfileModal';
+import AddCandidateButton from '../../Components/AddCandidateButton/AddCandidateButton';
 
 // Function to generate a random password in the format PCS-XXXXXX
 function generateRandomPassword(): string {
@@ -50,9 +49,6 @@ const AllUsers: React.FC = () => {
   
   // State for user data and loading status
   const [userData, setUserData] = useState<UserInformation[]>([]);
-  const [addCandidateModal, setAddCandidateModal] = useState<boolean>(false);
-  const [showCompleteProfileModal, setShowCompleteProfileModal] = useState<boolean>(false);
-  const [newCandidateData, setNewCandidateData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -167,85 +163,6 @@ const AllUsers: React.FC = () => {
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFilterStatus(e.target.value);
     setPagination(prev => ({ ...prev, current_page: 1 }));
-  };
-  
-  // Handle Add Candidate submission
-  const handleAddCandidate = async (candidateData: { name: string; email: string }) => {
-    try {
-      setLoading(true);
-      
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      
-      const response = await fetch('/api/addcan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          name: candidateData.name,
-          email: candidateData.email,
-          password: 'password',
-          password_confirmation: 'password',
-          agree_terms: true
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add candidate');
-      }
-      
-      const result = await response.json();
-      
-      // Check if registration was successful (handle both message formats)
-      if (result.message && result.message.includes('Registration successful') || result.user) {
-        // Close Add Candidate Modal
-        setAddCandidateModal(false);
-        
-        // Store candidate data for CompleteProfileModal
-        setNewCandidateData({
-          name: candidateData.name,
-          email: candidateData.email,
-          userId: result.user?.id || result.user_id
-        });
-        
-        // Open Complete Profile Modal
-        setShowCompleteProfileModal(true);
-        
-        // Show success message
-        setModalState({
-          isOpen: true,
-          title: 'Success',
-          message: 'Candidate added successfully. Please complete their profile.',
-          type: 'success',
-          onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
-        });
-      } else {
-        throw new Error('Unexpected response from server');
-      }
-    } catch (err) {
-      console.error('Error adding candidate:', err);
-      setModalState({
-        isOpen: true,
-        title: 'Error',
-        message: err instanceof Error ? err.message : 'Failed to add candidate',
-        type: 'error',
-        onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Handle Complete Profile Modal close
-  const handleCompleteProfileClose = () => {
-    setShowCompleteProfileModal(false);
-    setNewCandidateData(null);
-    // Refresh user list
-    fetchUserData();
   };
   
   // Action dropdown state
@@ -475,22 +392,6 @@ const AllUsers: React.FC = () => {
         userData={userDetailsModal.userData}
         onClose={handleCloseUserDetailsModal}
       />
-      
-      {/* Add Candidate Modal */}
-      {addCandidateModal && (
-        <AddCandidateModal 
-          onClose={() => setAddCandidateModal(false)}
-          onSubmit={handleAddCandidate}
-        />
-      )}
-      
-      {/* Complete Profile Modal */}
-      {showCompleteProfileModal && newCandidateData && (
-        <CompleteProfileModal 
-          onClose={handleCompleteProfileClose}
-          candidateUserId={newCandidateData.userId}
-        />
-      )}
     
       <div className="personal-deets-cont">
         <div className="personal-deets-header">
@@ -516,7 +417,7 @@ const AllUsers: React.FC = () => {
             <option value="nonprofit">Non-profit</option>
           </select>
           <input className="status-bar" type="text" placeholder="Status" />
-          <button className="add-candidate" onClick={() => setAddCandidateModal(true)}>Add Candidate</button>
+          <AddCandidateButton onCandidateAdded={fetchUserData} />
         </div>
         <table className="all-users-table">
           <thead>
