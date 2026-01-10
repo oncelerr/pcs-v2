@@ -63,6 +63,34 @@ class RegisterController extends Controller
         });
     }
 
+    public function addcan(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'agree_terms' => ['required', 'accepted'],
+        ]);
+
+        return DB::transaction(function () use ($validated) {
+            // Create the user
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make('password'),
+                'role_id' => 2, // Default role ID for regular users
+            ]);
+
+            // Initialize user's progress with default stages and items
+            $user->initializeProgress();
+
+            return response()->json([
+                'message' => 'Registration successful',
+                'redirect' => route('dashboard')
+            ]);
+        });
+    }
+
     /**
      * Redirect the user to the Google authentication page.
      *

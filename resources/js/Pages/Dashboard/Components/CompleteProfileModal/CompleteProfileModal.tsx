@@ -63,7 +63,12 @@ const helperTextStyle: React.CSSProperties = {
   fontStyle: 'italic'
 };
 
-export default function CompleteProfileModal({ onClose }: CompleteProfileModalProps = {}) {
+interface CompleteProfileModalProps {
+  onClose?: () => void;
+  candidateUserId?: number; // Add this prop for admin-added candidates
+}
+
+export default function CompleteProfileModal({ onClose, candidateUserId }: CompleteProfileModalProps = {}) {
   const { user } = useAuth();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -447,9 +452,12 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check if user is authenticated
-    if (!user?.id) {
-      setErrorMessage('You must be logged in to submit this form.');
+    // Determine which user ID to use
+    const targetUserId = candidateUserId || user?.id;
+    
+    // Check if we have a valid user ID
+    if (!targetUserId) {
+      setErrorMessage('User ID is required to submit this form.');
       setShowErrorModal(true);
       return;
     }
@@ -458,17 +466,12 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
       try {
         // Handle drawn signature if needed
         if (isDrawSignature) {
-          // Convert signature to file
           const signatureFile = await getSignatureAsFile();
           if (signatureFile) {
-            // Update formData with the signature file
-            // We need to create a new object to trigger React state update
             setFormData(prevData => ({
               ...prevData,
               signature_file: signatureFile
             }));
-            
-            // Wait a moment for state to update
             await new Promise(resolve => setTimeout(resolve, 100));
           } else {
             setErrors(prev => ({
@@ -479,10 +482,7 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
           }
         }
         
-        // Get CSRF token from meta tag
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        
-        // Create FormData object for file uploads
         const submitFormData = new FormData();
         
         // Add all text fields
@@ -492,23 +492,17 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
           }
         });
         
-        // Add user_id
-        submitFormData.append('user_id', user.id.toString());
+        // Use the target user ID (candidate's ID if admin-added, or logged-in user's ID)
+        submitFormData.append('user_id', targetUserId.toString());
         
-        // Add files with secure naming convention to private storage
+        // Add files with secure naming
         if (formData.passport_file) {
           const fileExt = formData.passport_file.name.split('.').pop() || 'pdf';
-          // Generate a more secure filename with random component
           const secureFilename = `passport_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
           
-          // Log file type for debugging
-          console.log('Passport file type:', formData.passport_file.type);
-          console.log('Passport file size:', formData.passport_file.size);
-          
-          // Check if it's a valid file
           if (formData.passport_file && typeof formData.passport_file === 'object') {
             submitFormData.append('passport_file', formData.passport_file);
-            submitFormData.append('passport_file_path', `client_${user.id}/passport/${secureFilename}`);
+            submitFormData.append('passport_file_path', `client_${targetUserId}/passport/${secureFilename}`);
           } else {
             console.error('Passport file is not a valid File object');
             setErrors(prev => ({
@@ -521,17 +515,11 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
         
         if (formData.proof_address_file) {
           const fileExt = formData.proof_address_file.name.split('.').pop() || 'pdf';
-          // Generate a more secure filename with random component
           const secureFilename = `proof_address_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
           
-          // Log file type for debugging
-          console.log('Proof address file type:', formData.proof_address_file.type);
-          console.log('Proof address file size:', formData.proof_address_file.size);
-          
-          // Check if it's a valid file
           if (formData.proof_address_file && typeof formData.proof_address_file === 'object') {
             submitFormData.append('proof_address_file', formData.proof_address_file);
-            submitFormData.append('proof_address_file_path', `client_${user.id}/proof_address/${secureFilename}`);
+            submitFormData.append('proof_address_file_path', `client_${targetUserId}/proof_address/${secureFilename}`);
           } else {
             console.error('Proof address file is not a valid File object');
             setErrors(prev => ({
@@ -542,22 +530,13 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
           }
         }
         
-        // Handle signature file (either uploaded or drawn)
         if (formData.signature_file) {
-          // Ensure the file has the correct type
           const fileExt = formData.signature_file.name.split('.').pop() || 'png';
-          // Generate a more secure filename with random component
           const secureFilename = `signature_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
           
-          // Log the file type for debugging
-          console.log('Signature file type:', formData.signature_file.type);
-          console.log('Signature file size:', formData.signature_file.size);
-          
-          // Check if it's a valid file
           if (formData.signature_file && typeof formData.signature_file === 'object') {
-            // Append the file to the form data
             submitFormData.append('signature_file', formData.signature_file);
-            submitFormData.append('signature_file_path', `client_${user.id}/signature/${secureFilename}`);
+            submitFormData.append('signature_file_path', `client_${targetUserId}/signature/${secureFilename}`);
           } else {
             console.error('Signature file is not a valid File object');
             setErrors(prev => ({
@@ -567,14 +546,11 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
             return;
           }
         } else if (isDrawSignature) {
-          // If we're in draw mode but somehow don't have a file, try to get it again
           const signatureFile = await getSignatureAsFile();
           if (signatureFile) {
             const secureFilename = `signature_${Date.now()}_${Math.random().toString(36).substring(2, 10)}.png`;
-            console.log('Generated signature file type:', signatureFile.type);
-            console.log('Generated signature file size:', signatureFile.size);
             submitFormData.append('signature_file', signatureFile);
-            submitFormData.append('signature_file_path', `client_${user.id}/signature/${secureFilename}`);
+            submitFormData.append('signature_file_path', `client_${targetUserId}/signature/${secureFilename}`);
           } else {
             setErrors(prev => ({
               ...prev,
@@ -584,7 +560,10 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
           }
         }
 
-        const response = await fetch('/api/submit-form', {
+        // Use different endpoint if this is for a candidate added by admin
+        const endpoint = candidateUserId ? '/api/submit-form-for-candidate' : '/api/submit-form';
+
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'X-CSRF-TOKEN': csrfToken || '',
@@ -595,16 +574,17 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
         });
 
         if (response.ok) {
-          // Show success modal instead of alert
           setShowSuccessModal(true);
           localStorage.removeItem('statusProgress');
           
-          // Delay page reload to allow user to see the success message
           setTimeout(() => {
             if (onClose) {
               onClose();
             }
-            window.location.reload();
+            // Only reload if not admin-added candidate
+            if (!candidateUserId) {
+              window.location.reload();
+            }
           }, 2000);
         } else {
           const error = await response.json();
@@ -634,9 +614,9 @@ export default function CompleteProfileModal({ onClose }: CompleteProfileModalPr
           companyName: 'Company Name',
           companyType: 'Company Type',
           companyWebsite: 'Company Website',
-          passport_file_name: 'Passport File Name',
-          proof_address_file_name: 'Proof Address File Name',
-          signature_file_name: 'Signature File Name',
+          passport_file_name: 'Passport File',
+          proof_address_file_name: 'Proof of Address File',
+          signature_file_name: 'Signature',
         };
         return fieldNames[field] || field;
       });

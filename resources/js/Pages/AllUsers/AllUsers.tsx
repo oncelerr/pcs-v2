@@ -6,6 +6,8 @@ import { COUNTRIES } from '../../data/countries';
 import LoadingSpinner from '../../Components/LoadingSpinner';
 import ConfirmationModal from '../../Components/ConfirmationModal';
 import UserDetailsModal from '../../Components/UserDetailsModal';
+import AddCandidateModal from '../../Components/AddCandidateModal/AddCandidateModal';
+import CompleteProfileModal from '../Dashboard/Components/CompleteProfileModal/CompleteProfileModal';
 
 // Function to generate a random password in the format PCS-XXXXXX
 function generateRandomPassword(): string {
@@ -28,9 +30,8 @@ interface UserInformation {
   last_name: string;
   company_designator: string;
   state_registration: string;
-  franchise?: string; // Using the dates from the mock data
-  irs?: string; // Using the dates from the mock data
-  // Add other fields as needed
+  franchise?: string;
+  irs?: string;
 }
 
 // Define interface for pagination data
@@ -49,6 +50,9 @@ const AllUsers: React.FC = () => {
   
   // State for user data and loading status
   const [userData, setUserData] = useState<UserInformation[]>([]);
+  const [addCandidateModal, setAddCandidateModal] = useState<boolean>(false);
+  const [showCompleteProfileModal, setShowCompleteProfileModal] = useState<boolean>(false);
+  const [newCandidateData, setNewCandidateData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -90,10 +94,8 @@ const AllUsers: React.FC = () => {
   const fetchUserData = async () => {
     setLoading(true);
     try {
-      // Get CSRF token from meta tag
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
       
-      // Build query parameters
       const params = new URLSearchParams({
         page: pagination.current_page.toString(),
         per_page: pagination.per_page.toString(),
@@ -101,12 +103,10 @@ const AllUsers: React.FC = () => {
         sort_order: 'desc'
       });
       
-      // Add search term if provided
       if (searchTerm) {
         params.append('search', searchTerm);
       }
       
-      // Add filter if provided
       if (filterStatus) {
         params.append('company_type', filterStatus);
       }
@@ -160,13 +160,92 @@ const AllUsers: React.FC = () => {
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setPagination(prev => ({ ...prev, current_page: 1 })); // Reset to first page on new search
+    setPagination(prev => ({ ...prev, current_page: 1 }));
   };
   
   // Handle filter change
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFilterStatus(e.target.value);
-    setPagination(prev => ({ ...prev, current_page: 1 })); // Reset to first page on new filter
+    setPagination(prev => ({ ...prev, current_page: 1 }));
+  };
+  
+  // Handle Add Candidate submission
+  const handleAddCandidate = async (candidateData: { name: string; email: string }) => {
+    try {
+      setLoading(true);
+      
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      
+      const response = await fetch('/api/addcan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          name: candidateData.name,
+          email: candidateData.email,
+          password: 'password',
+          password_confirmation: 'password',
+          agree_terms: true
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add candidate');
+      }
+      
+      const result = await response.json();
+      
+      // Check if registration was successful (handle both message formats)
+      if (result.message && result.message.includes('Registration successful') || result.user) {
+        // Close Add Candidate Modal
+        setAddCandidateModal(false);
+        
+        // Store candidate data for CompleteProfileModal
+        setNewCandidateData({
+          name: candidateData.name,
+          email: candidateData.email,
+          userId: result.user?.id || result.user_id
+        });
+        
+        // Open Complete Profile Modal
+        setShowCompleteProfileModal(true);
+        
+        // Show success message
+        setModalState({
+          isOpen: true,
+          title: 'Success',
+          message: 'Candidate added successfully. Please complete their profile.',
+          type: 'success',
+          onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+        });
+      } else {
+        throw new Error('Unexpected response from server');
+      }
+    } catch (err) {
+      console.error('Error adding candidate:', err);
+      setModalState({
+        isOpen: true,
+        title: 'Error',
+        message: err instanceof Error ? err.message : 'Failed to add candidate',
+        type: 'error',
+        onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Handle Complete Profile Modal close
+  const handleCompleteProfileClose = () => {
+    setShowCompleteProfileModal(false);
+    setNewCandidateData(null);
+    // Refresh user list
+    fetchUserData();
   };
   
   // Action dropdown state
@@ -196,23 +275,17 @@ const AllUsers: React.FC = () => {
   
   // Handle action selection
   const handleAction = (action: string, userId: number) => {
-    // Close dropdown
     setActiveDropdown(null);
     
-    // Perform action based on selection
     switch (action) {
       case 'view':
-        // Find the user data by ID
         const selectedUser = userData.find(user => user.id === userId);
-        console.log(selectedUser, 111);
         if (selectedUser) {
-          // Open user details modal
           setUserDetailsModal({
             isOpen: true,
             userData: selectedUser
           });
         } else {
-          // Show error if user not found
           setModalState({
             isOpen: true,
             title: 'Error',
@@ -223,23 +296,17 @@ const AllUsers: React.FC = () => {
         }
         break;
       case 'resetPassword':
-        // Show confirmation modal for resetting password
         setModalState({
           isOpen: true,
           title: 'Reset Password',
           message: 'Are you sure you want to reset the password for this user?',
           type: 'confirm',
           onConfirm: () => {
-            // Set loading state
             setLoading(true);
             
-            // Generate a random password
             const randomPassword = generateRandomPassword();
-            
-            // Get CSRF token from meta tag
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             
-            // Update the password in the database
             fetch(`/api/reset-password/${userId}`, {
               method: 'POST',
               headers: {
@@ -260,9 +327,7 @@ const AllUsers: React.FC = () => {
               setLoading(false);
               
               if (data.success) {
-                // Copy to clipboard
                 navigator.clipboard.writeText(randomPassword).then(() => {
-                  // Show success modal with the generated password
                   setModalState({
                     isOpen: true,
                     title: 'Password Reset',
@@ -274,7 +339,6 @@ const AllUsers: React.FC = () => {
                   });
                 }).catch(err => {
                   console.error('Could not copy password to clipboard:', err);
-                  // Show success modal with the generated password but indicate clipboard copy failed
                   setModalState({
                     isOpen: true,
                     title: 'Password Reset',
@@ -293,7 +357,6 @@ const AllUsers: React.FC = () => {
               setLoading(false);
               console.error('Error resetting password:', err);
               
-              // Show error message modal
               setModalState({
                 isOpen: true,
                 title: 'Error',
@@ -306,20 +369,16 @@ const AllUsers: React.FC = () => {
         });
         break;
       case 'delete':
-        // Show confirmation modal before deleting
         setModalState({
           isOpen: true,
           title: 'Confirm Deletion',
           message: 'Are you sure you want to delete this user? This will remove all their information from the system and cannot be undone.',
           type: 'confirm',
           onConfirm: () => {
-            // Set loading state for this operation
             setLoading(true);
             
-            // Get CSRF token from meta tag
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             
-            // Call API to delete user and all related information
             fetch(`/api/user-information/${userId}`, {
               method: 'DELETE',
               headers: {
@@ -337,7 +396,6 @@ const AllUsers: React.FC = () => {
             })
             .then(data => {
               if (data.success) {
-                // Show success message modal
                 setModalState({
                   isOpen: true,
                   title: 'Success',
@@ -345,7 +403,6 @@ const AllUsers: React.FC = () => {
                   type: 'success',
                   onConfirm: () => {
                     setModalState(prev => ({ ...prev, isOpen: false }));
-                    // Refresh the user list
                     fetchUserData();
                   }
                 });
@@ -357,7 +414,6 @@ const AllUsers: React.FC = () => {
               console.error('Error deleting user:', err);
               setError(err instanceof Error ? err.message : 'An unknown error occurred while deleting the user');
               
-              // Show error message modal
               setModalState({
                 isOpen: true,
                 title: 'Error',
@@ -419,6 +475,22 @@ const AllUsers: React.FC = () => {
         userData={userDetailsModal.userData}
         onClose={handleCloseUserDetailsModal}
       />
+      
+      {/* Add Candidate Modal */}
+      {addCandidateModal && (
+        <AddCandidateModal 
+          onClose={() => setAddCandidateModal(false)}
+          onSubmit={handleAddCandidate}
+        />
+      )}
+      
+      {/* Complete Profile Modal */}
+      {showCompleteProfileModal && newCandidateData && (
+        <CompleteProfileModal 
+          onClose={handleCompleteProfileClose}
+          candidateUserId={newCandidateData.userId}
+        />
+      )}
     
       <div className="personal-deets-cont">
         <div className="personal-deets-header">
@@ -444,7 +516,7 @@ const AllUsers: React.FC = () => {
             <option value="nonprofit">Non-profit</option>
           </select>
           <input className="status-bar" type="text" placeholder="Status" />
-          <button className="add-candidate">Add Candidate</button>
+          <button className="add-candidate" onClick={() => setAddCandidateModal(true)}>Add Candidate</button>
         </div>
         <table className="all-users-table">
           <thead>
@@ -474,15 +546,14 @@ const AllUsers: React.FC = () => {
                 <td colSpan={7} style={{ textAlign: 'center', padding: '20px' }}>No user data found</td>
               </tr>
             ) : (
-              // Use API data if available, fallback to mock data for development
               userData.map((user, index) => (
                 <tr key={user.id || index}>
                   <td>{user.company_name}</td>
                   <td>{`${user.first_name} ${user.last_name}`}</td>
                   <td>{user.company_designator}</td>
                   <td>{user.state_registration}</td>
-                  <td>{user.franchise || '04/11/2023'}</td> {/* Fallback to mock date */}
-                  <td>{user.irs || '04/11/2023'}</td> {/* Fallback to mock date */}
+                  <td>{user.franchise || '04/11/2023'}</td>
+                  <td>{user.irs || '04/11/2023'}</td>
                   <td className="action-dropdown-cell">
                     <div className="action-dropdown" ref={activeDropdown === user.id ? dropdownRef : null}>
                       <button 
@@ -534,41 +605,33 @@ const AllUsers: React.FC = () => {
             </button>
             
             {(() => {
-              // Logic to show limited page buttons with ellipsis
               const currentPage = pagination.current_page;
               const lastPage = pagination.last_page;
-              const delta = 2; // Number of pages to show before and after current page
+              const delta = 2;
               
               let pages = [];
               
-              // Always include first page
               pages.push(1);
               
-              // Calculate range around current page
               const rangeStart = Math.max(2, currentPage - delta);
               const rangeEnd = Math.min(lastPage - 1, currentPage + delta);
               
-              // Add ellipsis after first page if needed
               if (rangeStart > 2) {
                 pages.push('ellipsis-start');
               }
               
-              // Add pages in the calculated range
               for (let i = rangeStart; i <= rangeEnd; i++) {
                 pages.push(i);
               }
               
-              // Add ellipsis before last page if needed
               if (rangeEnd < lastPage - 1) {
                 pages.push('ellipsis-end');
               }
               
-              // Always include last page if it's not the first page
               if (lastPage > 1) {
                 pages.push(lastPage);
               }
               
-              // Render the page buttons
               return pages.map((page, index) => {
                 if (page === 'ellipsis-start' || page === 'ellipsis-end') {
                   return (

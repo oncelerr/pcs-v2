@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\RegisterController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
@@ -31,6 +32,7 @@ Route::post('/api/get-document-url', [DocumentAccessController::class, 'getDocum
 Route::group(['prefix' => 'api'], function () {
     // Registration
     Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/addcan', [AuthController::class, 'addcan']);
 
     // Email Verification
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
@@ -117,6 +119,7 @@ Route::get('/test-email', function () {
 
 Route::group(['prefix' => 'api'], function () {
     Route::post('/submit-form', [\App\Http\Controllers\FormSubmitController::class, 'store']);
+    Route::post('/submit-form-for-candidate', [\App\Http\Controllers\FormSubmitController::class, 'storeForCandidate']);
 });
 
 // Admin dashboard activity log route

@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Services\UserStageItemService;
+use App\Models\ComplianceUser;
+use function Symfony\Component\Clock\now;
 
 class AuthController extends Controller
 {
@@ -69,7 +71,7 @@ class AuthController extends Controller
                 // Log error but continue with registration process
                 Log::error('Failed to send admin notification about new user', ['error' => $e->getMessage()]);
             }
-            
+
             // Send OTP to user's email directly (no queue)
             try {
                 Mail::send([], [], function ($message) use ($user, $otp) {
@@ -89,13 +91,13 @@ class AuthController extends Controller
                             class="image_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tr><td class="pad" style="width:100%"><div class="alignment" align="center"><div style="max-width:700px"><img src="https://d15k2d11r6t6rl.cloudfront.net/pub/r388/l239mmxz/kmw/eq6/1x9/EmailHeading.png" style="display:block;height:auto;border:0;width:100%" width="700" alt title height="auto"></div></div></td></tr></table></td></tr></tbody></table>
                             </td></tr></tbody></table><table class="row row-3" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tbody><tr><td><table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;border-radius:0;color:#000;width:700px;margin:0 auto" width="700"><tbody><tr><td class="column column-1" width="100%" 
                             style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top"><table class="text_block block-1" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad"><div style="font-family:sans-serif"><div class 
-                            style="font-size:14px;font-family:Arial,Helvetica Neue,Helvetica,sans-serif;mso-line-height-alt:16.8px;color:#555;line-height:1.2"><p style="margin:0;font-size:14px;mso-line-height-alt:16.8px"><strong><span style="word-break: break-word; font-size: 24px;">Hi <span style="word-break: break-word; color: #106552;">'. $user->name .'</span>,</span></strong></p></div></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table><table class="row row-4" align="center" width="100%" border="0" 
+                            style="font-size:14px;font-family:Arial,Helvetica Neue,Helvetica,sans-serif;mso-line-height-alt:16.8px;color:#555;line-height:1.2"><p style="margin:0;font-size:14px;mso-line-height-alt:16.8px"><strong><span style="word-break: break-word; font-size: 24px;">Hi <span style="word-break: break-word; color: #106552;">' . $user->name . '</span>,</span></strong></p></div></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table><table class="row row-4" align="center" width="100%" border="0" 
                             cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tbody><tr><td><table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;border-radius:0;color:#000;width:700px;margin:0 auto" width="700"><tbody><tr><td class="column column-1" width="100%" 
                             style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top"><table class="paragraph_block block-1" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad"><div 
                             style="color:#000;direction:ltr;font-family:Arial,Helvetica Neue,Helvetica,sans-serif;font-size:14px;font-weight:400;letter-spacing:0;line-height:1.2;text-align:left;mso-line-height-alt:17px"><p style="margin:0;margin-bottom:16px">Here is your One Time Password (OTP)</p><p style="margin:0">Please enter this code to verify your email address for Premium Corporate Solutions.</p></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table><table class="row row-5" align="center" 
                             width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tbody><tr><td><table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;border-radius:0;color:#000;width:700px;margin:0 auto" width="700"><tbody><tr><td class="column column-1" width="100%" 
                             style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top"><table class="text_block block-1" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad"><div style="font-family:sans-serif"><div class 
-                            style="font-size:14px;font-family:Arial,Helvetica Neue,Helvetica,sans-serif;mso-line-height-alt:16.8px;color:#555;line-height:1.2"><p style="margin:0;font-size:14px;text-align:center;mso-line-height-alt:16.8px"><span style="word-break: break-word; font-size: 46px;">'. $otp .'</span></p></div></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table><table class="row row-6" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" 
+                            style="font-size:14px;font-family:Arial,Helvetica Neue,Helvetica,sans-serif;mso-line-height-alt:16.8px;color:#555;line-height:1.2"><p style="margin:0;font-size:14px;text-align:center;mso-line-height-alt:16.8px"><span style="word-break: break-word; font-size: 46px;">' . $otp . '</span></p></div></div></td></tr></table></td></tr></tbody></table></td></tr></tbody></table><table class="row row-6" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" 
                             style="mso-table-lspace:0;mso-table-rspace:0"><tbody><tr><td><table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;border-radius:0;color:#000;width:700px;margin:0 auto" width="700"><tbody><tr><td class="column column-1" width="100%" style="mso-table-lspace:0;mso-table-rspace:0;font-weight:400;text-align:left;padding-bottom:5px;padding-top:5px;vertical-align:top"><table 
                             class="paragraph_block block-1" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word"><tr><td class="pad"><div style="color:#000;direction:ltr;font-family:Arial,Helvetica Neue,Helvetica,sans-serif;font-size:14px;font-weight:400;letter-spacing:0;line-height:1.2;text-align:left;mso-line-height-alt:17px"><p style="margin:0">OTP will expire in <strong>24 Hours</strong>.</p></div></td></tr></table></td></tr>
                             </tbody></table></td></tr></tbody></table><table class="row row-7" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0"><tbody><tr><td><table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0;mso-table-rspace:0;border-radius:0;color:#000;width:700px;margin:0 auto" width="700"><tbody><tr><td class="column column-1" width="100%" 
@@ -149,6 +151,63 @@ class AuthController extends Controller
                 'user' => $user->only(['id', 'name', 'email', 'username']),
                 // In production, don't send OTP in the response
                 // 'otp' => $otp // Only for development/testing
+            ], 201);
+
+        } catch (\Exception $e) {
+            \Log::error('Registration error: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Registration failed. Please try again.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    public function addcan(Request $request)
+    {
+        // Validate the request data
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'role_id' => 'sometimes|integer|exists:roles,id',
+        ]);
+
+        try {
+            // Generate OTP (6 digits)
+            $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Create the user
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'username' => $validated['name'],
+                'password' => Hash::make('password'),
+                'role_id' => $validated['role_id'] ?? 2, // Default role ID (2 for regular users)
+                'email_verified_at' => now(),
+                'remember_token' => Str::random(10),
+            ]);
+
+            UserStageItemService::initializeForNewCandidate($user);
+
+            // Use $user->id instead of $userId
+            ComplianceUser::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'compliance_status' => ComplianceUser::STATUS_PENDING,
+                    'state_registration_status' => ComplianceUser::STATUS_PENDING,
+                    'bio_filing_status' => ComplianceUser::STATUS_PENDING,
+                    'ein_filing_status' => ComplianceUser::STATUS_PENDING,
+                    'bank_registration_status' => ComplianceUser::STATUS_PENDING,
+                    'process_status' => ComplianceUser::STATUS_PENDING,
+                    'annual_franchise_tax' => '',
+                    'annual_irs_tax' => ''
+                ]
+            );
+
+            // Return success response
+            return response()->json([
+                'message' => 'Adding Candidate Successful, You/They can complete their Profile now.',
+                'user' => $user->only(['id', 'name', 'email', 'username']),
             ], 201);
 
         } catch (\Exception $e) {
