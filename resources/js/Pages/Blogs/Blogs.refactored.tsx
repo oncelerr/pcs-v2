@@ -153,7 +153,7 @@ export default function Blogs() {
                     </div>
 
                     <div className="footer-bottom">
-                        <p>All rights reserved @ Premium Corp Solution 2025 | Made by Vibe Hive Digital Services</p>
+                        <p>All rights reserved @ Premium Corp Solutions 2025 | Made by Vibe Hive Digital Services</p>
                         <div className="social-links">
                             <a href="#" aria-label="Facebook">f</a>
                             <a href="#" aria-label="Twitter">t</a>

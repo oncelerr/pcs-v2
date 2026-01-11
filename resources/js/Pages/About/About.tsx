@@ -20,9 +20,9 @@ export default function About() {
           </div>
           <div className="section-two-right">
             <p className="section-two-right-p">
-              At Premium Corp Solution, we help individuals and businesses across the U.S. navigate legal compliance with ease and confidence. Our mission is to simplify the complex – turning paperwork and legal requirements into a guided, stress-free experience.
+              At Premium Corp Solutions, we help individuals and businesses across the U.S. navigate legal compliance with ease and confidence. Our mission is to simplify the complex – turning paperwork and legal requirements into a guided, stress-free experience.
               <br /><br />
-              At Premium Corp Solution, we help individuals and businesses across the U.S. navigate legal compliance with ease and confidence. Our mission is to simplify the complex – turning paperwork and legal requirements into a guided, stress-free experience.
+              At Premium Corp Solutions, we help individuals and businesses across the U.S. navigate legal compliance with ease and confidence. Our mission is to simplify the complex – turning paperwork and legal requirements into a guided, stress-free experience.
             </p>
           </div>
         </div>

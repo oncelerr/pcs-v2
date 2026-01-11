@@ -7,7 +7,7 @@ interface PageTitleProps {
 
 const PageTitle: React.FC<PageTitleProps> = ({ title, children }) => {
     useEffect(() => {
-        document.title = title ? `${title} | PCS` : 'Premium Corp Solution';
+        document.title = title ? `${title} | PCS` : 'Premium Corp Solutions';
     }, [title]);
 
     return <>{children}</>;

@@ -112,7 +112,7 @@ export default function Footer() {
             </div>
           </div>
           <div className="bottom">
-            <p>All rights reserved @ Premium Corp Solution 2025 | Made by <a href="https://vibehive.ph">Vibe Hive Digital Services</a></p>
+            <p>All rights reserved @ Premium Corp Solutions 2025 | Made by <a href="https://vibehive.ph">Vibe Hive Digital Services</a></p>
           </div>
         </div>
       </div>
