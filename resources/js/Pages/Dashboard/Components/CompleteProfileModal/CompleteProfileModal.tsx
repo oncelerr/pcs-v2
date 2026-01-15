@@ -911,7 +911,7 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
                     className={`${styles.pdFn} ${errors.businessDescription ? styles.errorField : ''}`}
                     value={formData.businessDescription}
                     onChange={(e) => handleInputChange('businessDescription', e.target.value)}
-                    placeholder="Tell me about your business in minimum 50 words"
+                    placeholder="Tell me about your business in minimum 20 words"
                     style={{ minHeight: '120px', width: 'calc(100% - 42px)', resize: 'vertical' }}
                     required
                   />
