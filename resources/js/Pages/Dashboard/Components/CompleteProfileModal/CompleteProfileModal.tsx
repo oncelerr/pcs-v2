@@ -105,8 +105,8 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
   const [errors, setErrors] = useState<ValidationErrors>({});
 
   const requiredFields = [
-    'firstName', 'lastName', 'emailAddress', 'contactNumber', 'ssn', 'country',
-    'streetAddress', 'city', 'state', 'zipCode', 'companyName', 'companyType', 'companyWebsite',
+    'firstName', 'lastName', 'emailAddress', 'contactNumber', 'country',
+    'streetAddress', 'city', 'state', 'zipCode', 'companyName', 'companyType',
     'businessDescription', 'passport_file_name', 'proof_address_file_name'
   ];
 
@@ -138,17 +138,11 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
         setErrors(prev => ({ ...prev, [field]: 'Only numbers allowed' }));
         return;
       }
-    } else if (field === 'zipCode') {
-      // For zip code, only allow numbers
-      if (value && !isNumbersOnly(value)) {
-        setErrors(prev => ({ ...prev, [field]: 'Only numbers allowed' }));
-        return;
-      }
     } else if (field === 'businessDescription') {
       // For business description, check word count
       const wordCount = countWords(value);
-      if (wordCount < 50) {
-        setErrors(prev => ({ ...prev, [field]: `Please provide at least 50 words. Current count: ${wordCount} words` }));
+      if (wordCount < 20) {
+        setErrors(prev => ({ ...prev, [field]: `Please provide at least 20 words. Current count: ${wordCount} words` }));
       } else {
         setErrors(prev => ({ ...prev, [field]: false }));
       }
@@ -424,9 +418,9 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
     });
     
     // Special validation for business description word count
-    if (formData.businessDescription.trim() && countWords(formData.businessDescription) < 50) {
+    if (formData.businessDescription.trim() && countWords(formData.businessDescription) < 20) {
       const wordCount = countWords(formData.businessDescription);
-      newErrors.businessDescription = `Please provide at least 50 words. Current count: ${wordCount} words`;
+      newErrors.businessDescription = `Please provide at least 20 words. Current count: ${wordCount} words`;
       isValid = false;
     }
     
@@ -765,7 +759,6 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
                     type="text"
                     value={formData.ssn}
                     onChange={(e) => handleInputChange('ssn', e.target.value)}
-                    required
                   />
                 </div>
                 <div className={styles.personalDeetsInput}>
@@ -896,7 +889,6 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
                     type="text"
                     value={formData.companyWebsite}
                     onChange={(e) => handleInputChange('companyWebsite', e.target.value)}
-                    required
                   />
                 </div>
                 <div className={styles.personalDeetsInput}>
