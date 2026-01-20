@@ -108,8 +108,8 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
   const [errors, setErrors] = useState<ValidationErrors>({});
 
   const requiredFields = [
-    'firstName', 'lastName', 'emailAddress', 'contactNumber', 'ssn', 'country',
-    'streetAddress', 'city', 'state', 'zipCode', 'companyName', 'companyType', 'companyWebsite',
+    'firstName', 'lastName', 'emailAddress', 'contactNumber', 'country',
+    'streetAddress', 'city', 'state', 'zipCode', 'companyName', 'companyType',
     'businessDescription', 'passport_file_name', 'proof_address_file_name'
   ];
 
@@ -758,7 +758,6 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
                     type="text"
                     value={formData.ssn}
                     onChange={(e) => handleInputChange('ssn', e.target.value)}
-                    required
                   />
                 </div>
                 <div className={styles.personalDeetsInput}>
@@ -889,7 +888,6 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
                     type="text"
                     value={formData.companyWebsite}
                     onChange={(e) => handleInputChange('companyWebsite', e.target.value)}
-                    required
                   />
                 </div>
                 <div className={styles.personalDeetsInput}>
