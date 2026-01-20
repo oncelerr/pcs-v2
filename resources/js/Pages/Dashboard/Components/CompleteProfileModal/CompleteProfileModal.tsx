@@ -25,6 +25,7 @@ interface FormData {
   companyIndustry: string;
   companyDesignator: string;
   stateRegistration: string;
+  otherStateRegistration: string;
   businessDescription: string;
   streetAddressLine2: string;
   passport_file_name: string;
@@ -74,6 +75,7 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDrawSignature, setIsDrawSignature] = useState(false);
+  const [showOtherStateInput, setShowOtherStateInput] = useState(false);
   const signaturePadRef = useRef<HTMLDivElement>(null);
   const signaturePad = useRef<any>(null);
   const [formData, setFormData] = useState<FormData>({
@@ -96,6 +98,7 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
     companyIndustry: '',
     companyDesignator: '',
     stateRegistration: '',
+    otherStateRegistration: '',
     businessDescription: '',
     passport_file_name: '',
     proof_address_file_name: '',
@@ -110,15 +113,6 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
     'businessDescription', 'passport_file_name', 'proof_address_file_name'
   ];
 
-  // Validation functions
-  const isLettersOnly = (value: string): boolean => {
-    return /^[A-Za-z\s'-]+$/.test(value);
-  };
-
-  const isNumbersOnly = (value: string): boolean => {
-    return /^[0-9]+$/.test(value);
-  };
-
   // Function to count words in a string
   const countWords = (text: string): number => {
     return text.trim().split(/\s+/).filter(word => word.length > 0).length;
@@ -126,31 +120,24 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     // Apply field-specific validation
-    if (['firstName', 'middleName', 'lastName', 'suffixName', 'city', 'state'].includes(field)) {
-      // For name fields, city and state, only allow letters
-      if (value && !isLettersOnly(value)) {
-        setErrors(prev => ({ ...prev, [field]: 'Only letters, spaces, hyphens and apostrophes allowed' }));
-        return;
-      }
-    } else if (field === 'contactNumber') {
-      // For contact number, only allow numbers
-      if (value && !isNumbersOnly(value)) {
-        setErrors(prev => ({ ...prev, [field]: 'Only numbers allowed' }));
-        return;
-      }
-    } else if (field === 'zipCode') {
-      // For zip code, only allow numbers
-      if (value && !isNumbersOnly(value)) {
-        setErrors(prev => ({ ...prev, [field]: 'Only numbers allowed' }));
-        return;
-      }
-    } else if (field === 'businessDescription') {
+    if (field === 'businessDescription') {
       // For business description, check word count
       const wordCount = countWords(value);
-      if (wordCount < 50) {
-        setErrors(prev => ({ ...prev, [field]: `Please provide at least 50 words. Current count: ${wordCount} words` }));
+      if (wordCount < 20) {
+        setErrors(prev => ({ ...prev, [field]: `Please provide at least 20 words. Current count: ${wordCount} words` }));
       } else {
         setErrors(prev => ({ ...prev, [field]: false }));
+      }
+    }
+
+    // Handle state registration selection
+    if (field === 'stateRegistration') {
+      console.log('State registration selected:', value);
+      console.log('Should show other input:', value === 'others');
+      setShowOtherStateInput(value === 'others');
+      // Clear the other state input if not "others"
+      if (value !== 'others') {
+        setFormData(prev => ({ ...prev, otherStateRegistration: '' }));
       }
     }
 
@@ -424,9 +411,15 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
     });
     
     // Special validation for business description word count
-    if (formData.businessDescription.trim() && countWords(formData.businessDescription) < 50) {
+    if (formData.businessDescription.trim() && countWords(formData.businessDescription) < 20) {
       const wordCount = countWords(formData.businessDescription);
-      newErrors.businessDescription = `Please provide at least 50 words. Current count: ${wordCount} words`;
+      newErrors.businessDescription = `Please provide at least 20 words. Current count: ${wordCount} words`;
+      isValid = false;
+    }
+    
+    // Special validation for "Others" state registration
+    if (formData.stateRegistration === 'others' && !formData.otherStateRegistration.trim()) {
+      newErrors.otherStateRegistration = 'Please specify the state';
       isValid = false;
     }
     
@@ -919,7 +912,7 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
                     className={`${styles.pdFn} ${errors.businessDescription ? styles.errorField : ''}`}
                     value={formData.businessDescription}
                     onChange={(e) => handleInputChange('businessDescription', e.target.value)}
-                    placeholder="Tell me about your business in minimum 50 words"
+                    placeholder="Tell me about your business in minimum 20 words"
                     style={{ minHeight: '120px', width: 'calc(100% - 42px)', resize: 'vertical' }}
                     required
                   />
@@ -947,20 +940,52 @@ export default function CompleteProfileModal({ onClose, candidateUserId }: Compl
                 </div>
                 <div className={styles.personalDeetsInput}>
                   <h3 className={styles.h3Title}>State Registration</h3>
-                  <select
-                    className={`${styles.pdFn} ${errors.companyName ? styles.errorField : ''}`}
-                    value={formData.stateRegistration}
-                    onChange={(e) => handleInputChange('stateRegistration', e.target.value)}
-                    required
-                  >
-                    <option value="" disabled>Select a State Registration</option>
-                    <option value="llc">DELAWARE</option>
-                    <option value="nonprofit">WYOMING</option>
-                    <option value="subsidiary">FLORIDA</option>
-                    <option value="inc">CALIFORNIA</option>
-                    <option value="corporation">NEVADA</option>
-                    <option value="corporation">Others</option>
-                  </select>
+                  {!showOtherStateInput ? (
+                    <select
+                      className={`${styles.pdFn} ${errors.stateRegistration ? styles.errorField : ''}`}
+                      value={formData.stateRegistration}
+                      onChange={(e) => handleInputChange('stateRegistration', e.target.value)}
+                      required
+                    >
+                      <option value="" disabled>Select a State Registration</option>
+                      <option value="delaware">DELAWARE</option>
+                      <option value="wyoming">WYOMING</option>
+                      <option value="florida">FLORIDA</option>
+                      <option value="california">CALIFORNIA</option>
+                      <option value="nevada">NEVADA</option>
+                      <option value="others">Others</option>
+                    </select>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <input
+                        className={`${styles.pdFn} ${errors.otherStateRegistration ? styles.errorField : ''}`}
+                        type="text"
+                        value={formData.otherStateRegistration}
+                        onChange={(e) => handleInputChange('otherStateRegistration', e.target.value)}
+                        placeholder="Please specify state"
+                        required
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowOtherStateInput(false);
+                          setFormData(prev => ({ ...prev, stateRegistration: '', otherStateRegistration: '' }));
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#f5f5f5',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        Back to dropdown
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
