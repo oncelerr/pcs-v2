@@ -48,7 +48,7 @@ const UserDocuments = () => {
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Modal state
   const [modalState, setModalState] = useState({
     isOpen: false,
@@ -92,8 +92,8 @@ const UserDocuments = () => {
     title = '',
     message = '',
     type = 'info' as 'confirm' | 'success' | 'error' | 'info',
-    onConfirm = () => {},
-    onCancel = () => {}
+    onConfirm = () => { },
+    onCancel = () => { }
   }) => ({
     isOpen,
     title,
@@ -113,23 +113,23 @@ const UserDocuments = () => {
     setLoading(true);
     try {
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      
+
       // Build query parameters
       const queryParams = new URLSearchParams();
       queryParams.append('page', page.toString());
       queryParams.append('per_page', pagination.per_page.toString());
-      
+
       if (searchTerm) {
         queryParams.append('search', searchTerm);
       }
-      
+
       if (filterDocumentType) {
         queryParams.append('document_type', filterDocumentType);
       }
 
       // Get the auth token from localStorage
       const token = localStorage.getItem('auth_token');
-      
+
       const response = await fetch(`/api/user-documents?${queryParams.toString()}`, {
         method: 'GET',
         headers: {
@@ -171,13 +171,13 @@ const UserDocuments = () => {
       navigate('/login');
       return;
     }
-    
+
     if (!user) {
       console.error('No user data found, may need to refresh auth state');
       // You might want to trigger a refresh of the auth state here
     }
   }, [navigate, user]);
-  
+
   // Initial data fetch
   useEffect(() => {
     if (isAdmin) {
@@ -206,7 +206,7 @@ const UserDocuments = () => {
   // View user details
   const handleViewUserDetails = (userId: number) => {
     const userToView = documents.find(doc => doc.user_id === userId);
-    
+
     if (userToView) {
       setUserDetailsModal({
         isOpen: true,
@@ -227,31 +227,31 @@ const UserDocuments = () => {
     try {
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
       const token = localStorage.getItem('auth_token');
-      
+
       // Map document types to the expected backend values
       // Backend only accepts: 'passport', 'proof_address', 'signature'
       let documentType = 'passport'; // Default to passport
-      
+
       // Check file extension to determine document type
       const fileName = doc.file_name.toLowerCase();
       const isImage = /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileName);
       const isPdf = /\.pdf$/i.test(fileName);
-      
+
       if (!isImage && !isPdf) {
         throw new Error('Only image files and PDFs are supported');
       }
-      
+
       // Map document types based on the document_type field
       // This is a simplified mapping - adjust based on your actual document types
       if (doc.document_type.toLowerCase().includes('passport')) {
         documentType = 'passport';
-      } else if (doc.document_type.toLowerCase().includes('address') || 
-                doc.document_type.toLowerCase().includes('proof')) {
+      } else if (doc.document_type.toLowerCase().includes('address') ||
+        doc.document_type.toLowerCase().includes('proof')) {
         documentType = 'proof_address';
       } else if (doc.document_type.toLowerCase().includes('signature')) {
         documentType = 'signature';
       }
-      
+
       // Create a custom endpoint to handle file retrieval directly
       // We'll use the actual file path from the document record
       const response = await fetch('/api/get-document-url', {
@@ -284,10 +284,10 @@ const UserDocuments = () => {
       return data.downloadUrl; // The endpoint returns downloadUrl, not url
     } catch (error: any) {
       console.error('Error getting document URL:', error);
-      
+
       // Provide more specific error messages
       let errorMessage = 'Failed to access document. Please try again later.';
-      
+
       if (error.message) {
         if (error.message.includes('Only image files and PDFs are supported')) {
           errorMessage = 'Only image files (JPG, PNG, etc.) and PDF documents are supported.';
@@ -295,7 +295,7 @@ const UserDocuments = () => {
           errorMessage = 'This document type is not supported. Only passport, proof of address, and signature documents are allowed.';
         }
       }
-      
+
       setModalState(createModalState({
         isOpen: true,
         title: 'Document Error',
@@ -312,7 +312,7 @@ const UserDocuments = () => {
     const isPdf = /\.pdf$/i.test(fileName);
     return isImage || isPdf;
   };
-  
+
   // View document
   const handleViewDocument = async (doc: UserDocument) => {
     setLoading(true);
@@ -321,9 +321,9 @@ const UserDocuments = () => {
       if (!isSupportedFileType(doc.file_name)) {
         throw new Error('Only image files and PDFs are supported');
       }
-      
+
       const secureUrl = await getSecureDocumentUrl(doc);
-      
+
       if (secureUrl) {
         setDocumentViewerModal({
           isOpen: true,
@@ -333,10 +333,10 @@ const UserDocuments = () => {
       }
     } catch (error: any) {
       console.error('Error viewing document:', error);
-      
+
       // Provide more specific error messages
       let errorMessage = 'Failed to view document. Please try again later.';
-      
+
       if (error.message) {
         if (error.message.includes('Only image files and PDFs are supported')) {
           errorMessage = 'Only image files (JPG, PNG, etc.) and PDF documents are supported.';
@@ -344,7 +344,7 @@ const UserDocuments = () => {
           errorMessage = 'This document type is not supported. Only passport, proof of address, and signature documents are allowed.';
         }
       }
-      
+
       setModalState(createModalState({
         isOpen: true,
         title: 'Document Error',
@@ -363,10 +363,10 @@ const UserDocuments = () => {
       if (!isSupportedFileType(doc.file_name)) {
         throw new Error('Only image files and PDFs are supported');
       }
-      
+
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
       const token = localStorage.getItem('auth_token');
-      
+
       // Create a direct download URL with the download parameter
       const response = await fetch('/api/get-document-url', {
         method: 'POST',
@@ -378,40 +378,45 @@ const UserDocuments = () => {
         },
         body: JSON.stringify({
           userId: doc.user_id,
-          filePath: doc.file_path, // Use the actual file path from the document
+          filePath: doc.file_path,
           fileName: doc.file_name,
-          download: true // Specify that this is a download request
+          download: true
         }),
         credentials: 'same-origin'
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error('Failed to get download URL: ' + (errorData.message || 'Unknown error'));
       }
-      
+
       const data = await response.json();
       const downloadUrl = data.downloadUrl;
-      
+
       if (downloadUrl) {
-        // Create a temporary anchor element to trigger download
-        const link = window.document.createElement('a');
-        link.href = downloadUrl;
-        link.download = doc.file_name;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        window.document.body.appendChild(link);
-        link.click();
-        window.document.body.removeChild(link);
+        // Use window.location for PDF downloads to ensure proper handling
+        if (doc.file_name.toLowerCase().endsWith('.pdf')) {
+          window.open(downloadUrl, '_blank');
+        } else {
+          // For non-PDF files, use the anchor element approach
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = doc.file_name;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
       } else {
         throw new Error('Failed to download document. Please try again later.');
       }
     } catch (error: any) {
       console.error('Error downloading document:', error);
-      
+
       // Provide more specific error messages
       let errorMessage = 'Failed to download document. Please try again later.';
-      
+
       if (error.message) {
         if (error.message.includes('Only image files and PDFs are supported')) {
           errorMessage = 'Only image files (JPG, PNG, etc.) and PDF documents are supported.';
@@ -419,7 +424,7 @@ const UserDocuments = () => {
           errorMessage = 'This document type is not supported. Only passport, proof of address, and signature documents are allowed.';
         }
       }
-      
+
       setModalState(createModalState({
         isOpen: true,
         title: 'Document Error',
@@ -468,18 +473,18 @@ const UserDocuments = () => {
   const renderPagination = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     let startPage = Math.max(1, pagination.current_page - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(pagination.last_page, startPage + maxVisiblePages - 1);
-    
+
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-    
+
     // Previous button
     pages.push(
-      <button 
-        key="prev" 
+      <button
+        key="prev"
         className={`pagination-button ${pagination.current_page === 1 ? 'disabled' : ''}`}
         onClick={() => pagination.current_page > 1 && handlePageChange(pagination.current_page - 1)}
         disabled={pagination.current_page === 1}
@@ -487,12 +492,12 @@ const UserDocuments = () => {
         &laquo;
       </button>
     );
-    
+
     // Page numbers
     for (let i = startPage; i <= endPage; i++) {
       pages.push(
-        <button 
-          key={i} 
+        <button
+          key={i}
           className={`pagination-button ${pagination.current_page === i ? 'active' : ''}`}
           onClick={() => handlePageChange(i)}
         >
@@ -500,11 +505,11 @@ const UserDocuments = () => {
         </button>
       );
     }
-    
+
     // Next button
     pages.push(
-      <button 
-        key="next" 
+      <button
+        key="next"
         className={`pagination-button ${pagination.current_page === pagination.last_page ? 'disabled' : ''}`}
         onClick={() => pagination.current_page < pagination.last_page && handlePageChange(pagination.current_page + 1)}
         disabled={pagination.current_page === pagination.last_page}
@@ -512,7 +517,7 @@ const UserDocuments = () => {
         &raquo;
       </button>
     );
-    
+
     return (
       <div className="pagination-container">
         <div className="pagination-info">
@@ -541,15 +546,15 @@ const UserDocuments = () => {
           </div>
           <div className="document-viewer-content">
             {isImage && (
-              <img 
-                src={documentViewerModal.documentUrl} 
-                alt={documentViewerModal.documentName} 
+              <img
+                src={documentViewerModal.documentUrl}
+                alt={documentViewerModal.documentName}
                 className="document-image"
               />
             )}
             {isPdf && (
-              <iframe 
-                src={documentViewerModal.documentUrl} 
+              <iframe
+                src={documentViewerModal.documentUrl}
                 title={documentViewerModal.documentName}
                 className="document-pdf"
                 width="100%"
@@ -559,7 +564,7 @@ const UserDocuments = () => {
             {!isImage && !isPdf && (
               <div className="document-download">
                 <p>This document type cannot be previewed.</p>
-                <button 
+                <button
                   onClick={() => {
                     const link = window.document.createElement('a');
                     link.href = documentViewerModal.documentUrl;
@@ -578,7 +583,7 @@ const UserDocuments = () => {
             )}
           </div>
           <div className="document-viewer-footer">
-            <button 
+            <button
               onClick={() => {
                 const link = window.document.createElement('a');
                 link.href = documentViewerModal.documentUrl;
@@ -612,7 +617,7 @@ const UserDocuments = () => {
             className="search-input"
           />
         </div>
-        
+
         <div className="filter-container">
           <select
             value={filterDocumentType}
@@ -627,7 +632,7 @@ const UserDocuments = () => {
           </select>
         </div>
       </div>
-      
+
       {/* Main content */}
       <div className="content-container">
         {error ? (
@@ -674,19 +679,19 @@ const UserDocuments = () => {
                       <td>{formatDate(document.uploaded_at)}</td>
                       <td>
                         <div className="action-buttons">
-                          <button 
+                          <button
                             className="view-button"
                             onClick={() => handleViewDocument(document)}
                           >
                             View Document
                           </button>
-                          <button 
+                          <button
                             className="download-button"
                             onClick={() => handleDownloadDocument(document)}
                           >
                             Download
                           </button>
-                          <button 
+                          <button
                             className="details-button"
                             onClick={() => handleViewUserDetails(document.user_id)}
                           >
@@ -699,13 +704,13 @@ const UserDocuments = () => {
                 )}
               </tbody>
             </table>
-            
+
             {/* Pagination - only show when not loading and has multiple pages */}
             {!loading && pagination.last_page > 1 && renderPagination()}
           </div>
         )}
       </div>
-      
+
       {/* Modals */}
       <ConfirmationModal
         isOpen={modalState.isOpen}
@@ -715,7 +720,7 @@ const UserDocuments = () => {
         onConfirm={modalState.onConfirm}
         onCancel={modalState.onCancel}
       />
-      
+
       {userDetailsModal.isOpen && userDetailsModal.userData && (
         <UserDetailsModal
           isOpen={userDetailsModal.isOpen}
@@ -723,7 +728,7 @@ const UserDocuments = () => {
           userData={userDetailsModal.userData}
         />
       )}
-      
+
       {/* Document Viewer Modal */}
       <DocumentViewerModal />
     </div>
