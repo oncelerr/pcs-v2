@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Services\UserStageItemService;
 use App\Models\ComplianceUser;
-use function Symfony\Component\Clock\now;
 
 class AuthController extends Controller
 {
@@ -63,7 +62,7 @@ class AuthController extends Controller
                             'name' => $user->name,
                             'email' => $user->email,
                             'username' => $user->username,
-                            'registered_at' => now()->toDateTimeString()
+                            'registered_at' => now()
                         ]
                     ]
                 );
