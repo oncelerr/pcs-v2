@@ -244,13 +244,16 @@ class DocumentAccessController extends Controller
         //     return response()->json(['error' => 'Unauthorized access to document'], 403);
         // }
 
+        // Base64 encode the filePath to avoid URL encoding issues with slashes
+        $encodedFilePath = base64_encode($filePath);
+
         // Generate a signed URL that expires in 5 minutes
         $downloadUrl = URL::temporarySignedRoute(
             'document.direct-view',
             now()->addMinutes(5),
             [
                 'userId' => $userId,
-                'filePath' => $filePath,
+                'filePath' => $encodedFilePath,
                 'fileName' => $fileName,
                 'download' => $download
             ]
@@ -271,9 +274,17 @@ class DocumentAccessController extends Controller
 
         // Extract parameters
         $userId = $request->userId;
-        $filePath = $request->filePath;
+        $encodedFilePath = $request->filePath;
         $fileName = $request->fileName;
         $download = $request->has('download');
+
+        // Decode the base64 encoded filePath
+        $filePath = base64_decode($encodedFilePath);
+
+        // Validate that the decoded path is valid
+        if ($filePath === false || empty($filePath)) {
+            abort(400, 'Invalid file path');
+        }
 
         // Temporarily removed auth check for testing
         // $currentUser = Auth::user();
