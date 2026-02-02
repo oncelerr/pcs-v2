@@ -869,13 +869,6 @@ const Dashboard = () => {
     }
   }, [user?.id]);
 
-  const mailForwarding = [
-    { id: 1, title: 'IRS Letter - July 2025' },
-    { id: 2, title: 'Bank Statement - June 2025' },
-    { id: 3, title: 'Franchise Tax Notice (scanned)' },
-    { id: 4, title: 'Compliance Notice - State' }
-  ];
-
   // Show blocking modal when a Stage Item named "Profile Setup" is active
   const hasActiveProfileSetup = statusProgress.stages.some((stage) =>
     stage.items.some((item) => item.name === 'Profile Setup' && item.status === 'active')
@@ -1046,7 +1039,7 @@ const Dashboard = () => {
           loadingTaxes={loadingTaxes}
           userDocuments={userDocuments}
           loadingUserDocuments={loadingUserDocuments}
-          mailForwarding={mailForwarding}
+          mailForwarding={[]}
           handleViewDetails={handleViewDetails}
         />
       ) : (

@@ -397,13 +397,19 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
             <div className="card__header-title">Mail Forwarding</div>
           </div>
           <div className="card__body" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 22 }}>
-            {mailForwarding.map((mail, idx) => (
-              <ListItem
-                key={mail.id}
-                title={mail.title}
-                onAction={() => handleViewDetails(mail)}
-              />
-            ))}
+            {mailForwarding.length > 0 ? (
+              mailForwarding.map((mail) => (
+                <ListItem
+                  key={mail.id}
+                  title={mail.title}
+                  onAction={() => handleViewDetails(mail)}
+                />
+              ))
+            ) : (
+              <div style={{ textAlign: 'center', color: '#666', padding: '16px 0' }}>
+                No data
+              </div>
+            )}
           </div>
         </div>
       </div>
