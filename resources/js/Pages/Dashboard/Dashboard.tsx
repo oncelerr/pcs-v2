@@ -878,30 +878,102 @@ const Dashboard = () => {
     stage.items.some((item) => item.name === 'Payment' && item.status === 'active')
   );
 
-  const handleDownload = (filePath: string) => {
-    console.log('Downloading:', filePath);
+  /**
+   * Enhanced file download handler with robust error handling
+   * Fixes the "Failed to load PDF Document" error by:
+   * 1. Properly cleaning and normalizing file paths
+   * 2. Fetching files as blobs to preserve binary data
+   * 3. Verifying file existence before download
+   * 4. Using blob URLs for downloads instead of direct links
+   */
+  const handleDownload = async (filePath: string) => {
+    if (!filePath) {
+      console.error('Invalid file path: empty or undefined');
+      alert('File path is missing. Please contact support.');
+      return;
+    }
 
-    // If filePath is a relative path, convert to absolute URL
-    if (filePath && !filePath.startsWith('http')) {
-      // Assuming files are stored in storage/app/public and accessible via /storage
-      const fileUrl = `/storage/${filePath}`;
+    console.log('Attempting to download file:', filePath);
 
-      // Create a temporary link element
+    try {
+      // Clean up the file path - remove any leading slashes or 'storage/' prefix
+      let cleanPath = filePath.trim();
+      
+      // Remove leading 'storage/' if present
+      if (cleanPath.startsWith('storage/')) {
+        cleanPath = cleanPath.substring(8); // Remove 'storage/'
+      }
+      
+      // Remove leading slashes
+      cleanPath = cleanPath.replace(/^\/+/, '');
+
+      // Construct the proper storage URL
+      const fileUrl = `/storage/${cleanPath}`;
+      
+      console.log('Cleaned file path:', cleanPath);
+      console.log('Constructed file URL:', fileUrl);
+
+      // Get CSRF token for authenticated requests
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+      // First, verify the file exists by making a HEAD request
+      const verifyResponse = await fetch(fileUrl, {
+        method: 'HEAD',
+        headers: {
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin'
+      });
+
+      if (!verifyResponse.ok) {
+        console.error('File verification failed:', verifyResponse.status, verifyResponse.statusText);
+        alert(`File not found on server. Status: ${verifyResponse.status}`);
+        return;
+      }
+
+      // Fetch the file as a blob for proper download
+      const response = await fetch(fileUrl, {
+        method: 'GET',
+        headers: {
+          'X-CSRF-TOKEN': csrfToken || '',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.status} ${response.statusText}`);
+      }
+
+      // Get the blob
+      const blob = await response.blob();
+      
+      // Extract filename from path
+      const fileName = cleanPath.split('/').pop() || 'document';
+
+      // Create blob URL and trigger download
+      const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = fileUrl;
-      link.target = '_blank';
-      link.download = filePath.split('/').pop() || 'document';
+      link.href = blobUrl;
+      link.download = fileName;
+      link.style.display = 'none';
 
-      // Append to body, click, and remove
+      // Append to body, click, and cleanup
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-    } else if (filePath && filePath.startsWith('http')) {
-      // If it's already a full URL, open in new tab
-      window.open(filePath, '_blank');
-    } else {
-      console.error('Invalid file path:', filePath);
-      alert('File not available for download');
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      }, 100);
+
+      console.log('File downloaded successfully:', fileName);
+
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Failed to download file. Please try again or contact support.');
     }
   };
 
