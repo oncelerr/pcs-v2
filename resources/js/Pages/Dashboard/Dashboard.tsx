@@ -54,18 +54,17 @@ interface UserDocument {
 
 type DocumentRowProps = {
   number: number;
-  fileName: string;
-  stage: string;
-  onDownload: (fileName: string) => void;
+  document: UserDocument;
+  onDownload: (filePath: string, fileName: string) => void;
 };
 
-const DocumentRow: React.FC<DocumentRowProps> = ({ number, fileName, stage, onDownload }) => (
+const DocumentRow: React.FC<DocumentRowProps> = ({ number, document, onDownload }) => (
   <>
     <div className="table-row">
       <div style={{ color: '#474747', fontSize: 14, fontWeight: 400 }}>{number}</div>
-      <div style={{ color: '#474747', fontSize: 14, fontWeight: 400 }}>{fileName}</div>
-      <div className="badge">{stage}</div>
-      <div className="action-link" onClick={() => onDownload(fileName)}>Download</div>
+      <div style={{ color: '#474747', fontSize: 14, fontWeight: 400 }}>{document.fileName}</div>
+      <div className="badge">{document.stage}</div>
+      <div className="action-link" onClick={() => onDownload(document.file_path || '', document.fileName)}>Download</div>
     </div>
     <div className="table-divider" />
   </>
@@ -879,14 +878,11 @@ const Dashboard = () => {
   );
 
   /**
-   * Enhanced file download handler with robust error handling
-   * Fixes the "Failed to load PDF Document" error by:
-   * 1. Properly cleaning and normalizing file paths
-   * 2. Fetching files as blobs to preserve binary data
-   * 3. Verifying file existence before download
-   * 4. Using blob URLs for downloads instead of direct links
+   * Enhanced file download handler using backend API
+   * This approach mirrors the working UserDocuments.tsx implementation
+   * Uses a secure signed URL from the backend to handle downloads properly
    */
-  const handleDownload = async (filePath: string) => {
+  const handleDownload = async (filePath: string, fileName?: string) => {
     if (!filePath) {
       console.error('Invalid file path: empty or undefined');
       alert('File path is missing. Please contact support.');
@@ -896,84 +892,71 @@ const Dashboard = () => {
     console.log('Attempting to download file:', filePath);
 
     try {
-      // Clean up the file path - remove any leading slashes or 'storage/' prefix
-      let cleanPath = filePath.trim();
-      
-      // Remove leading 'storage/' if present
-      if (cleanPath.startsWith('storage/')) {
-        cleanPath = cleanPath.substring(8); // Remove 'storage/'
-      }
-      
-      // Remove leading slashes
-      cleanPath = cleanPath.replace(/^\/+/, '');
-
-      // Construct the proper storage URL
-      const fileUrl = `/storage/${cleanPath}`;
-      
-      console.log('Cleaned file path:', cleanPath);
-      console.log('Constructed file URL:', fileUrl);
-
-      // Get CSRF token for authenticated requests
+      // Get CSRF token and auth token
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      const token = localStorage.getItem('auth_token');
 
-      // First, verify the file exists by making a HEAD request
-      const verifyResponse = await fetch(fileUrl, {
-        method: 'HEAD',
+      // Extract filename from path if not provided
+      const fileNameToUse = fileName || filePath.split('/').pop() || 'document';
+
+      // Call backend API to get secure download URL
+      const response = await fetch('/api/get-document-url', {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'X-CSRF-TOKEN': csrfToken || '',
           'X-Requested-With': 'XMLHttpRequest',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'same-origin'
-      });
-
-      if (!verifyResponse.ok) {
-        console.error('File verification failed:', verifyResponse.status, verifyResponse.statusText);
-        alert(`File not found on server. Status: ${verifyResponse.status}`);
-        return;
-      }
-
-      // Fetch the file as a blob for proper download
-      const response = await fetch(fileUrl, {
-        method: 'GET',
-        headers: {
-          'X-CSRF-TOKEN': csrfToken || '',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
+        body: JSON.stringify({
+          userId: user?.id,
+          filePath: filePath,
+          fileName: fileNameToUse,
+          download: true
+        }),
         credentials: 'same-origin'
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to download file: ${response.status} ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to get download URL');
       }
 
-      // Get the blob
-      const blob = await response.blob();
-      
-      // Extract filename from path
-      const fileName = cleanPath.split('/').pop() || 'document';
+      const data = await response.json();
+      const downloadUrl = data.downloadUrl;
 
-      // Create blob URL and trigger download
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = fileName;
-      link.style.display = 'none';
+      if (!downloadUrl) {
+        throw new Error('No download URL received from server');
+      }
 
-      // Append to body, click, and cleanup
-      document.body.appendChild(link);
-      link.click();
+      console.log('Download URL received:', downloadUrl);
+
+      // Handle download based on file type
+      const isPdf = fileNameToUse.toLowerCase().endsWith('.pdf');
       
-      // Cleanup
-      setTimeout(() => {
+      if (isPdf) {
+        // For PDFs, open in new tab - this works better in production
+        window.open(downloadUrl, '_blank');
+      } else {
+        // For other files (images, etc.), use download attribute
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = fileNameToUse;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
         document.body.removeChild(link);
-        window.URL.revokeObjectURL(blobUrl);
-      }, 100);
+      }
 
-      console.log('File downloaded successfully:', fileName);
+      console.log('File download initiated successfully:', fileNameToUse);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error downloading file:', error);
-      alert('Failed to download file. Please try again or contact support.');
+      
+      // Show user-friendly error message
+      const errorMessage = error.message || 'Failed to download file. Please try again or contact support.';
+      alert(errorMessage);
     }
   };
 
