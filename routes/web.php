@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Api\UserProgressController;
+use App\Http\Controllers\Api\StateServiceRequestController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserInformationController;
 use App\Http\Controllers\DocumentAccessController;
@@ -59,6 +60,21 @@ Route::group(['prefix' => 'api'], function () {
         Route::get('/user-documents', [UserDocumentController::class, 'index']);
         Route::get('/user-documents/{id}', [UserDocumentController::class, 'show']);
         Route::get('/user/{userId}/documents', [UserDocumentController::class, 'getUserDocuments']);
+        
+        // State Service Request Routes (User)
+        Route::prefix('state-service-request')->group(function () {
+            Route::post('/', [StateServiceRequestController::class, 'store']);
+            Route::get('/', [StateServiceRequestController::class, 'index']);
+            Route::get('/{stateServiceRequest}', [StateServiceRequestController::class, 'show']);
+            Route::post('/{stateServiceRequest}/cancel', [StateServiceRequestController::class, 'cancel']);
+        });
+        
+        // State Service Request Routes (Admin Only)
+        Route::middleware('admin')->prefix('admin/state-service-requests')->group(function () {
+            Route::get('/', [StateServiceRequestController::class, 'adminIndex']);
+            Route::put('/{stateServiceRequest}', [StateServiceRequestController::class, 'update']);
+            Route::patch('/{stateServiceRequest}/assign', [StateServiceRequestController::class, 'assign']);
+        });
     });
 
     // Contact Form

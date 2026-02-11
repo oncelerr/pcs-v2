@@ -30,6 +30,7 @@ const AllUsers = lazy(() => import('./Pages/AllUsers/AllUsers'))
 const Compliance = lazy(() => import('./Pages/Compliance/Compliance'))
 const UserDocuments = lazy(() => import('./Pages/UserDocuments/UserDocuments'))
 const AccountSetting = lazy(() => import('./Pages/AccountSetting/AccountSetting'));
+const StateServiceRequests = lazy(() => import('./Pages/StateServiceRequests/StateServiceRequests'));
 
 const PageWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <PageTitle title={title}>
@@ -76,7 +77,8 @@ const AppContent: React.FC = () => {
       '/compliance-success', 
       '/compliance-uploads', 
       '/blog-management',
-      '/user-documents'
+      '/user-documents',
+      '/state-service-requests'
     ];
     return privateRoutes.some(route => pathname.startsWith(route));
   };
@@ -119,6 +121,7 @@ const AppContent: React.FC = () => {
           <Route path="/compliance-success" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
           <Route path="/compliance-uploads" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
           <Route path="/blog-management" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
+          <Route path="/state-service-requests" element={<DashboardPage title="State Service Requests"><StateServiceRequests /></DashboardPage>} />
         </Route>
 
         {/* 403 Access Denied Page */}
