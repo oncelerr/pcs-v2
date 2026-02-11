@@ -70,10 +70,7 @@ class NotificationController extends Controller
                             "<div style='font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 5px;'>"
                             . "<h2 style='color: #106552;'>$title</h2>"
                             . "<p style='font-size: 16px; line-height: 1.5;'>$message</p>"
-                            . (isset($options['data']) ? "<div style='background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin-top: 20px;'>"
-                                . "<h3 style='margin-top: 0;'>Additional Information</h3>"
-                                . "<pre style='white-space: pre-wrap;'>" . json_encode($options['data'], JSON_PRETTY_PRINT) . "</pre>"
-                                . "</div>" : "")
+                            . (isset($options['data']) ? $this->formatAdditionalInfo($options['data']) : "")
                             . "<p style='margin-top: 30px; font-size: 12px; color: #777;'>This is an automated notification from Premium Corp Solutions.</p>"
                             . "</div>"
                         );
@@ -90,6 +87,54 @@ class NotificationController extends Controller
 
         // Also log this in Laravel log file for auditing
         Log::channel('daily')->info("[ADMIN NOTIFICATION] $title - $message", $options);
+    }
+
+    /**
+     * Format additional information in a human-readable table format
+     */
+    private function formatAdditionalInfo(array $data): string
+    {
+        $html = "<div style='background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin-top: 20px;'>";
+        $html .= "<h3 style='margin-top: 0; color: #106552;'>Request Details</h3>";
+        $html .= "<table style='width: 100%; border-collapse: collapse;'>";
+        
+        foreach ($data as $key => $value) {
+            // Convert snake_case to Title Case
+            $label = ucwords(str_replace('_', ' ', $key));
+            
+            // Format the value
+            $formattedValue = $this->formatValue($value);
+            
+            $html .= "<tr style='border-bottom: 1px solid #ddd;'>";
+            $html .= "<td style='padding: 10px 5px; font-weight: bold; color: #555; width: 40%;'>$label:</td>";
+            $html .= "<td style='padding: 10px 5px; color: #333;'>$formattedValue</td>";
+            $html .= "</tr>";
+        }
+        
+        $html .= "</table>";
+        $html .= "</div>";
+        
+        return $html;
+    }
+
+    /**
+     * Format individual values for display
+     */
+    private function formatValue($value): string
+    {
+        if (is_array($value)) {
+            return implode(', ', $value);
+        }
+        
+        if (is_bool($value)) {
+            return $value ? 'Yes' : 'No';
+        }
+        
+        if (is_null($value)) {
+            return 'N/A';
+        }
+        
+        return htmlspecialchars((string) $value);
     }
 
     /**
