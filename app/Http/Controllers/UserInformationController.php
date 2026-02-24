@@ -274,4 +274,32 @@ class UserInformationController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get the authenticated user's profile information.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getMyProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $userInfo = UserInformation::where('user_id', $user->id)->first();
+
+        if (!$userInfo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Profile information not found'
+            ], 404);
+        }
+
+        $uploadedFiles = \App\Models\ClientUploadedFile::where('user_id', $user->id)->first();
+
+        return response()->json([
+            'success' => true,
+            'data' => $userInfo,
+            'uploaded_files' => $uploadedFiles
+        ]);
+    }
 }

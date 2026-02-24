@@ -69,6 +69,12 @@ Route::group(['prefix' => 'api'], function () {
             Route::post('/{stateServiceRequest}/cancel', [StateServiceRequestController::class, 'cancel']);
         });
         
+        // Change own password (authenticated user)
+        Route::post('/change-password', [\App\Http\Controllers\PasswordResetController::class, 'changeOwnPassword']);
+
+        // Get authenticated user's profile
+        Route::get('/my-profile', [\App\Http\Controllers\UserInformationController::class, 'getMyProfile']);
+
         // State Service Request Routes (Admin Only)
         Route::middleware('admin')->prefix('admin/state-service-requests')->group(function () {
             Route::get('/', [StateServiceRequestController::class, 'adminIndex']);

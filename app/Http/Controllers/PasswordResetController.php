@@ -80,4 +80,58 @@ class PasswordResetController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Change the authenticated user's own password.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function changeOwnPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $user = $request->user();
+
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Current password is incorrect'
+                ], 422);
+            }
+
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+            Log::info("User changed own password", [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password changed successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Failed to change password: {$e->getMessage()}");
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to change password. Please try again.'
+            ], 500);
+        }
+    }
 }
