@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Services\AdminActivityLogger;
 
 class ComplianceUserController extends Controller
 {
@@ -259,7 +260,7 @@ class ComplianceUserController extends Controller
         
         // Begin transaction to ensure data consistency
         DB::beginTransaction();
-        
+
         try {
             // Get the fields being updated
             $updatedFields = $request->only([
@@ -270,15 +271,20 @@ class ComplianceUserController extends Controller
                 'bank_registration_status',
                 'process_status'
             ]);
-            
+
+            // Snapshot the previous values so we can log exactly what changed
+            $previousValues = $complianceUser->only(array_keys($updatedFields));
+
             // Update the compliance user record
             $complianceUser->update($updatedFields);
-            
+
             // Update corresponding user stage items based on the updated fields
             $this->updateUserStageItems($complianceUser->user_id, $updatedFields);
-            
+
             DB::commit();
-            
+
+            $this->logComplianceStepChanges($complianceUser, $previousValues, $updatedFields);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Compliance user information updated successfully',
@@ -313,8 +319,16 @@ class ComplianceUserController extends Controller
             ], 404);
         }
         
+        $userId = $complianceUser->user_id;
         $complianceUser->delete();
-        
+
+        AdminActivityLogger::log(
+            'compliance_record_deleted',
+            "Deleted compliance record for user #{$userId}",
+            null,
+            ['user_id' => $userId]
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Compliance user information deleted successfully'
@@ -410,7 +424,19 @@ class ComplianceUserController extends Controller
                 'column_for' => $columnFor,
                 'naming' => $naming
             ]);
-            
+
+            AdminActivityLogger::log(
+                'document_upload',
+                "Uploaded \"{$naming}\" ({$documentType}) for user #{$userId}",
+                $clientComplianceFile,
+                [
+                    'document_type' => $documentType,
+                    'user_id' => $userId,
+                    'file_path' => $filePath,
+                    'file_name' => $naming,
+                ]
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'Document uploaded successfully',
@@ -462,8 +488,18 @@ class ComplianceUserController extends Controller
         }
         
         // Update tax dates
-        $complianceUser->update($request->only(['annual_franchise_tax', 'annual_irs_tax']));
-        
+        $taxDates = $request->only(['annual_franchise_tax', 'annual_irs_tax']);
+        $complianceUser->update($taxDates);
+
+        if (!empty($taxDates)) {
+            AdminActivityLogger::log(
+                'tax_info_update',
+                "Updated tax due dates for user #{$complianceUser->user_id}",
+                $complianceUser,
+                $taxDates
+            );
+        }
+
         $userId = $complianceUser->user_id;
         $uploadedFiles = [];
         
@@ -502,6 +538,18 @@ class ComplianceUserController extends Controller
                 'file_path' => $filePath,
                 'compliance_file' => $clientComplianceFile
             ];
+
+            AdminActivityLogger::log(
+                'document_upload',
+                "Uploaded Annual Franchise Tax document for user #{$userId}",
+                $clientComplianceFile,
+                [
+                    'document_type' => 'annual_franchise_tax',
+                    'user_id' => $userId,
+                    'file_path' => $filePath,
+                    'file_name' => 'Annual Franchise Tax Document',
+                ]
+            );
         }
         
         // Handle IRS tax document upload
@@ -539,6 +587,18 @@ class ComplianceUserController extends Controller
                 'file_path' => $filePath,
                 'compliance_file' => $clientComplianceFile
             ];
+
+            AdminActivityLogger::log(
+                'document_upload',
+                "Uploaded IRS Annual Tax Return document for user #{$userId}",
+                $clientComplianceFile,
+                [
+                    'document_type' => 'annual_irs_tax',
+                    'user_id' => $userId,
+                    'file_path' => $filePath,
+                    'file_name' => 'IRS Annual Tax Return Document',
+                ]
+            );
         }
         
         return response()->json([
@@ -551,6 +611,51 @@ class ComplianceUserController extends Controller
         ]);
     }
     
+    /**
+     * Log one admin activity entry per compliance step whose status actually
+     * changed, using human-readable step names instead of raw column names.
+     *
+     * @param  \App\Models\ComplianceUser  $complianceUser
+     * @param  array  $previousValues
+     * @param  array  $newValues
+     * @return void
+     */
+    private function logComplianceStepChanges(ComplianceUser $complianceUser, array $previousValues, array $newValues): void
+    {
+        $stepLabels = [
+            'compliance_status' => 'Compliance',
+            'state_registration_status' => 'State Registration',
+            'bio_filing_status' => 'BOI Filing',
+            'ein_filing_status' => 'EIN Filing',
+            'bank_registration_status' => 'Bank Registration',
+            'process_status' => 'Overall Process',
+        ];
+
+        foreach ($newValues as $field => $newValue) {
+            $previousValue = $previousValues[$field] ?? null;
+
+            if ($previousValue === $newValue) {
+                continue;
+            }
+
+            $stepLabel = $stepLabels[$field] ?? $field;
+            $statusText = $this->getStatusText($newValue);
+
+            AdminActivityLogger::log(
+                'compliance_step_update',
+                "Changed {$stepLabel} status to \"{$statusText}\" for user #{$complianceUser->user_id}",
+                $complianceUser,
+                [
+                    'step' => $stepLabel,
+                    'field' => $field,
+                    'previous_status' => $previousValue,
+                    'new_status' => $newValue,
+                    'user_id' => $complianceUser->user_id,
+                ]
+            );
+        }
+    }
+
     /**
      * Helper method to convert status to user-friendly text.
      *

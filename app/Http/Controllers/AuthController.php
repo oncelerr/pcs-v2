@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Services\UserStageItemService;
+use App\Services\AdminActivityLogger;
 use App\Models\ComplianceUser;
+use App\Models\Role;
 
 class AuthController extends Controller
 {
@@ -203,6 +205,12 @@ class AuthController extends Controller
                 ]
             );
 
+            AdminActivityLogger::log(
+                'candidate_added',
+                "Added new candidate {$user->name} ({$user->email})",
+                $user
+            );
+
             // Return success response
             return response()->json([
                 'message' => 'Adding Candidate Successful, You/They can complete their Profile now.',
@@ -328,6 +336,11 @@ class AuthController extends Controller
             // Create new token with role information
             $token = $user->createToken('auth_token', ['role:' . $user->role->name])->plainTextToken;
 
+            // Also establish a session so routes that check the default web
+            // guard (e.g. Auth::id() for admin activity logging) resolve
+            // the current user, not just token-gated routes.
+            Auth::login($user);
+
             return response()->json([
                 'message' => 'Login successful',
                 'user' => array_merge($user->only(['id', 'name', 'email', 'username', 'role_id']), [
@@ -399,6 +412,107 @@ class AuthController extends Controller
                     'name' => $user->role->name
                 ] : null
             ]
+        ]);
+    }
+
+    /**
+     * Admin-only: list all admin accounts.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function listAdmins(Request $request)
+    {
+        $adminRole = Role::where('name', 'Admin')->first();
+
+        $admins = User::where('role_id', $adminRole?->id)
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'name', 'email', 'username', 'created_at']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $admins,
+        ]);
+    }
+
+    /**
+     * Admin-only: create a new admin account. Generates a temporary
+     * password that is returned once so the creating admin can share it.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createAdminAccount(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'username' => 'required|string|max:255|unique:users',
+        ]);
+
+        $adminRole = Role::firstOrCreate(['name' => 'Admin']);
+
+        $temporaryPassword = Str::random(4) . '-' . Str::random(4) . '-' . random_int(10, 99);
+
+        $admin = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'username' => $validated['username'],
+            'password' => Hash::make($temporaryPassword),
+            'role_id' => $adminRole->id,
+            'email_verified_at' => now(),
+            'remember_token' => Str::random(10),
+        ]);
+
+        AdminActivityLogger::log(
+            'admin_account_created',
+            "Created new admin account for {$admin->name} ({$admin->email})",
+            $admin
+        );
+
+        return response()->json([
+            'message' => 'Admin account created successfully. Share the temporary password securely - it will not be shown again.',
+            'user' => $admin->only(['id', 'name', 'email', 'username']),
+            'temporary_password' => $temporaryPassword,
+        ], 201);
+    }
+
+    /**
+     * Admin-only: reset another admin's password. Admin accounts have no
+     * UserInformation record, so they can't go through the regular
+     * PasswordResetController flow - this generates a fresh temporary
+     * password and returns it once.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function resetAdminPassword(Request $request, $id)
+    {
+        $adminRole = Role::where('name', 'Admin')->first();
+        $admin = User::where('id', $id)->where('role_id', $adminRole?->id)->first();
+
+        if (!$admin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Admin account not found',
+            ], 404);
+        }
+
+        $temporaryPassword = Str::random(4) . '-' . Str::random(4) . '-' . random_int(10, 99);
+
+        $admin->password = Hash::make($temporaryPassword);
+        $admin->save();
+
+        AdminActivityLogger::log(
+            'admin_password_reset',
+            "Reset password for admin {$admin->name} ({$admin->email})",
+            $admin
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password reset successfully. Share it securely - it will not be shown again.',
+            'temporary_password' => $temporaryPassword,
         ]);
     }
 }

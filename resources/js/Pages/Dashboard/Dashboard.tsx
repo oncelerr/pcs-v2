@@ -42,6 +42,20 @@ type UserStats = {
   total: number;
 };
 
+type PaymentStats = {
+  paid: number;
+  unpaid: number;
+};
+
+type ComplianceStepStat = {
+  label: string;
+  done: number;
+  inProgress: number;
+  pending: number;
+};
+
+type ComplianceStepStats = ComplianceStepStat[];
+
 interface UserDocument {
   id: number;
   fileName: string;
@@ -108,6 +122,8 @@ const Dashboard = () => {
     total: 0
   });
   const [loadingStats, setLoadingStats] = useState<boolean>(false);
+  const [paymentStats, setPaymentStats] = useState<PaymentStats>({ paid: 0, unpaid: 0 });
+  const [complianceStepStats, setComplianceStepStats] = useState<ComplianceStepStats>([]);
 
   // 👇 Local state instead of hardcoded IIFE
   const [statusProgress, setStatusProgress] = useState<StatusProgress>({
@@ -228,6 +244,35 @@ const Dashboard = () => {
         unprocessed: unprocessedUsers,
         total: totalUsers
       });
+
+      // Payment status breakdown - user.is_paid comes from the eager-loaded
+      // user relation on UserInformationController::index
+      const paidUsers = allUsersData.filter((u: any) => u.user?.is_paid === true).length;
+      setPaymentStats({
+        paid: paidUsers,
+        unpaid: totalUsers - paidUsers
+      });
+
+      // Compliance step breakdown across the 5 filing steps
+      const stepFields: { key: string; label: string }[] = [
+        { key: 'compliance_status', label: 'Compliance' },
+        { key: 'state_registration_status', label: 'State Registration' },
+        { key: 'bio_filing_status', label: 'BOI Filing' },
+        { key: 'ein_filing_status', label: 'EIN Filing' },
+        { key: 'bank_registration_status', label: 'Bank Registration' },
+      ];
+
+      const stepStats: ComplianceStepStats = stepFields.map(({ key, label }) => {
+        let done = 0, inProgress = 0, pending = 0;
+        complianceUsers.forEach((cu: any) => {
+          const value = cu[key] || 'pending';
+          if (value === 'done') done++;
+          else if (value === 'in progress') inProgress++;
+          else pending++;
+        });
+        return { label, done, inProgress, pending };
+      });
+      setComplianceStepStats(stepStats);
     } catch (error) {
       console.error('Error fetching user statistics:', error);
     } finally {
@@ -1096,11 +1141,14 @@ const Dashboard = () => {
           loadingUserDocuments={loadingUserDocuments}
           mailForwarding={[]}
           handleViewDetails={handleViewDetails}
+          userName={user?.name}
         />
       ) : (
         <AdminDashboard
           loadingStats={loadingStats}
           userStats={userStats}
+          paymentStats={paymentStats}
+          complianceStepStats={complianceStepStats}
           createPieChartData={createPieChartData}
           chartOptions={chartOptions}
         />

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserInformation;
 use App\Models\ClientUploadedFile;
 use App\Models\UserStageItem;
+use App\Services\AdminActivityLogger;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
@@ -342,7 +343,19 @@ class FormSubmitController extends Controller
             ]);
 
             // Use the same logic as store() method
-            return $this->processFormSubmission($validated);
+            $response = $this->processFormSubmission($validated);
+
+            $candidate = User::find($validated['user_id']);
+            if ($candidate) {
+                AdminActivityLogger::log(
+                    'candidate_profile_completed',
+                    "Completed profile setup for candidate {$candidate->name} ({$candidate->email})",
+                    $candidate,
+                    ['user_id' => $candidate->id]
+                );
+            }
+
+            return $response;
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([

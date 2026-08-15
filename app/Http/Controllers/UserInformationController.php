@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Services\AdminActivityLogger;
 
 class UserInformationController extends Controller
 {
@@ -48,7 +49,7 @@ class UserInformationController extends Controller
         }
         
         // Build the query with filters
-        $query = UserInformation::query();
+        $query = UserInformation::with('user:id,is_paid');
         
         // Apply search filter if provided
         if ($request->has('search')) {
@@ -189,7 +190,14 @@ class UserInformationController extends Controller
         }
         
         $userInformation->update($request->all());
-        
+
+        AdminActivityLogger::log(
+            'user_information_update',
+            "Updated user information for user #{$userInformation->user_id}",
+            $userInformation,
+            $request->all()
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'User information updated successfully',
@@ -216,7 +224,9 @@ class UserInformationController extends Controller
         
         // Get the associated user ID
         $userId = $userInformation->user_id;
-        
+        $userSnapshot = User::find($userId);
+        $userLabel = $userSnapshot ? "{$userSnapshot->name} ({$userSnapshot->email})" : "user #{$userId}";
+
         // Begin a database transaction to ensure all or nothing deletion
         DB::beginTransaction();
         
@@ -255,7 +265,14 @@ class UserInformationController extends Controller
             
             // Commit the transaction if all operations succeeded
             DB::commit();
-            
+
+            AdminActivityLogger::log(
+                'user_deleted',
+                "Deleted {$userLabel} and all related information",
+                null,
+                ['user_id' => $userId]
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'User and all related information deleted successfully'

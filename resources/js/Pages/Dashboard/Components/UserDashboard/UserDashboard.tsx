@@ -119,6 +119,7 @@ interface UserDashboardProps {
   loadingUserDocuments: boolean;
   mailForwarding: MailItem[];
   handleViewDetails: (mail: MailItem) => void;
+  userName?: string;
 }
 
 const UserDashboard: React.FC<UserDashboardProps> = ({
@@ -143,10 +144,42 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
   userDocuments,
   loadingUserDocuments,
   mailForwarding,
-  handleViewDetails
+  handleViewDetails,
+  userName
 }) => {
+  const percentage = Math.round(statusProgress.percentage || 0);
+
+  const currentStepName = (() => {
+    for (const stage of statusProgress.stages) {
+      const activeItem = stage.items.find(item => item.status === 'active');
+      if (activeItem) return activeItem.name;
+    }
+    return null;
+  })();
+
+  const firstName = userName?.split(' ')[0];
+
   return (
     <div className="user-dashboard">
+      {/* Welcome / Overall Progress Banner */}
+      <div className="welcome-banner">
+        <div className="welcome-banner__text">
+          <div className="welcome-banner__greeting">{firstName ? `Welcome back, ${firstName}` : 'Welcome back'}</div>
+          <div className="welcome-banner__subtitle">
+            {percentage >= 100
+              ? "You're all set - everything is complete."
+              : currentStepName
+                ? <>You're currently on <strong>{currentStepName}</strong></>
+                : 'Your formation journey is in progress.'}
+          </div>
+        </div>
+        <div className="welcome-banner__progress">
+          <div className="welcome-banner__progress-ring" style={{ background: `conic-gradient(#146755 ${percentage * 3.6}deg, #E2E8F0 0deg)` }}>
+            <div className="welcome-banner__progress-inner">{percentage}%</div>
+          </div>
+          <div className="welcome-banner__progress-label">Overall Progress</div>
+        </div>
+      </div>
       <div className="content-grid">
       <div className="content-left">
         {/* Status Progress Card */}

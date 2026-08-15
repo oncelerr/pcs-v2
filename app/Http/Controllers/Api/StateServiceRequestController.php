@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\NotificationController;
 use App\Models\StateServiceRequest;
+use App\Services\AdminActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -241,6 +242,13 @@ class StateServiceRequestController extends Controller
             }
         }
 
+        AdminActivityLogger::log(
+            'state_service_request_update',
+            "Updated service request #{$stateServiceRequest->id} ({$stateServiceRequest->service_type})",
+            $stateServiceRequest,
+            $validated
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Service request updated successfully',
@@ -315,6 +323,15 @@ class StateServiceRequestController extends Controller
         ]);
 
         $stateServiceRequest->markAsCancelled($validated['reason'] ?? 'Cancelled by user');
+
+        if ($isAdmin) {
+            AdminActivityLogger::log(
+                'state_service_request_cancelled',
+                "Cancelled service request #{$stateServiceRequest->id} ({$stateServiceRequest->service_type})",
+                $stateServiceRequest,
+                ['reason' => $validated['reason'] ?? null]
+            );
+        }
 
         // Notify admins about cancellation
         $this->notificationController->notifyAdmins(

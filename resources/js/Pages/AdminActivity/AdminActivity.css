@@ -1,0 +1,353 @@
+.admin-activity-container {
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0px 4px 12px 0px #0000000D;
+}
+
+.admin-activity-header {
+  display: flex;
+  align-items: center;
+  padding: 22px 27px;
+  gap: 10px;
+}
+
+.admin-activity-header-img {
+  object-fit: contain;
+}
+
+.admin-activity-title {
+  font-family: "DM Sans";
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 150%;
+  letter-spacing: 0.2px;
+}
+
+.admin-activity-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 27px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.admin-activity-tabs button {
+  all: unset;
+  cursor: pointer;
+  padding: 12px 20px;
+  font-family: "DM Sans";
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+  border-bottom: 2px solid transparent;
+}
+
+.admin-activity-tabs button.active {
+  color: #146755;
+  border-bottom: 2px solid #146755;
+}
+
+.admin-activity-panel {
+  padding: 22px 27px;
+}
+
+.admin-activity-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.aa-btn-primary,
+.aa-btn-secondary,
+.aa-btn-approve,
+.aa-btn-reject {
+  all: unset;
+  cursor: pointer;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-family: "DM Sans";
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.aa-btn-primary {
+  color: white;
+  background-color: #146755;
+}
+
+.aa-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.aa-btn-secondary {
+  color: #146755;
+  background-color: white;
+  border: 1px solid #146755;
+}
+
+.aa-btn-approve {
+  color: white;
+  background-color: #16A34A;
+  padding: 8px 16px;
+}
+
+.aa-btn-reject {
+  color: white;
+  background-color: #DC2626;
+  padding: 8px 16px;
+}
+
+.aa-btn-approve:disabled,
+.aa-btn-reject:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.aa-form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #F8F8F8;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  max-width: 520px;
+}
+
+.aa-form-card input,
+.aa-form-card textarea {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  font-family: "DM Sans";
+  font-size: 13px;
+  color: #323B49;
+}
+
+.aa-form-hint {
+  font-family: "DM Sans";
+  font-size: 12px;
+  color: #6B7280;
+  margin: 0;
+}
+
+.aa-empty-state {
+  padding: 40px;
+  text-align: center;
+  color: #6B7280;
+  font-family: "DM Sans";
+  font-size: 14px;
+}
+
+.admin-activity-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-activity-table th {
+  background-color: #F8F8F8;
+  color: #323B49;
+  font-family: "DM Sans";
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 160%;
+  height: 48px;
+  padding: 0 20px;
+  text-align: left;
+}
+
+.admin-activity-table td {
+  height: 48px;
+  padding: 10px 20px;
+  font-family: "DM Sans";
+  font-size: 14px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.aa-view-document-btn {
+  all: unset;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: #146755;
+  background-color: #F0F9F6;
+  border: 1px solid #146755;
+  font-family: "DM Sans";
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.aa-view-document-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.aa-action-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background-color: #EEF2FF;
+  color: #4338CA;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.admin-activity-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 0;
+  font-family: "DM Sans";
+  font-size: 14px;
+  color: #6B7280;
+}
+
+.admin-activity-pagination button {
+  padding: 8px 16px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  background-color: #FFFFFF;
+  font-family: "DM Sans";
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.admin-activity-pagination button:disabled {
+  color: #D1D5DB;
+  cursor: not-allowed;
+}
+
+.aa-report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.aa-report-card {
+  border: 1px solid #F1F5F9;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.aa-report-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.aa-report-card-header h4 {
+  margin: 4px 0 0 0;
+  font-family: "DM Sans";
+  font-size: 16px;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.aa-type-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.aa-type-chip.automated {
+  background-color: #E0F2FE;
+  color: #0369A1;
+}
+
+.aa-type-chip.manual {
+  background-color: #F3E8FF;
+  color: #7E22CE;
+}
+
+.aa-status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.aa-report-summary {
+  white-space: pre-wrap;
+  font-family: "DM Sans", monospace;
+  font-size: 13px;
+  color: #475569;
+  background-color: #F8FAFC;
+  border-radius: 8px;
+  padding: 14px;
+  margin: 10px 0;
+}
+
+.aa-report-meta {
+  display: flex;
+  gap: 16px;
+  font-family: "DM Sans";
+  font-size: 12px;
+  color: #94A3B8;
+  margin-bottom: 8px;
+}
+
+.aa-report-approvals {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-top: 1px solid #F1F5F9;
+  padding-top: 12px;
+}
+
+.aa-approval-count {
+  font-family: "DM Sans";
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.aa-approval-chip {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: "DM Sans";
+}
+
+.aa-approval-chip.approved {
+  background-color: #DCFCE7;
+  color: #16A34A;
+}
+
+.aa-approval-chip.rejected {
+  background-color: #FEE2E2;
+  color: #DC2626;
+}
+
+.aa-report-decision-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.aa-report-hint {
+  font-family: "DM Sans";
+  font-size: 12px;
+  color: #94A3B8;
+  font-style: italic;
+  margin-left: auto;
+}

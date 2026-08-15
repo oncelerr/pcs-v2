@@ -24,6 +24,7 @@ function generateRandomPassword(): string {
 // Define interface for user information
 interface UserInformation {
   id: number;
+  user_id: number;
   company_name: string;
   first_name: string;
   last_name: string;
@@ -31,6 +32,10 @@ interface UserInformation {
   state_registration: string;
   franchise?: string;
   irs?: string;
+  user?: {
+    id: number;
+    is_paid: boolean;
+  };
 }
 
 // Define interface for pagination data
@@ -285,6 +290,83 @@ const AllUsers: React.FC = () => {
           }
         });
         break;
+      case 'togglePaid': {
+        const targetUser = userData.find(u => u.id === userId);
+        const trueUserId = targetUser?.user_id;
+        const currentlyPaid = !!targetUser?.user?.is_paid;
+
+        if (!trueUserId) {
+          setModalState({
+            isOpen: true,
+            title: 'Error',
+            message: 'Could not determine the user account to update.',
+            type: 'error',
+            onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+          });
+          break;
+        }
+
+        setModalState({
+          isOpen: true,
+          title: currentlyPaid ? 'Mark as Unpaid' : 'Mark as Paid',
+          message: currentlyPaid
+            ? 'Are you sure you want to mark this user as unpaid? Their payment stage will be reverted.'
+            : 'Are you sure you want to mark this user as paid? Their payment stage will be completed and their onboarding will continue.',
+          type: 'confirm',
+          onConfirm: () => {
+            setLoading(true);
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const authToken = localStorage.getItem('auth_token');
+
+            fetch(`/api/admin/users/${trueUserId}/payment-status`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken || '',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Authorization': `Bearer ${authToken}`,
+              },
+              body: JSON.stringify({ is_paid: !currentlyPaid }),
+              credentials: 'same-origin'
+            })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`Failed to update payment status: ${response.statusText}`);
+              }
+              return response.json();
+            })
+            .then(() => {
+              setModalState({
+                isOpen: true,
+                title: 'Success',
+                message: currentlyPaid
+                  ? 'User has been marked as unpaid.'
+                  : 'User has been marked as paid.',
+                type: 'success',
+                onConfirm: () => {
+                  setModalState(prev => ({ ...prev, isOpen: false }));
+                  fetchUserData();
+                }
+              });
+            })
+            .catch(err => {
+              console.error('Error updating payment status:', err);
+              setModalState({
+                isOpen: true,
+                title: 'Error',
+                message: err instanceof Error ? err.message : 'Failed to update payment status',
+                type: 'error',
+                onConfirm: () => setModalState(prev => ({ ...prev, isOpen: false }))
+              });
+            })
+            .finally(() => {
+              setLoading(false);
+            });
+          }
+        });
+        break;
+      }
       case 'delete':
         setModalState({
           isOpen: true,
@@ -428,23 +510,24 @@ const AllUsers: React.FC = () => {
               <th>State Registration</th>
               <th>Franchise</th>
               <th>IRS</th>
+              <th>Payment</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '20px' }}>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>
                   <LoadingSpinner size="small" color="#126654" />
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '20px', color: 'red' }}>{error}</td>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '20px', color: 'red' }}>{error}</td>
               </tr>
             ) : userData.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '20px' }}>No user data found</td>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>No user data found</td>
               </tr>
             ) : (
               userData.map((user, index) => (
@@ -455,6 +538,17 @@ const AllUsers: React.FC = () => {
                   <td>{user.state_registration}</td>
                   <td>{user.franchise || '04/11/2023'}</td>
                   <td>{user.irs || '04/11/2023'}</td>
+                  <td>
+                    <span
+                      className="badge"
+                      style={{
+                        backgroundColor: user.user?.is_paid ? '#DCFCE7' : '#FEE2E2',
+                        color: user.user?.is_paid ? '#16A34A' : '#DC2626'
+                      }}
+                    >
+                      {user.user?.is_paid ? 'Paid' : 'Unpaid'}
+                    </span>
+                  </td>
                   <td className="action-dropdown-cell">
                     <div className="action-dropdown" ref={activeDropdown === user.id ? dropdownRef : null}>
                       <button 
@@ -477,6 +571,9 @@ const AllUsers: React.FC = () => {
                         }}>
                           <button onClick={() => handleAction('view', user.id)}>View</button>
                           <button onClick={() => handleAction('resetPassword', user.id)}>Reset Password</button>
+                          <button onClick={() => handleAction('togglePaid', user.id)}>
+                            {user.user?.is_paid ? 'Mark as Unpaid' : 'Mark as Paid'}
+                          </button>
                           <button onClick={() => handleAction('delete', user.id)} className="delete-action">Delete</button>
                         </div>
                       )}

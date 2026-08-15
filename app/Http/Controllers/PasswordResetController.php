@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Services\AdminActivityLogger;
 
 class PasswordResetController extends Controller
 {
@@ -64,7 +65,13 @@ class PasswordResetController extends Controller
                 'user_id' => $userInfo->user_id,
                 'email' => $user->email
             ]);
-            
+
+            AdminActivityLogger::log(
+                'password_reset',
+                "Reset password for {$user->name} ({$user->email})",
+                $user
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'Password reset successfully'

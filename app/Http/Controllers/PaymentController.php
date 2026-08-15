@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\UserStageItem;
 use App\Models\Stage;
 use App\Models\ComplianceUser;
+use App\Services\AdminActivityLogger;
 
 class PaymentController extends Controller
 {
@@ -236,79 +237,12 @@ class PaymentController extends Controller
             if ($session->payment_status !== 'paid') {
                 return response()->json(['error' => 'Payment not completed'], 400);
             }
-            
-            // Create or update compliance user record
-            ComplianceUser::updateOrCreate(
-                ['user_id' => $userId],
-                [
-                    'compliance_status' => ComplianceUser::STATUS_PENDING,
-                    'state_registration_status' => ComplianceUser::STATUS_PENDING,
-                    'bio_filing_status' => ComplianceUser::STATUS_PENDING,
-                    'ein_filing_status' => ComplianceUser::STATUS_PENDING,
-                    'bank_registration_status' => ComplianceUser::STATUS_PENDING,
-                    'process_status' => ComplianceUser::STATUS_PENDING,
-                    'annual_franchise_tax' => '',
-                    'annual_irs_tax' => ''
-                ]
-            );
 
-            // Update Payment stage item from active to completed
-            $paymentStageCompleted = false;
-            $nextPaymentStageActivated = false;
-            
-            $paymentStageItem = UserStageItem::where('user_id', $userId)
-                ->whereHas('stageItem', function ($query) {
-                    $query->where('name', 'Payment');
-                })
-                ->where('status', UserStageItem::STATUS_ACTIVE)
-                ->first();
-
-            if ($paymentStageItem) {
-                $paymentStageCompleted = $paymentStageItem->markAsCompleted();
-                
-                // Find and activate the next stage item
-                $currentStageItemId = $paymentStageItem->stage_item_id;
-                $nextStageItem = UserStageItem::where('user_id', $userId)
-                    ->where('stage_item_id', $currentStageItemId + 1)
-                    ->where('status', UserStageItem::STATUS_PENDING)
-                    ->first();
-                
-                if ($nextStageItem) {
-                    $nextPaymentStageActivated = $nextStageItem->update([
-                        'status' => UserStageItem::STATUS_ACTIVE
-                    ]);
-                }
-            }
-
-            // Update Setup stage from active to completed
-            $setupStageCompleted = false;
-            $nextSetupStageActivated = false;
-            
-            $setupStage = UserStageItem::where('user_id', $userId)
-                ->whereHas('stage', function ($query) {
-                    $query->where('name', 'Setup');
-                })
-                ->where('status', UserStageItem::STATUS_ACTIVE)
-                ->first();
-
-            if ($setupStage) {
-                $setupStageCompleted = $setupStage->update([
-                    'status' => UserStageItem::STATUS_DONE
-                ]);
-                
-                // Find and activate the next stage
-                $currentStageId = $setupStage->stage_id;
-                $nextStage = UserStageItem::where('user_id', $userId)
-                    ->where('stage_id', $currentStageId + 1)
-                    ->where('status', UserStageItem::STATUS_PENDING)
-                    ->first();
-                
-                if ($nextStage) {
-                    $nextSetupStageActivated = $nextStage->update([
-                        'status' => UserStageItem::STATUS_ACTIVE
-                    ]);
-                }
-            }
+            $stageResult = $this->advancePaidStagesForUser($userId);
+            $paymentStageCompleted = $stageResult['payment_stage_completed'];
+            $nextPaymentStageActivated = $stageResult['next_payment_stage_activated'];
+            $setupStageCompleted = $stageResult['setup_stage_completed'];
+            $nextSetupStageActivated = $stageResult['next_setup_stage_activated'];
 
             // Get user details for notification
             $user = User::find($userId);
@@ -462,5 +396,215 @@ class PaymentController extends Controller
                 'debug_info' => config('app.debug', false) ? $e->getMessage() : null
             ], 500);
         }
+    }
+
+    /**
+     * Admin-only: manually mark a user as paid or unpaid while the Stripe
+     * checkout flow is disabled (payment is settled directly with the user,
+     * e.g. by email, and confirmed manually by an admin).
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $userId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updatePaymentStatus(Request $request, $userId)
+    {
+        $request->validate([
+            'is_paid' => 'required|boolean',
+        ]);
+
+        $user = User::find($userId);
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        $isPaid = $request->boolean('is_paid');
+        $user->is_paid = $isPaid;
+        $user->save();
+
+        if ($isPaid) {
+            $stageResult = $this->advancePaidStagesForUser($userId);
+        } else {
+            $stageResult = $this->revertPaidStagesForUser($userId);
+        }
+
+        AdminActivityLogger::log(
+            $isPaid ? 'payment_marked_paid' : 'payment_marked_unpaid',
+            $isPaid
+                ? "Marked {$user->name} ({$user->email}) as paid"
+                : "Marked {$user->name} ({$user->email}) as unpaid",
+            $user,
+            ['stage_result' => $stageResult]
+        );
+
+        return response()->json([
+            'message' => $isPaid
+                ? 'User marked as paid and their stages have been updated.'
+                : 'User marked as unpaid and their stages have been reverted.',
+            'is_paid' => $isPaid,
+            'stages' => $stageResult,
+        ]);
+    }
+
+    /**
+     * Complete the Payment stage item and the Setup stage for a user, and
+     * activate whatever comes next. Mirrors what a successful Stripe
+     * checkout used to do, so it can be reused for the manual admin
+     * "mark as paid" action.
+     */
+    private function advancePaidStagesForUser(int $userId): array
+    {
+        // Create or update compliance user record
+        ComplianceUser::updateOrCreate(
+            ['user_id' => $userId],
+            [
+                'compliance_status' => ComplianceUser::STATUS_PENDING,
+                'state_registration_status' => ComplianceUser::STATUS_PENDING,
+                'bio_filing_status' => ComplianceUser::STATUS_PENDING,
+                'ein_filing_status' => ComplianceUser::STATUS_PENDING,
+                'bank_registration_status' => ComplianceUser::STATUS_PENDING,
+                'process_status' => ComplianceUser::STATUS_PENDING,
+                'annual_franchise_tax' => '',
+                'annual_irs_tax' => ''
+            ]
+        );
+
+        // Update Payment stage item from active to completed
+        $paymentStageCompleted = false;
+        $nextPaymentStageActivated = false;
+
+        $paymentStageItem = UserStageItem::where('user_id', $userId)
+            ->whereHas('stageItem', function ($query) {
+                $query->where('name', 'Payment');
+            })
+            ->where('status', UserStageItem::STATUS_ACTIVE)
+            ->first();
+
+        if ($paymentStageItem) {
+            $paymentStageCompleted = $paymentStageItem->markAsCompleted();
+
+            // Find and activate the next stage item
+            $currentStageItemId = $paymentStageItem->stage_item_id;
+            $nextStageItem = UserStageItem::where('user_id', $userId)
+                ->where('stage_item_id', $currentStageItemId + 1)
+                ->where('status', UserStageItem::STATUS_PENDING)
+                ->first();
+
+            if ($nextStageItem) {
+                $nextPaymentStageActivated = $nextStageItem->update([
+                    'status' => UserStageItem::STATUS_ACTIVE
+                ]);
+            }
+        }
+
+        // Update Setup stage from active to completed
+        $setupStageCompleted = false;
+        $nextSetupStageActivated = false;
+
+        $setupStage = UserStageItem::where('user_id', $userId)
+            ->whereHas('stage', function ($query) {
+                $query->where('name', 'Setup');
+            })
+            ->where('status', UserStageItem::STATUS_ACTIVE)
+            ->first();
+
+        if ($setupStage) {
+            $setupStageCompleted = $setupStage->update([
+                'status' => UserStageItem::STATUS_DONE
+            ]);
+
+            // Find and activate the next stage
+            $currentStageId = $setupStage->stage_id;
+            $nextStage = UserStageItem::where('user_id', $userId)
+                ->where('stage_id', $currentStageId + 1)
+                ->where('status', UserStageItem::STATUS_PENDING)
+                ->first();
+
+            if ($nextStage) {
+                $nextSetupStageActivated = $nextStage->update([
+                    'status' => UserStageItem::STATUS_ACTIVE
+                ]);
+            }
+        }
+
+        return [
+            'payment_stage_completed' => $paymentStageCompleted,
+            'next_payment_stage_activated' => $nextPaymentStageActivated,
+            'setup_stage_completed' => $setupStageCompleted,
+            'next_setup_stage_activated' => $nextSetupStageActivated,
+        ];
+    }
+
+    /**
+     * Undo advancePaidStagesForUser(): send the Payment stage item and the
+     * Setup stage back to active, and roll back whatever was activated
+     * after them to pending. Used when an admin un-marks a user as paid.
+     */
+    private function revertPaidStagesForUser(int $userId): array
+    {
+        $paymentStageReverted = false;
+        $nextPaymentStageReverted = false;
+
+        $paymentStageItem = UserStageItem::where('user_id', $userId)
+            ->whereHas('stageItem', function ($query) {
+                $query->where('name', 'Payment');
+            })
+            ->where('status', UserStageItem::STATUS_DONE)
+            ->first();
+
+        if ($paymentStageItem) {
+            $currentStageItemId = $paymentStageItem->stage_item_id;
+            $nextStageItem = UserStageItem::where('user_id', $userId)
+                ->where('stage_item_id', $currentStageItemId + 1)
+                ->where('status', UserStageItem::STATUS_ACTIVE)
+                ->first();
+
+            if ($nextStageItem) {
+                $nextPaymentStageReverted = $nextStageItem->update([
+                    'status' => UserStageItem::STATUS_PENDING
+                ]);
+            }
+
+            $paymentStageReverted = $paymentStageItem->update([
+                'status' => UserStageItem::STATUS_ACTIVE,
+                'completed_at' => null,
+            ]);
+        }
+
+        $setupStageReverted = false;
+        $nextSetupStageReverted = false;
+
+        $setupStage = UserStageItem::where('user_id', $userId)
+            ->whereHas('stage', function ($query) {
+                $query->where('name', 'Setup');
+            })
+            ->where('status', UserStageItem::STATUS_DONE)
+            ->first();
+
+        if ($setupStage) {
+            $currentStageId = $setupStage->stage_id;
+            $nextStage = UserStageItem::where('user_id', $userId)
+                ->where('stage_id', $currentStageId + 1)
+                ->where('status', UserStageItem::STATUS_ACTIVE)
+                ->first();
+
+            if ($nextStage) {
+                $nextSetupStageReverted = $nextStage->update([
+                    'status' => UserStageItem::STATUS_PENDING
+                ]);
+            }
+
+            $setupStageReverted = $setupStage->update([
+                'status' => UserStageItem::STATUS_ACTIVE
+            ]);
+        }
+
+        return [
+            'payment_stage_reverted' => $paymentStageReverted,
+            'next_payment_stage_reverted' => $nextPaymentStageReverted,
+            'setup_stage_reverted' => $setupStageReverted,
+            'next_setup_stage_reverted' => $nextSetupStageReverted,
+        ];
     }
 }

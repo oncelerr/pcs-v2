@@ -119,6 +119,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <Link to="/state-service-requests" className={'submenu-link ' + (isActive('/state-service-requests') ? 'active' : '')}>
                   <span>Service Requests</span>
                 </Link>
+                <Link to="/admin-activity" className={'submenu-link ' + (isActive('/admin-activity') ? 'active' : '')}>
+                  <span>Activity &amp; Reports</span>
+                </Link>
               </>
             ) : (
               <>
