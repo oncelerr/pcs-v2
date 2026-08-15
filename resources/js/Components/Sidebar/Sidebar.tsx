@@ -17,8 +17,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Check if the logged-in user is admin
-  const isAdmin = user?.role?.name?.toLowerCase() === 'admin';
+  // Check if the logged-in user is admin - Super Admin counts as admin too
+  const isAdmin = ['admin', 'super admin'].includes(user?.role?.name?.toLowerCase() || '');
 
   const handleServiceRequestSubmit = async (formData: any) => {
     try {

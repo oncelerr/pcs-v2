@@ -106,15 +106,13 @@ const ListItem: React.FC<ListItemProps> = ({ title, subtitle, onAction }) => (
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, hasRole } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [showPaymentSuccessModal, setShowPaymentSuccessModal] = useState(false);
   const [showPaymentErrorModal, setShowPaymentErrorModal] = useState(false);
   const [showPaymentCancelModal, setShowPaymentCancelModal] = useState(false);
   const [paymentErrorMessage, setPaymentErrorMessage] = useState('');
   const [paymentCancelMessage, setPaymentCancelMessage] = useState('');
 
-  // Check if user is admin
-  const isAdmin = hasRole('Admin');
   const [userStats, setUserStats] = useState<UserStats>({
     completed: 0,
     ongoing: 0,
@@ -290,7 +288,7 @@ const Dashboard = () => {
       // console.log('Fetching user stats for admin');
       fetchUserStats();
     }
-  }, [isAdmin, user, hasRole]);
+  }, [isAdmin, user]);
 
   useEffect(() => {
     const fetchProgress = async () => {

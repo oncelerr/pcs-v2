@@ -147,7 +147,7 @@ class StateServiceRequestController extends Controller
     {
         // Ensure user can only view their own requests (unless admin)
         $user = $request->user();
-        $isAdmin = $user->role_id === 1; // Adjust based on your admin role check
+        $isAdmin = $user->isAdmin();
         
         if ($stateServiceRequest->user_id !== $user->id && !$isAdmin) {
             return response()->json([
@@ -171,7 +171,7 @@ class StateServiceRequestController extends Controller
     {
         // Ensure only admins can update
         $user = $request->user();
-        $isAdmin = $user->role_id === 1; // Adjust based on your admin role check
+        $isAdmin = $user->isAdmin();
         
         if (!$isAdmin) {
             return response()->json([
@@ -262,7 +262,7 @@ class StateServiceRequestController extends Controller
     public function adminIndex(Request $request)
     {
         $user = $request->user();
-        $isAdmin = $user->role_id === 1; // Adjust based on your admin role check
+        $isAdmin = $user->isAdmin();
         
         if (!$isAdmin) {
             return response()->json([
@@ -300,7 +300,7 @@ class StateServiceRequestController extends Controller
     public function cancel(Request $request, StateServiceRequest $stateServiceRequest)
     {
         $user = $request->user();
-        $isAdmin = $user->role_id === 1;
+        $isAdmin = $user->isAdmin();
         
         // Check authorization
         if ($stateServiceRequest->user_id !== $user->id && !$isAdmin) {

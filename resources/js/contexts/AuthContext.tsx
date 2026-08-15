@@ -68,9 +68,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return roleName.toLowerCase() === role.toLowerCase();
   }, [user]);
 
-  // Check if user is admin
+  // Check if user is admin - Super Admin is a superset of Admin, so it
+  // passes this check too. Use hasRole('Super Admin') for the stricter check.
   const isAdmin = useCallback((): boolean => {
-    return hasRole('Admin');
+    return hasRole('Admin') || hasRole('Super Admin');
   }, [hasRole]);
 
   // Clear any authentication errors
@@ -213,7 +214,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user,
         isAuthenticated,
         hasRole,
-        isAdmin: hasRole('Admin'),
+        isAdmin: hasRole('Admin') || hasRole('Super Admin'),
         login,
         logout,
         loading,

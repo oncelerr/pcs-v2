@@ -97,4 +97,25 @@ class User extends Authenticatable
     {
         return $this->role && $this->role->name === $roleName;
     }
+
+    /**
+     * Check if the user has admin-level access. Super Admin is a superset
+     * of Admin - anywhere a regular Admin is allowed, Super Admin is too.
+     *
+     * @return bool
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role && in_array($this->role->name, ['Admin', 'Super Admin'], true);
+    }
+
+    /**
+     * Check if the user has Super Admin access specifically.
+     *
+     * @return bool
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole('Super Admin');
+    }
 }

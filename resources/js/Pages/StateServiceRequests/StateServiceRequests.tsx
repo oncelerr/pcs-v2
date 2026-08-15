@@ -44,9 +44,8 @@ interface PaginationData {
 }
 
 const StateServiceRequests = () => {
-    const { user, hasRole } = useAuth();
+    const { user, isAdmin } = useAuth();
     const navigate = useNavigate();
-    const isAdmin = hasRole('Admin');
 
     const [requests, setRequests] = useState<StateServiceRequest[]>([]);
     const [loading, setLoading] = useState<boolean>(true);

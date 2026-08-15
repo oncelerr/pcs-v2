@@ -41,9 +41,8 @@ interface UserInformation {
 }
 
 const UserDocuments = () => {
-  const { user, hasRole } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = hasRole('Admin');
 
   const [documents, setDocuments] = useState<UserDocument[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

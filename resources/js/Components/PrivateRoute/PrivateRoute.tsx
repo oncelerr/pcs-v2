@@ -32,10 +32,17 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // ✅ Role-based protection
+  // ✅ Role-based protection - Super Admin satisfies an "Admin" requirement too
   if (requiredRoles) {
     const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
-    const hasAccess = roles.some(r => user?.role?.name?.toLowerCase() === r.toLowerCase());
+    const userRoleName = user?.role?.name?.toLowerCase() || '';
+    const hasAccess = roles.some(r => {
+      const required = r.toLowerCase();
+      if (required === 'admin') {
+        return userRoleName === 'admin' || userRoleName === 'super admin';
+      }
+      return userRoleName === required;
+    });
 
     if (!hasAccess) {
       return <Navigate to="/403" replace />; // 🔒 or "/dashboard"

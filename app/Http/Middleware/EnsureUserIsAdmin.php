@@ -24,11 +24,8 @@ class EnsureUserIsAdmin
         // Get the user with role relationship loaded
         $user = $request->user()->load('role');
 
-        // Check if user is admin based on role
-        // Using the same logic as your AuthController
-        $isAdmin = $user->role && $user->role->name === 'Admin';
-
-        if (!$isAdmin) {
+        // Super Admin passes every Admin gate too - it's a superset role
+        if (!$user->isAdmin()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized. Admin access required.'

@@ -42,8 +42,7 @@ interface PaginationData {
 }
 
 const Compliance: React.FC = () => {
-  const { user, logout, hasRole } = useAuth();
-  const isAdmin = hasRole('Admin');
+  const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const [userData, setUserData] = useState<ComplianceUser[]>([]);
