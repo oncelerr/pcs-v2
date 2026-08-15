@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Pie } from 'react-chartjs-2';
 import LoadingSpinner from '../../../../Components/LoadingSpinner/LoadingSpinner';
+import { useAuth } from '../../../../contexts/AuthContext';
 import './AdminDashboard.css';
 
 interface UserStats {
@@ -88,6 +89,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   createPieChartData,
   chartOptions
 }) => {
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
+
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [loadingActivities, setLoadingActivities] = useState<boolean>(true);
 
@@ -127,17 +131,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, []);
 
   useEffect(() => {
-    fetchActivities();
+    if (isSuperAdmin) fetchActivities();
     fetchPendingReports();
 
     // Refresh every 5 minutes
     const intervalId = setInterval(() => {
-      fetchActivities();
+      if (isSuperAdmin) fetchActivities();
       fetchPendingReports();
     }, 5 * 60 * 1000);
 
     return () => clearInterval(intervalId);
-  }, [fetchActivities, fetchPendingReports]);
+  }, [isSuperAdmin, fetchActivities, fetchPendingReports]);
 
   const maxStepCount = Math.max(
     1,
@@ -254,39 +258,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         <div className="ad-db-right">
-          <div className="card">
-            <div className="card__header">
-              <div className="card__header-icon">🔔</div>
-              <div className="card__header-title">Recent Admin Activity</div>
-              <Link to="/admin-activity" className="card__header-link">View All</Link>
-            </div>
-            <div className="card__body">
-              <div className="activity-list">
-                {loadingActivities ? (
-                  <div className="loading-activity">
-                    <LoadingSpinner size="small" color="#126654" />
-                  </div>
-                ) : activities.length > 0 ? (
-                  activities.map((activity) => (
-                    <div key={activity.id} className="activity-item">
-                      <div className="activity-item__icon activity-item__icon--user">
-                        👤
-                      </div>
-                      <div className="activity-item__content">
-                        <div className="activity-item__title">{activity.admin ? activity.admin.name : 'System'}</div>
-                        <div className="activity-item__details">{activity.description}</div>
-                        <div className="activity-item__time">{timeAgo(activity.created_at)}</div>
-                      </div>
+          {isSuperAdmin && (
+            <div className="card">
+              <div className="card__header">
+                <div className="card__header-icon">🔔</div>
+                <div className="card__header-title">Recent Admin Activity</div>
+                <Link to="/admin-activity" className="card__header-link">View All</Link>
+              </div>
+              <div className="card__body">
+                <div className="activity-list">
+                  {loadingActivities ? (
+                    <div className="loading-activity">
+                      <LoadingSpinner size="small" color="#126654" />
                     </div>
-                  ))
-                ) : (
-                  <div className="loading-activity">
-                    <p>No recent activity found</p>
-                  </div>
-                )}
+                  ) : activities.length > 0 ? (
+                    activities.map((activity) => (
+                      <div key={activity.id} className="activity-item">
+                        <div className="activity-item__icon activity-item__icon--user">
+                          👤
+                        </div>
+                        <div className="activity-item__content">
+                          <div className="activity-item__title">{activity.admin ? activity.admin.name : 'System'}</div>
+                          <div className="activity-item__details">{activity.description}</div>
+                          <div className="activity-item__time">{timeAgo(activity.created_at)}</div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="loading-activity">
+                      <p>No recent activity found</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div className="card">
             <div className="card__header">

@@ -71,8 +71,9 @@ const formatDate = (dateString: string | null): string => {
 const REQUIRED_APPROVALS = 2;
 
 const AdminActivity: React.FC = () => {
-  const { user } = useAuth();
-  const [tab, setTab] = useState<Tab>('activity');
+  const { user, hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
+  const [tab, setTab] = useState<Tab>(isSuperAdmin ? 'activity' : 'reports');
 
   const [modalState, setModalState] = useState({
     isOpen: false,
@@ -112,8 +113,8 @@ const AdminActivity: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (tab === 'activity') fetchLogs(1);
-  }, [tab, fetchLogs]);
+    if (tab === 'activity' && isSuperAdmin) fetchLogs(1);
+  }, [tab, isSuperAdmin, fetchLogs]);
 
   const handleViewDocument = async (log: ActivityLog) => {
     const filePath = log.metadata?.file_path;
@@ -375,12 +376,14 @@ const AdminActivity: React.FC = () => {
       </div>
 
       <div className="admin-activity-tabs">
-        <button className={tab === 'activity' ? 'active' : ''} onClick={() => setTab('activity')}>Activity Log</button>
+        {isSuperAdmin && (
+          <button className={tab === 'activity' ? 'active' : ''} onClick={() => setTab('activity')}>Activity Log</button>
+        )}
         <button className={tab === 'reports' ? 'active' : ''} onClick={() => setTab('reports')}>Reports</button>
         <button className={tab === 'admins' ? 'active' : ''} onClick={() => setTab('admins')}>Admins</button>
       </div>
 
-      {tab === 'activity' && (
+      {tab === 'activity' && isSuperAdmin && (
         <div className="admin-activity-panel">
           {logsLoading ? (
             <div className="aa-empty-state"><LoadingSpinner size="small" color="#126654" /></div>

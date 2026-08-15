@@ -83,8 +83,8 @@ Route::group(['prefix' => 'api'], function () {
             Route::post('/{id}/reset-password', [AuthController::class, 'resetAdminPassword']);
         });
 
-        // Admin activity log (Admin Only)
-        Route::middleware('admin')->get('/admin/activity-logs', [AdminActivityLogController::class, 'index']);
+        // Admin activity log (Super Admin Only)
+        Route::middleware('super-admin')->get('/admin/activity-logs', [AdminActivityLogController::class, 'index']);
 
         // Admin reports: automated summaries + manual reports requiring 2-admin approval (Admin Only)
         Route::middleware('admin')->prefix('admin/reports')->group(function () {
