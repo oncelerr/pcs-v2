@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\PersonalAccessToken;
 
+// Static helper for recording admin actions into the audit log; never throws to avoid breaking the caller
 class AdminActivityLogger
 {
     /**

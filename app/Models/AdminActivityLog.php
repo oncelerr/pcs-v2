@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+// Immutable audit trail of admin actions with polymorphic subject tracking
 class AdminActivityLog extends Model
 {
     protected $fillable = [

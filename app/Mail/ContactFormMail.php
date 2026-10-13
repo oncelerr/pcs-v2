@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
+// Mailable class for rendering and sending contact form submissions to the admin
 class ContactFormMail extends Mailable
 {
     use Queueable, SerializesModels;

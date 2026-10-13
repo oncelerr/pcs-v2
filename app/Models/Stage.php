@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+// Represents a high-level workflow stage (Setup, Business Formation, Finalization)
 class Stage extends Model
 {
     protected $fillable = [

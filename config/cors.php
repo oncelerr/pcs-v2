@@ -1,5 +1,6 @@
 <?php
 
+// CORS configuration for the SPA frontend to communicate with the API
 return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
     'allowed_methods' => ['*'],

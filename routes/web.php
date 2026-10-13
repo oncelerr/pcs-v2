@@ -15,6 +15,10 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AdminActivityLogController;
 use App\Http\Controllers\AdminReportController;
 
+// ============================================================
+// Route definitions for the PCS application
+// ============================================================
+
 // Secure document access with signed URLs
 Route::get('/document/view', [DocumentAccessController::class, 'viewDocument'])
     ->middleware(['signed'])
@@ -159,7 +163,7 @@ Route::middleware('web')->group(function () {
 });
 
 
-// SPA catch-all route - must be the last route
+// SPA catch-all route - serves the React app for all non-API paths
 Route::get('/{path?}', function () {
     return view('welcome');
 })->where('path', '^(?!api).*$')->name('home');

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Services\AdminActivityLogger;
 
+// CRUD operations for user profile information with search, filtering, and cascading deletion
 class UserInformationController extends Controller
 {
     /**

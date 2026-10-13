@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\UserStageItem;
 
+// Initializes default stage progress rows for newly registered users and admin-added candidates
 class UserStageItemService
 {
     public static function initializeFor(User $user): void

@@ -13,6 +13,7 @@ use App\Models\Stage;
 use App\Models\UserInformation;
 use App\Models\ComplianceUser;
 
+// Core user model with role-based access control (User, Admin, Super Admin)
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;

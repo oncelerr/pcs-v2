@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+// Migration: creates admin_activity_logs table for auditing all admin actions
 return new class extends Migration
 {
     public function up(): void

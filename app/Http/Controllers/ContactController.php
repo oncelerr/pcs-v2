@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\ContactFormMail;
 use Illuminate\Support\Facades\Validator;
 
+// Processes contact form submissions and forwards them via email to the admin
 class ContactController extends Controller
 {
     public function send(Request $request)

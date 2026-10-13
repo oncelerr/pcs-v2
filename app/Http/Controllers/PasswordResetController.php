@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Services\AdminActivityLogger;
 
+// Handles password reset by admin and self-service password change by authenticated users
 class PasswordResetController extends Controller
 {
     /**

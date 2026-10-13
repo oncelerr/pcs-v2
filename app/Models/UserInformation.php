@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+// Extended profile data for a user including personal, contact, and company details
 class UserInformation extends Model
 {
     use HasFactory;

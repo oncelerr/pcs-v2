@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
+// Auto-creates default stage items for authenticated users who have none yet
 class InitializeUserProgress
 {
     /**

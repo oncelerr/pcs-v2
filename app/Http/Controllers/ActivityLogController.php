@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+// Aggregates recent activities across all database tables for the admin dashboard overview
 class ActivityLogController extends Controller
 {
     /**

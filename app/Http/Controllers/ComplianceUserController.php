@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Services\AdminActivityLogger;
 
+// CRUD operations for compliance user records, document uploads, and tax information management
 class ComplianceUserController extends Controller
 {
     /**

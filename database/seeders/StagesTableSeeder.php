@@ -7,6 +7,7 @@ use App\Models\StageItem;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
+// Seeds the three workflow stages (Setup, Business Formation, Finalization) and their items
 class StagesTableSeeder extends Seeder
 {
     /**

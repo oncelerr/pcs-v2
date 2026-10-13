@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
+// Manages automated and manual admin reports with a two-admin approval workflow
 class AdminReportController extends Controller
 {
     /**

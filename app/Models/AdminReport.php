@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+// Admin reports: automated (system-generated) or manual (requires two-admin approval)
 class AdminReport extends Model
 {
     public const TYPE_AUTOMATED = 'automated';

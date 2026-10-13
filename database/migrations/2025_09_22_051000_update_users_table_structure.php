@@ -5,6 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
+// Migration: restructures the users table with OTP, role, and profile fields
 return new class extends Migration
 {
     /**

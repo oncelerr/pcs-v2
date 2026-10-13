@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Config;
 
+// Centralized notification service for sending alerts to users, admins, and logging system events
 class NotificationController extends Controller
 {
     /**

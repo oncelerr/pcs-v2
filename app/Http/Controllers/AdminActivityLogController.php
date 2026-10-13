@@ -6,6 +6,7 @@ use App\Models\AdminActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
+// Provides paginated, filterable access to the admin activity audit trail
 class AdminActivityLogController extends Controller
 {
     /**

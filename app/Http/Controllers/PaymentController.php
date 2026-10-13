@@ -12,6 +12,7 @@ use App\Models\Stage;
 use App\Models\ComplianceUser;
 use App\Services\AdminActivityLogger;
 
+// Integrates with Stripe for checkout sessions and handles payment lifecycle (success, cancel, manual marking)
 class PaymentController extends Controller
 {
     /**

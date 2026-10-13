@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+// Defines available user roles (user, admin, super_admin) for access control
 class Role extends Model
 {
     /**

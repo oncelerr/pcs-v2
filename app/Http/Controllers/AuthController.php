@@ -16,6 +16,7 @@ use App\Services\AdminActivityLogger;
 use App\Models\ComplianceUser;
 use App\Models\Role;
 
+// Handles authentication flows: registration, login, logout, OTP verification, and admin account management
 class AuthController extends Controller
 {
     /**

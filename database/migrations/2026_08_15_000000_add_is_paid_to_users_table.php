@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+// Migration: adds is_paid boolean flag to users table for manual payment tracking
 return new class extends Migration
 {
     /**

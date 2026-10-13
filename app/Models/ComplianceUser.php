@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+// Tracks multi-step compliance workflow status for each client (state registration, EIN, bank, etc.)
 class ComplianceUser extends Model
 {
     /**

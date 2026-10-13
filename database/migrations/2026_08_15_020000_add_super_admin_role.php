@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
+// Migration: inserts the Super Admin role into the roles table
 return new class extends Migration
 {
     /**

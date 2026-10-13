@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+// Records an individual admin's approval or rejection decision on a manual report
 class AdminReportApproval extends Model
 {
     public const DECISION_APPROVED = 'approved';

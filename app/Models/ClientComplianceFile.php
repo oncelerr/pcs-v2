@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+// Stores metadata for compliance documents uploaded by admins on behalf of clients
 class ClientComplianceFile extends Model
 {
     /**

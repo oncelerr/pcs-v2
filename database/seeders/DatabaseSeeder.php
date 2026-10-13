@@ -7,6 +7,7 @@ use App\Models\Role;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
+// Main seeder: creates default roles, base admin account, and delegates to stage seeding
 class DatabaseSeeder extends Seeder
 {
     /**
@@ -24,7 +25,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Admin User',
                 'username' => 'admin',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('@Admin1234'),
                 'role_id' => $adminRole->id,
                 'email_verified_at' => now(),
             ]

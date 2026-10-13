@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+// Guards admin-only routes; allows both Admin and Super Admin roles
 class EnsureUserIsAdmin
 {
     /**

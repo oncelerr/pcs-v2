@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+// Placeholder middleware - admin checks are handled by EnsureUserIsAdmin instead
 class AdminMiddleware
 {
     /**

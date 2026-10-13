@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+// Guards routes that require Super Admin privileges exclusively
 class EnsureUserIsSuperAdmin
 {
     /**

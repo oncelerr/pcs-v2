@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+// Migration: creates user_stage_items pivot table to track each user's progress per stage item
 return new class extends Migration {
     /**
      * Run the migrations.

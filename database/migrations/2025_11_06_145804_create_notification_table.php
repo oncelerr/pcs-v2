@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+// Migration: creates the notification table for in-app user alerts
 return new class extends Migration {
     /**
      * Run the migrations.

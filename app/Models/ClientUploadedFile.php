@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+// References to client-uploaded identity documents (passport, proof of address, signature)
 class ClientUploadedFile extends Model
 {
     use HasFactory;

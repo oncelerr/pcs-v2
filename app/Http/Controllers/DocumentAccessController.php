@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\URL;
 use App\Models\ClientUploadedFile;
 
+// Provides secure, signed-URL-based access to privately stored client documents
 class DocumentAccessController extends Controller
 {
     /**

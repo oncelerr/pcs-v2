@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+// Individual actionable items within a stage (e.g., Profile Setup, Payment, EIN Filing)
 class StageItem extends Model
 {
     /**

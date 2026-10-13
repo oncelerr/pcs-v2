@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
+// Handles user profile form submissions, document uploads, and stage progression after profile completion
 class FormSubmitController extends Controller
 {
     /**

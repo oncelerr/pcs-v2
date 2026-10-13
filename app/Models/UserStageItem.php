@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+// Tracks individual user progress through each stage item (pending -> active -> completed)
 class UserStageItem extends Model
 {
     /**
