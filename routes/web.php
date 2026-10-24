@@ -14,6 +14,7 @@ use App\Http\Controllers\UserDocumentController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AdminActivityLogController;
 use App\Http\Controllers\AdminReportController;
+use App\Http\Controllers\Api\BlogController;
 
 // ============================================================
 // Route definitions for the PCS application
@@ -99,6 +100,21 @@ Route::group(['prefix' => 'api'], function () {
             Route::post('/{report}/approve', [AdminReportController::class, 'approve']);
             Route::post('/{report}/reject', [AdminReportController::class, 'reject']);
         });
+
+        // Blog management (Admin Only)
+        Route::middleware('admin')->prefix('admin/blogs')->group(function () {
+            Route::get('/', [BlogController::class, 'adminIndex']);
+            Route::get('/{blog}', [BlogController::class, 'adminShow']);
+            Route::post('/', [BlogController::class, 'store']);
+            Route::post('/{blog}', [BlogController::class, 'update']); // multipart/form-data needs POST + _method spoof
+            Route::delete('/{blog}', [BlogController::class, 'destroy']);
+        });
+    });
+
+    // Public blog routes - readable by anyone, no auth required
+    Route::prefix('blogs')->group(function () {
+        Route::get('/', [BlogController::class, 'index']);
+        Route::get('/{slug}', [BlogController::class, 'show']);
     });
 
     // Contact Form

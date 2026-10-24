@@ -1,138 +1,174 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import axios from 'axios';
+import LoadingSpinner from '../../Components/LoadingSpinner/LoadingSpinner';
 import './Article.css'
 
-// Import CSS (in a real project, you would import: import './styles.css')
+interface BlogDetail {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  cover_image: string | null;
+  tags: string[] | null;
+  published_at: string;
+  author?: { id: number; name: string } | null;
+}
 
-const ArticleCard = ({ image, tags, date, title, description, link }) => {
+interface RelatedBlog {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  cover_image: string | null;
+  tags: string[] | null;
+  published_at: string;
+}
+
+const formatDate = (dateString: string) => {
+  try {
+    return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  } catch {
+    return dateString;
+  }
+};
+
+const coverImageUrl = (path: string | null) => {
+  if (!path) return 'https://placehold.co/995x360?text=Premium+Corp+Solutions';
+  return path.startsWith('http') ? path : `/storage/${path}`;
+};
+
+const ArticleCard: React.FC<{ post: RelatedBlog }> = ({ post }) => {
   return (
     <div className="article-card">
-      <img className="article-card__image" src={image} alt={title} />
+      <img className="article-card__image" src={coverImageUrl(post.cover_image)} alt={post.title} />
       <div className="article-card__content">
         <div className="article-card__tags">
-          {tags.map((tag, index) => (
-            <div key={index} className="tag">
+          {(post.tags || []).slice(0, 3).map((tag) => (
+            <div key={tag} className="tag">
               {tag}
             </div>
           ))}
         </div>
         <div className="article-card__info">
-          <div className="article-card__date">{date}</div>
-          <h3 className="article-card__title">{title}</h3>
-          <p className="article-card__description">{description}</p>
-          <a href={link} className="article-card__link">
+          <div className="article-card__date">{formatDate(post.published_at)}</div>
+          <h3 className="article-card__title">{post.title}</h3>
+          {post.excerpt && <p className="article-card__description">{post.excerpt}</p>}
+          <Link to={`/article/${post.slug}`} className="article-card__link">
             Read Article →
-          </a>
+          </Link>
         </div>
       </div>
     </div>
   );
 };
 
-const BlogPost = () => {
-  const recommendedArticles = [
-    {
-      image: "https://placehold.co/416x240",
-      tags: ["3PL Growth", "3PL Tips", "3+"],
-      date: "Jan 25, 2025",
-      title: "The 2024 Best Apparel 3PL Warehouses",
-      description: "Explore the top apparel 3PL warehouses of 2024, known for their efficient fulfillment, fashion logistics expertise, and scalable solutions.",
-      link: "#"
-    },
-    {
-      image: "https://placehold.co/416x240",
-      tags: ["3PL Growth", "3PL Tips", "3+"],
-      date: "Jan 25, 2025",
-      title: "The 2024 Best Apparel 3PL Warehouses",
-      description: "Explore the top apparel 3PL warehouses of 2024, known for their efficient fulfillment, fashion logistics expertise, and scalable solutions.",
-      link: "#"
-    },
-    {
-      image: "https://placehold.co/416x240",
-      tags: ["3PL Growth", "3PL Tips", "3+"],
-      date: "Jan 25, 2025",
-      title: "The 2024 Best Apparel 3PL Warehouses",
-      description: "Explore the top apparel 3PL warehouses of 2024, known for their efficient fulfillment, fashion logistics expertise, and scalable solutions.",
-      link: "#"
-    }
-  ];
+const BlogPost: React.FC = () => {
+  const { slug } = useParams<{ slug: string }>();
+  const [blog, setBlog] = useState<BlogDetail | null>(null);
+  const [related, setRelated] = useState<RelatedBlog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchArticle = async () => {
+      setLoading(true);
+      setNotFound(false);
+      try {
+        const response = await axios.get(`/api/blogs/${slug}`);
+        if (cancelled) return;
+        setBlog(response.data.data);
+        setRelated(response.data.related || []);
+      } catch (err: any) {
+        if (cancelled) return;
+        if (err.response?.status === 404) {
+          setNotFound(true);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    if (slug) fetchArticle();
+    return () => { cancelled = true; };
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="page-container">
+        <div className="article-loading">
+          <LoadingSpinner size="medium" color="#106552" />
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound || !blog) {
+    return (
+      <div className="page-container">
+        <div className="article-not-found">
+          <h1>Article not found</h1>
+          <p>This post may have been unpublished or the link is incorrect.</p>
+          <Link to="/blogs" className="text-link">← Back to Blog</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const paragraphs = blog.content.split(/\n{2,}/).filter(Boolean);
 
   return (
     <div className="page-container">
       {/* Breadcrumb */}
       <div className="breadcrumb">
-        <span className="breadcrumb__item">Home</span>
+        <Link to="/" className="breadcrumb__item">Home</Link>
         <span className="breadcrumb__separator">›</span>
-        <span className="breadcrumb__item">Blogs</span>
+        <Link to="/blogs" className="breadcrumb__item">Blogs</Link>
         <span className="breadcrumb__separator">›</span>
         <span className="breadcrumb__item breadcrumb__item--active">
-          Work With Experts In Fulfillment Solutions
+          {blog.title}
         </span>
       </div>
 
       <main className="main-content">
         <article className="article">
-          <h1 className="article__title">Work With Experts In Fulfillment Solutions</h1>
-          
+          <h1 className="article__title">{blog.title}</h1>
+
           <div className="article__meta">
             <div className="meta-item">
               <div className="meta-item__label">Published:</div>
-              <div className="meta-item__value">Jan 25, 2025</div>
+              <div className="meta-item__value">{formatDate(blog.published_at)}</div>
             </div>
             <div className="meta-item">
               <div className="meta-item__label">Written By:</div>
-              <div className="meta-item__value">Team</div>
+              <div className="meta-item__value">{blog.author?.name || 'PCS Team'}</div>
             </div>
           </div>
 
-          <img className="article__hero" src="https://placehold.co/995x360" alt="Article hero" />
+          <img className="article__hero" src={coverImageUrl(blog.cover_image)} alt={blog.title} />
 
           <div className="article__body">
-            <section className="article__section">
-              <h2 className="section-title">The Importance of Efficient Merchandise Logistics</h2>
-              <p>Managing merchandise logistics requires precision, reliability, and efficiency, especially as businesses scale and customer expectations continue to rise. From sourcing raw materials to delivering finished products, every step in the supply chain must be carefully managed to ensure seamless operations.</p>
-              
-              <blockquote className="article__quote">
-                "A strong logistics network isn't just about moving goods—it's about moving businesses forward."
-              </blockquote>
-              
-              <p>This is where third-party logistics (3PL) providers come in, offering businesses the infrastructure and expertise needed to optimize storage, inventory management, and distribution.</p>
-            </section>
-
-            <section className="article__section">
-              <h2 className="section-title">Key Benefits of 3PL Partnerships:</h2>
-              <p>Cost Savings – Reduces overhead costs by outsourcing warehousing and fulfillment.<br/>
-              Scalability – Easily adjust operations based on demand fluctuations.<br/>
-              Technology Integration – Real-time tracking and automated inventory management.<br/>
-              Faster Shipping – Optimized distribution networks for quicker deliveries.</p>
-              <p>For an in-depth look at how 3PL services can transform your business, visit this <a href="#" className="text-link">guide</a>.</p>
-            </section>
-
-            <section className="article__section">
-              <h2 className="section-title">Beyond Warehousing: The Full Scope of 3PL Services</h2>
-              <p>A well-established 3PL provider offers more than just storage space. They provide end-to-end logistics solutions, including:<br/>
-              Order Fulfillment – Picking, packing, and shipping services.<br/>
-              Transportation Management – Coordinating shipping and freight.<br/>
-              Reverse Logistics – Handling returns and exchanges.</p>
-            </section>
-
-            <section className="article__section">
-              <h2 className="section-title">Choosing a Tech-Enabled 3PL Provider</h2>
-              <p>With so many logistics providers available, choosing the right 3PL partner requires careful evaluation. Businesses must consider factors such as warehouse locations, technology capabilities, industry expertise, and service flexibility. A strong 3PL partnership can be a game-changer, allowing companies to streamline their operations and remain competitive in a rapidly evolving market. In this blog, we highlight some of the top 3PL warehouses that excel in handling various types of merchandise, helping businesses find the right logistics partner to support their growth and operational success.</p>
-              <p>For a list of top-rated 3PL providers, check out <a href="#" className="text-link">this resource</a>.</p>
-            </section>
+            {paragraphs.map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
           </div>
         </article>
       </main>
 
       {/* Recommended Articles */}
-      <section className="recommended-section">
-        <h2 className="recommended-section__title">Recommended Articles</h2>
-        <div className="recommended-section__grid">
-          {recommendedArticles.map((article, index) => (
-            <ArticleCard key={index} {...article} />
-          ))}
-        </div>
-      </section>
+      {related.length > 0 && (
+        <section className="recommended-section">
+          <h2 className="recommended-section__title">Recommended Articles</h2>
+          <div className="recommended-section__grid">
+            {related.map((post) => (
+              <ArticleCard key={post.id} post={post} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };
