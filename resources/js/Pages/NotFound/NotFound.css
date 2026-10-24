@@ -2,22 +2,26 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 60vh;
+  min-height: 100vh;
   text-align: center;
-  padding: 2rem;
-  background-color: #f8f9fa;
+  padding: 140px 1.5rem 2rem;
+  box-sizing: border-box;
+  background: radial-gradient(circle, rgba(16, 101, 82, 0.07) 1.5px, transparent 1.5px) 0 0 / 26px 26px,
+              #F6F8F7;
 }
 
 .not-found-content {
   max-width: 600px;
-  padding: 2rem;
+  width: 100%;
+  padding: clamp(1.75rem, 5vw, 3rem);
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
 }
 
 .not-found-content h1 {
-  font-size: 6rem;
+  font-size: clamp(3.5rem, 12vw, 6rem);
   font-weight: 700;
   color: #106552;
   margin: 0;
@@ -25,7 +29,7 @@
 }
 
 .not-found-content h2 {
-  font-size: 2rem;
+  font-size: clamp(1.4rem, 5vw, 2rem);
   color: #212529;
   margin: 1rem 0;
 }

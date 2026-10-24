@@ -22,7 +22,7 @@ export default function About() {
             <p className="section-two-right-p">
               At Premium Corp Solutions, we help individuals and businesses across the U.S. navigate legal compliance with ease and confidence. Our mission is to simplify the complex – turning paperwork and legal requirements into a guided, stress-free experience.
               <br /><br />
-              At Premium Corp Solutions, we help individuals and businesses across the U.S. navigate legal compliance with ease and confidence. Our mission is to simplify the complex – turning paperwork and legal requirements into a guided, stress-free experience.
+              From entity formation to ongoing compliance, our team combines deep regulatory knowledge with a client-first approach, so you always know exactly where you stand.
             </p>
           </div>
         </div>

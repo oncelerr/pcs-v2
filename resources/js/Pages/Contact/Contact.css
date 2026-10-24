@@ -1,186 +1,263 @@
 .contact-cont {
   width: 100%;
-  max-width: 100%;
-  max-height: 1377px;
-  aspect-ratio: 1435 / 1410;
-  background-image: url('/assets/contact-bg.png');
-  background-size: cover;
-  background-position: top center;
-  background-repeat: no-repeat;
+  background: radial-gradient(circle, rgba(16, 101, 82, 0.08) 1.5px, transparent 1.5px) 0 0 / 26px 26px,
+              #F6F8F7;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   text-align: center;
-  overflow-x: hidden;
+  padding: 140px 24px 100px;
   box-sizing: border-box;
 }
 
 .contact-cont-h1 {
   font-family: DM Sans;
   font-weight: 700;
-  font-style: Bold;
-  font-size: 52px;
-  line-height: 57px;
-  letter-spacing: -2px;
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 1.15;
+  letter-spacing: -1px;
   text-align: center;
-  vertical-align: middle;
-  width: 600px;
+  max-width: 640px;
 }
 
 .contact-cont-p {
   font-family: DM Sans;
   font-weight: 500;
-  font-style: Medium;
   font-size: 16px;
-  line-height: 32px;
-  letter-spacing: 0px;
+  line-height: 1.8;
   text-align: center;
-  vertical-align: middle;
-  width: 618px;
-  margin-bottom: 73px;
+  color: #474747;
+  max-width: 618px;
+  margin-top: 16px;
+  margin-bottom: 56px;
 }
 
 .grid-wrp {
   display: flex;
   gap: 30px;
+  width: 100%;
+  max-width: 1220px;
+  align-items: stretch;
 }
 
 .grid-left {
-  width: 577px;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 30px;
 }
 
+.grid-left > img {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+}
+
 .contact-info {
-  border: 1px solid #D9D9D9;
+  border: 1px solid #E5E7EB;
   border-radius: 16px;
   background-color: #FFFFFF;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 48px;
+  padding: 40px;
+  flex: 1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
 .each-info {
   display: flex;
-  width: 392px;
-  height: 62px;
   gap: 16px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.each-info img {
+  width: 24px;
+  height: 24px;
+  margin-top: 4px;
+  flex-shrink: 0;
 }
 
 .info-text-title {
   font-family: DM Sans;
-  font-weight: 500;
-  font-style: Medium;
-  font-size: 16px;
-  leading-trim: NONE;
-  line-height: 32px;
-  letter-spacing: 0px;
-  vertical-align: middle;
-  text-align: left;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #191919;
 }
 
 .info-text-value {
   font-family: DM Sans;
-  font-weight: 500;
-  font-style: Medium;
-  font-size: 16px;
-  line-height: 32px;
-  letter-spacing: 0px;
-  vertical-align: middle;
-  text-align: left;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #6B7280;
 }
 
 .grid-right {
-  width: 608px;
-  height: 772px;
-  border: 1px solid #D9D9D9;
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #E5E7EB;
   border-radius: 16px;
   background-color: #FFFFFF;
-  padding: 64px 60.5px;
+  padding: 48px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  text-align: left;
 }
 
 .grid-right-h1 {
   font-family: DM Sans;
   font-weight: 700;
-  font-style: Bold;
-  font-size: 48px;
-  line-height: 57px;
-  letter-spacing: -2px;
-  vertical-align: middle;
+  font-size: clamp(28px, 3.5vw, 40px);
+  line-height: 1.2;
+  letter-spacing: -1px;
   text-align: left;
 }
 
 .grid-right-p {
   font-family: DM Sans;
   font-weight: 500;
-  font-style: Medium;
   font-size: 16px;
-  leading-trim: NONE;
-  line-height: 32px;
-  letter-spacing: 0px;
-  vertical-align: middle;
+  line-height: 1.6;
   text-align: left;
-  margin-top: 16px;
-  margin-bottom: 32px;
+  color: #6B7280;
+  margin-top: 12px;
+  margin-bottom: 28px;
+}
+
+.alert {
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-family: DM Sans;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.alert-success {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+  border: 1px solid #A5D6A7;
+}
+
+.alert-error {
+  background-color: #FCE4EC;
+  color: #C62828;
+  border: 1px solid #EF9A9A;
 }
 
 .grid-right form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
-.grid-right form input {
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grid-right form input,
+.grid-right form textarea {
   all: unset;
+  box-sizing: border-box;
   font-family: Inter;
   font-weight: 400;
-  font-style: Regular;
   font-size: 16px;
-  line-height: 100%;
-  letter-spacing: 0%;
-  vertical-align: middle;
-  color: #757575;
-  width: calc(100% - (17px + 17px));
+  color: #191919;
+  width: 100%;
   text-align: left;
-  padding: 20px 16px;
+  padding: 16px;
   border-radius: 8px;
   border: 1px solid #D9D9D9;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.grid-right form input::placeholder,
+.grid-right form textarea::placeholder {
+  color: #9CA3AF;
+}
+
+.grid-right form input:focus,
+.grid-right form textarea:focus {
+  border-color: #106552;
+  box-shadow: 0 0 0 3px rgba(16, 101, 82, 0.12);
+}
+
+.grid-right form input.error,
+.grid-right form textarea.error {
+  border-color: #DC2626;
+}
+
+.error-message {
+  color: #DC2626;
+  font-size: 13px;
+  font-family: DM Sans;
 }
 
 .grid-right form textarea {
-  all: unset;
-  font-family: Inter;
-  font-weight: 400;
-  font-style: Regular;
-  font-size: 16px;
-  line-height: 100%;
-  letter-spacing: 0%;
-  vertical-align: middle;
-  color: #757575;
-  width: calc(100% - (17px + 17px));
-  height: 100px;
-  text-align: left;
-  padding: 21.5px 16px;
-  border-radius: 8px;
-  border: 1px solid #D9D9D9;
-  margin-bottom: 24px;
+  height: 120px;
+  resize: vertical;
 }
 
 .grid-right form button {
   all: unset;
+  box-sizing: border-box;
   font-family: Inter;
   font-weight: 500;
-  font-style: Medium;
   font-size: 16px;
   line-height: 20px;
-  letter-spacing: 0%;
-  vertical-align: middle;
+  text-align: center;
   color: #FFFFFF;
   background-color: #000;
   padding: 18px 0;
   width: 100%;
   border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.grid-right form button:hover:not(:disabled) {
+  background-color: #106552;
+  transform: translateY(-1px);
+}
+
+.grid-right form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .grid-wrp {
+    flex-direction: column;
+  }
+
+  .grid-left > img {
+    height: 240px;
+  }
+}
+
+@media (max-width: 640px) {
+  .contact-cont {
+    padding: 100px 16px 70px;
+  }
+
+  .contact-cont-p {
+    margin-bottom: 40px;
+  }
+
+  .contact-info,
+  .grid-right {
+    padding: 28px 24px;
+  }
+
+  .grid-right-h1 {
+    font-size: 26px;
+  }
 }

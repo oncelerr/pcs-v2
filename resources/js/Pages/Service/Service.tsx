@@ -70,7 +70,7 @@ export default function Service() {
         {
           id: 1,
           title: "Business Registration",
-          description: "We help you register your business in the U.S. quickly and correctly, ensuring all documents meet state and federal requirements. Whether you need an LLC, Corporation, or Partnership, we guide you through the entire setup processssssssssssssssssssssssssssssssssssss.",
+          description: "We help you register your business in the U.S. quickly and correctly, ensuring all documents meet state and federal requirements. Whether you need an LLC, Corporation, or Partnership, we guide you through the entire setup process.",
           image: "/assets/business-registration.png"
         },
         {
