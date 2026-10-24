@@ -501,6 +501,7 @@ const AllUsers: React.FC = () => {
           <input className="status-bar" type="text" placeholder="Status" />
           <AddCandidateButton onCandidateAdded={fetchUserData} />
         </div>
+        <div className="table-scroll">
         <table className="all-users-table">
           <thead>
             <tr>
@@ -532,13 +533,13 @@ const AllUsers: React.FC = () => {
             ) : (
               userData.map((user, index) => (
                 <tr key={user.id || index}>
-                  <td>{user.company_name}</td>
-                  <td>{`${user.first_name} ${user.last_name}`}</td>
-                  <td>{user.company_designator}</td>
-                  <td>{user.state_registration}</td>
-                  <td>{user.franchise || '04/11/2023'}</td>
-                  <td>{user.irs || '04/11/2023'}</td>
-                  <td>
+                  <td className="row-title-cell" data-label="Company Name">{user.company_name}</td>
+                  <td data-label="Full Name">{`${user.first_name} ${user.last_name}`}</td>
+                  <td data-label="Company Designator">{user.company_designator}</td>
+                  <td data-label="State Registration">{user.state_registration}</td>
+                  <td data-label="Franchise">{user.franchise || '04/11/2023'}</td>
+                  <td data-label="IRS">{user.irs || '04/11/2023'}</td>
+                  <td data-label="Payment">
                     <span
                       className="badge"
                       style={{
@@ -549,7 +550,7 @@ const AllUsers: React.FC = () => {
                       {user.user?.is_paid ? 'Paid' : 'Unpaid'}
                     </span>
                   </td>
-                  <td className="action-dropdown-cell">
+                  <td className="action-dropdown-cell" data-label="Action">
                     <div className="action-dropdown" ref={activeDropdown === user.id ? dropdownRef : null}>
                       <button 
                         className="action-dropdown-toggle" 
@@ -584,7 +585,8 @@ const AllUsers: React.FC = () => {
             )}
           </tbody>
         </table>
-        
+        </div>
+
         {/* Pagination Controls */}
         <div className="pagination-container">
           <div className="pagination-info">

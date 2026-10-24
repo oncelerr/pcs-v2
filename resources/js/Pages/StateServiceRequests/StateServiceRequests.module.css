@@ -546,4 +546,99 @@
     flex-direction: column;
     gap: 12px;
   }
+
+  .container {
+    padding: 12px;
+  }
+
+  .header h1 {
+    font-size: 22px;
+  }
+
+  /* Card-based table for mobile instead of horizontal scroll */
+  .tableContainer {
+    overflow-x: visible;
+  }
+
+  .requestsTable {
+    min-width: 0;
+  }
+
+  .requestsTable thead {
+    display: none;
+  }
+
+  .requestsTable tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .requestsTable tbody tr {
+    display: block;
+    background: white;
+    border: 1px solid #F1F5F9;
+    border-radius: 12px;
+    padding: 4px 16px;
+  }
+
+  .requestsTable td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #F1F5F9;
+    text-align: right;
+  }
+
+  .requestsTable td:last-child {
+    border-bottom: none;
+  }
+
+  .requestsTable td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748B;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  .rowTitleCell {
+    justify-content: flex-start !important;
+    font-weight: 700;
+    font-size: 16px;
+    color: #0F172A;
+  }
+
+  .rowTitleCell::before {
+    content: none;
+  }
+
+  .requestsTable td:last-child {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .requestsTable td:last-child::before {
+    content: none;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+
+  .modalFooter {
+    flex-wrap: wrap;
+  }
+
+  .modalHeader,
+  .modalBody,
+  .modalFooter {
+    padding: 16px;
+  }
 }

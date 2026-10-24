@@ -9,8 +9,6 @@ import Footer from './Components/Footer/Footer';
 import PrivateRoute from './Components/PrivateRoute/PrivateRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import LoadingSpinner from './Components/LoadingSpinner/LoadingSpinner';
-import MobileNotice from './Components/MobileNotice/MobileNotice';
-import useIsMobile from './hooks/useIsMobile';
 import './layouts/DashboardLayout.css';
 
 const Home = lazy(() => import('./Pages/Home/Home'));
@@ -32,6 +30,7 @@ const UserDocuments = lazy(() => import('./Pages/UserDocuments/UserDocuments'))
 const AccountSetting = lazy(() => import('./Pages/AccountSetting/AccountSetting'));
 const StateServiceRequests = lazy(() => import('./Pages/StateServiceRequests/StateServiceRequests'));
 const AdminActivity = lazy(() => import('./Pages/AdminActivity/AdminActivity'));
+const BlogManagement = lazy(() => import('./Pages/BlogManagement/BlogManagement'));
 
 const PageWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <PageTitle title={title}>
@@ -63,7 +62,6 @@ const App: React.FC = () => {
 
 const AppContent: React.FC = () => {
   const location = useLocation();
-  const isMobile = useIsMobile();
 
   const isPrivateRoute = (pathname: string): boolean => {
     const privateRoutes = [
@@ -92,7 +90,6 @@ const AppContent: React.FC = () => {
 
   return (
     <>
-      {isMobile && <MobileNotice />}
       {showNavbarFooter && <Navbar />}
       <Routes>
         {/* Public Routes */}
@@ -101,7 +98,7 @@ const AppContent: React.FC = () => {
         <Route path="/contact" element={<PageWrapper title="Contact"><Contact /></PageWrapper>} />
         <Route path="/services" element={<PageWrapper title="Services"><Service /></PageWrapper>} />
         <Route path="/blogs" element={<PageWrapper title="Blogs"><Blogs /></PageWrapper>} />
-        <Route path="/article" element={<PageWrapper title="Article"><Article /></PageWrapper>} />
+        <Route path="/article/:slug" element={<PageWrapper title="Article"><Article /></PageWrapper>} />
         <Route path="/login" element={<PageWrapper title="Login"><Login /></PageWrapper>} />
         <Route path="/register" element={<PageWrapper title="Register"><Register /></PageWrapper>} />
         <Route path="/terms" element={<PageWrapper title="Terms"><Terms /></PageWrapper>} />
@@ -122,7 +119,7 @@ const AppContent: React.FC = () => {
           <Route path="/user-documents" element={<DashboardPage title="User Documents"><UserDocuments /></DashboardPage>} />
           <Route path="/compliance-success" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
           <Route path="/compliance-uploads" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
-          <Route path="/blog-management" element={<DashboardPage title="Dashboard"><Dashboard /></DashboardPage>} />
+          <Route path="/blog-management" element={<DashboardPage title="Blog Management"><BlogManagement /></DashboardPage>} />
           <Route path="/state-service-requests" element={<DashboardPage title="State Service Requests"><StateServiceRequests /></DashboardPage>} />
           <Route path="/admin-activity" element={<DashboardPage title="Admin Activity & Reports"><AdminActivity /></DashboardPage>} />
         </Route>

@@ -739,17 +739,17 @@ const StateServiceRequests = () => {
                                 ) : (
                                     requests.map((request) => (
                                         <tr key={request.id}>
-                                            <td>#{request.id}</td>
-                                            <td>{request.company_name}</td>
-                                            <td>{request.service_type}</td>
-                                            <td>
+                                            <td data-label="ID">#{request.id}</td>
+                                            <td className={styles.rowTitleCell} data-label="Company">{request.company_name}</td>
+                                            <td data-label="Service Type">{request.service_type}</td>
+                                            <td data-label="Status">
                                                 <span className={`${styles.statusBadge} ${getStatusBadgeClass(request.status)}`}>
                                                     {request.status.replace('_', ' ')}
                                                 </span>
                                             </td>
-                                            <td>{request.user?.name || 'N/A'}</td>
-                                            <td>{formatDate(request.created_at)}</td>
-                                            <td>
+                                            <td data-label="Submitted By">{request.user?.name || 'N/A'}</td>
+                                            <td data-label="Submitted On">{formatDate(request.created_at)}</td>
+                                            <td data-label="Actions">
                                                 <div className={styles.actionButtons}>
                                                     <button
                                                         className={styles.viewButton}

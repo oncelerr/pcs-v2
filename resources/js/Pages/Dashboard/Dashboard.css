@@ -18,22 +18,6 @@ body {
   display: flex;
 }
 
-/* Sidebar */
-.sidebar {
-  width: 269px;
-  height: 100vh;
-  position: fixed;
-  left: 0;
-  top: 0;
-  background: #005444;
-  border-top-right-radius: 20px;
-  border-bottom-right-radius: 20px;
-  padding: 48px 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
 .sidebar__logo {
   width: 100%;
   height: 51px;
@@ -621,13 +605,6 @@ body {
 }
 
 @media (max-width: 768px) {
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    border-radius: 0;
-  }
-  
   .header {
     flex-direction: column;
     gap: 16px;

@@ -1018,6 +1018,7 @@ const Compliance: React.FC = () => {
           <input className="status-bar" type="text" placeholder="Status" />
           <AddCandidateButton onCandidateAdded={fetchUserData} />
         </div>
+        <div className="table-scroll">
         <table className="all-users-table">
           <thead>
             <tr>
@@ -1050,14 +1051,14 @@ const Compliance: React.FC = () => {
               // Use API data if available, fallback to mock data for development
               userData.map((user, index) => (
                 <tr key={user.id || index}>
-                  <td>{user.company_name}</td>
-                  <td>{renderStatusCell(user.id, 'compliance_status', user.compliance_status)}</td>
-                  <td>{renderStatusCell(user.id, 'state_registration_status', user.state_registration_status)}</td>
-                  <td>{renderStatusCell(user.id, 'bio_filing_status', user.bio_filing_status)}</td>
-                  <td>{renderStatusCell(user.id, 'ein_filing_status', user.ein_filing_status)}</td>
-                  <td>{renderStatusCell(user.id, 'bank_registration_status', user.bank_registration_status)}</td>
-                  <td>{renderStatusCell(user.id, 'process_status', user.process_status)}</td>
-                  <td className="action-dropdown-cell">
+                  <td className="row-title-cell" data-label="Company Name">{user.company_name}</td>
+                  <td data-label="Compliance">{renderStatusCell(user.id, 'compliance_status', user.compliance_status)}</td>
+                  <td data-label="State Registration">{renderStatusCell(user.id, 'state_registration_status', user.state_registration_status)}</td>
+                  <td data-label="BOI Filing">{renderStatusCell(user.id, 'bio_filing_status', user.bio_filing_status)}</td>
+                  <td data-label="EIN Filing">{renderStatusCell(user.id, 'ein_filing_status', user.ein_filing_status)}</td>
+                  <td data-label="Bank Registration">{renderStatusCell(user.id, 'bank_registration_status', user.bank_registration_status)}</td>
+                  <td data-label="Status">{renderStatusCell(user.id, 'process_status', user.process_status)}</td>
+                  <td className="action-dropdown-cell" data-label="Action">
                     <div className="action-dropdown" ref={activeDropdown === user.id ? dropdownRef : null}>
                       <button
                         className="action-dropdown-toggle"
@@ -1088,6 +1089,7 @@ const Compliance: React.FC = () => {
             )}
           </tbody>
         </table>
+        </div>
 
         {/* Pagination Controls */}
         <div className="pagination-container">

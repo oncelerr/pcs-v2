@@ -667,16 +667,16 @@ const UserDocuments = () => {
                 ) : (
                   documents.map((document) => (
                     <tr key={document.id}>
-                      <td>{document.company_name}</td>
-                      <td>
+                      <td className="row-title-cell" data-label="Company">{document.company_name}</td>
+                      <td data-label="Document Type">
                         <span className="document-type-badge">
                           {document.document_type.replace(/_/g, ' ')}
                         </span>
                       </td>
-                      <td>{document.file_name}</td>
-                      <td>{document.uploaded_by}</td>
-                      <td>{formatDate(document.uploaded_at)}</td>
-                      <td>
+                      <td data-label="File Name">{document.file_name}</td>
+                      <td data-label="Uploaded By">{document.uploaded_by}</td>
+                      <td data-label="Upload Date">{formatDate(document.uploaded_at)}</td>
+                      <td data-label="Actions">
                         <div className="action-buttons">
                           <button
                             className="view-button"

@@ -109,3 +109,21 @@
   font-family: DM Sans;
   font-size: 14px;
 }
+
+@media (max-width: 768px) {
+  .personal-deets-header,
+  .personal-deets-field {
+    padding: 16px;
+  }
+
+  .personal-deets-section {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pd-fn,
+  .pd-display {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

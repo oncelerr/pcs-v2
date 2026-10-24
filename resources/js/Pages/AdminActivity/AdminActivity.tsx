@@ -406,11 +406,11 @@ const AdminActivity: React.FC = () => {
                     const hasDocument = !!(log.action === 'document_upload' && log.metadata?.file_path);
                     return (
                       <tr key={log.id}>
-                        <td>{log.admin ? log.admin.name : 'System'}</td>
-                        <td><span className="aa-action-chip">{log.action.replace(/_/g, ' ')}</span></td>
-                        <td>{log.description}</td>
-                        <td>{formatDate(log.created_at)}</td>
-                        <td>
+                        <td className="row-title-cell" data-label="Admin">{log.admin ? log.admin.name : 'System'}</td>
+                        <td data-label="Action"><span className="aa-action-chip">{log.action.replace(/_/g, ' ')}</span></td>
+                        <td data-label="Description">{log.description}</td>
+                        <td data-label="Date">{formatDate(log.created_at)}</td>
+                        <td data-label="Document">
                           {hasDocument ? (
                             <button
                               className="aa-view-document-btn"
@@ -559,11 +559,11 @@ const AdminActivity: React.FC = () => {
               <tbody>
                 {admins.map(admin => (
                   <tr key={admin.id}>
-                    <td>{admin.name}</td>
-                    <td>{admin.email}</td>
-                    <td>{admin.username}</td>
-                    <td>{formatDate(admin.created_at)}</td>
-                    <td>
+                    <td className="row-title-cell" data-label="Name">{admin.name}</td>
+                    <td data-label="Email">{admin.email}</td>
+                    <td data-label="Username">{admin.username}</td>
+                    <td data-label="Created">{formatDate(admin.created_at)}</td>
+                    <td data-label="Actions">
                       <button
                         className="aa-view-document-btn"
                         disabled={resettingAdminId === admin.id}

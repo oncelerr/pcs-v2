@@ -351,3 +351,103 @@
   font-style: italic;
   margin-left: auto;
 }
+
+@media (max-width: 768px) {
+  .admin-activity-header {
+    padding: 16px;
+  }
+
+  .admin-activity-tabs {
+    padding: 0 16px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .admin-activity-panel {
+    padding: 16px;
+    overflow-x: visible;
+  }
+
+  /* Card-based table for mobile instead of horizontal scroll */
+  .admin-activity-table {
+    min-width: 0;
+  }
+
+  .admin-activity-table thead {
+    display: none;
+  }
+
+  .admin-activity-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .admin-activity-table tr {
+    display: block;
+    background: white;
+    border: 1px solid #F1F5F9;
+    border-radius: 12px;
+    padding: 4px 16px;
+  }
+
+  .admin-activity-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    height: auto;
+    padding: 10px 0;
+    border-bottom: 1px solid #F1F5F9;
+    white-space: normal;
+    text-align: right;
+  }
+
+  .admin-activity-table td:last-child {
+    border-bottom: none;
+  }
+
+  .admin-activity-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #6B7280;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  .admin-activity-table td.row-title-cell {
+    justify-content: flex-start;
+    font-weight: 700;
+    color: #0F172A;
+  }
+
+  .admin-activity-table td.row-title-cell::before {
+    content: none;
+  }
+
+  .admin-activity-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .aa-form-card {
+    max-width: 100%;
+  }
+
+  .aa-report-card-header {
+    flex-direction: column;
+  }
+
+  .aa-report-meta {
+    flex-wrap: wrap;
+  }
+
+  .aa-report-decision-actions,
+  .aa-report-hint {
+    margin-left: 0;
+    width: 100%;
+  }
+}

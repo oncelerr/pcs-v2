@@ -80,6 +80,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         />
       )}
 
+      {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
+
       <div className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <img src="/assets/sidenav-logo.png" alt="" />

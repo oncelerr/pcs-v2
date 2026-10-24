@@ -18,15 +18,23 @@ const ScrollToTop = () => {
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleNavigation = (path: string) => {
+    setMenuOpen(false);
     navigate(path);
   };
 
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
   const handleLogout = async () => {
     try {
+      setMenuOpen(false);
       await logout();
       navigate('/login');
     } catch (error) {
@@ -54,20 +62,43 @@ export default function Navbar() {
             onClick={() => handleNavigation("/")} 
             style={{ cursor: 'pointer' }}
           />
-          <div className="nav-links">
+          <button
+            className={`nav-toggle ${menuOpen ? "open" : ""}`}
+            onClick={() => setMenuOpen(prev => !prev)}
+            aria-label="Toggle navigation menu"
+            aria-expanded={menuOpen}
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+
+          <div className={`nav-links ${menuOpen ? "open" : ""}`}>
             <button onClick={() => handleNavigation("/")} className="nav-link">Home</button>
             <button onClick={() => handleNavigation("/about")} className="nav-link">About</button>
             <button onClick={() => handleNavigation("/services")} className="nav-link">Services</button>
             <button onClick={() => handleNavigation("/contact")} className="nav-link">Contact</button>
             {user && (
-              <button 
-                onClick={() => handleNavigation("/dashboard")} 
+              <button
+                onClick={() => handleNavigation("/dashboard")}
                 className="nav-link"
               >
                 Dashboard
               </button>
             )}
+            {user ? (
+              <div className="user-actions user-actions-mobile">
+                <button onClick={handleLogout} className="login-btn">
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => handleNavigation("/login")} className="login-btn login-btn-mobile">
+                Login
+              </button>
+            )}
           </div>
+
           {user ? (
             <div className="user-actions">
               <button onClick={handleLogout} className="login-btn">

@@ -306,3 +306,111 @@
 .download-button:hover {
   background-color: #0e5344;
 }
+
+@media (max-width: 768px) {
+  .user-documents-container {
+    padding: 12px;
+  }
+
+  .page-title {
+    font-size: 24px;
+    line-height: normal;
+    margin-bottom: 12px;
+  }
+
+  .controls-container {
+    flex-direction: column;
+  }
+
+  .filter-container {
+    width: 100%;
+  }
+
+  /* Card-based table for mobile instead of horizontal scroll */
+  .table-container {
+    overflow-x: visible;
+  }
+
+  .documents-table {
+    min-width: 0;
+  }
+
+  .documents-table thead {
+    display: none;
+  }
+
+  .documents-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .documents-table tr {
+    display: block;
+    background: white;
+    border: 1px solid #E7E7E7;
+    border-radius: 12px;
+    padding: 4px 16px;
+  }
+
+  .documents-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #F1F5F9;
+  }
+
+  .documents-table td:last-child {
+    border-bottom: none;
+  }
+
+  .documents-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #757575;
+    flex-shrink: 0;
+  }
+
+  .documents-table td.row-title-cell {
+    justify-content: flex-start;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .documents-table td.row-title-cell::before {
+    content: none;
+  }
+
+  .documents-table td:last-child {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .documents-table td:last-child::before {
+    content: none;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .view-button, .details-button, .download-button {
+    width: 100%;
+    text-align: center;
+    padding: 10px 12px;
+  }
+
+  .document-viewer-modal {
+    width: 96%;
+  }
+
+  .document-viewer-footer {
+    flex-wrap: wrap;
+  }
+}
