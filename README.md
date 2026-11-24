@@ -1,61 +1,154 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PCS v2
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel 12 backend with a React (TypeScript) single-page frontend built by Vite.
 
-## About Laravel
+## Running on localhost
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 1. Requirements
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Install these first:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Tool             | Version                 | Notes                                                                                                        |
+| ---------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| PHP              | 8.2 or newer            | Needs the `pdo_mysql`, `mbstring`, `openssl`, `fileinfo` and `curl` extensions. XAMPP's PHP works. |
+| Composer         | 2.x                     | https://getcomposer.org                                                                                      |
+| Node.js          | 20 or newer, with npm   | https://nodejs.org                                                                                           |
+| MySQL or MariaDB | MySQL 8 / MariaDB 10.4+ | XAMPP, Laragon, or a standalone install all work.                                                            |
 
-## Learning Laravel
+> **Use MySQL/MariaDB, not SQLite.** `.env.example` defaults to `DB_CONNECTION=sqlite`, but the
+> users-table migration runs MySQL-only SQL (`SHOW TABLES`, `ENGINE=InnoDB`), so `php artisan migrate`
+> fails on SQLite.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. Install dependencies
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+From the project folder:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+composer install
+npm install
+```
 
-## Laravel Sponsors
+### 3. Create the environment file
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+cp .env.example .env          # PowerShell: Copy-Item .env.example .env
+php artisan key:generate
+```
 
-### Premium Partners
+### 4. Configure the database
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Create an empty database, for example in phpMyAdmin or the MySQL shell:
 
-## Contributing
+```sql
+CREATE DATABASE pcs_v2 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Then edit `.env`. Replace the `DB_CONNECTION=sqlite` line and uncomment the others:
 
-## Code of Conduct
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=pcs_v2
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+(XAMPP's default MySQL user is `root` with an empty password.)
 
-## Security Vulnerabilities
+Set the app URL to match the port the dev server uses:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```dotenv
+APP_URL=http://localhost:8000
+```
 
-## License
+### 5. Run migrations, seed data, and link storage
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+php artisan migrate --seed
+php artisan storage:link
+```
+
+- `--seed` creates the roles, the onboarding stages, and a default admin account (see
+  `database/seeders/DatabaseSeeder.php` for its email and password). Change that password after you
+  first sign in.
+- `storage:link` makes uploaded files (blog covers, compliance documents) reachable at `/storage/...`.
+
+**Optional: make the seeded admin a Super Admin.** A migration promotes the seeded admin to Super Admin,
+but on a fresh database it runs before the seeder creates that account, so the account starts as a
+regular Admin. To get access to Super Admin pages such as the activity log, run:
+
+```bash
+php artisan tinker --execute="App\Models\User::where('email','admin@gmail.com')->update(['role_id' => App\Models\Role::where('name','Super Admin')->value('id')]);"
+```
+
+### 6. Start the app
+
+The quickest way starts everything in one terminal:
+
+```bash
+composer run dev
+```
+
+This runs four processes together: the Laravel server, the queue worker, the log viewer (`pail`), and
+the Vite dev server.
+
+If `pail` will not start (it needs the `pcntl` extension, which Windows PHP does not have), run the
+processes yourself in separate terminals instead:
+
+```bash
+php artisan serve
+```
+
+```bash
+npm run dev
+```
+
+```bash
+php artisan queue:listen --tries=1
+```
+
+Open **http://localhost:8000** in your browser. Keep `npm run dev` running: it serves the React code with
+hot reload. Don't open the Vite URL (port 5173) directly.
+
+To run without the Vite dev server, build the frontend once with `npm run build`, then only
+`php artisan serve` is needed.
+
+## Optional integrations
+
+The app runs without these, but the matching features need keys in `.env`.
+
+**Email (OTP codes, contact form, notifications).** With the default `MAIL_MAILER=log`, emails are
+not sent. They are written to `storage/logs/laravel.log`, so you can copy OTP codes from there while
+developing. To send real email, set `MAIL_MAILER=smtp` and fill in the `MAIL_*` values.
+
+**Stripe payments.** Use test-mode keys from the Stripe dashboard:
+
+```dotenv
+STRIPE_SECRET=sk_test_...
+STRIPE_KEY=pk_test_...
+VITE_STRIPE_PUBLIC_KEY=pk_test_...
+```
+
+Restart `npm run dev` after changing any `VITE_` variable.
+
+**Google sign-in.** Create an OAuth client in Google Cloud Console with the redirect URI
+`http://localhost:8000/auth/google/callback`, then set:
+
+```dotenv
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+```
+
+## Common problems
+
+| Symptom                                                                      | Fix                                                                  |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `could not find driver` during migrate                                     | Enable `extension=pdo_mysql` in your `php.ini`.                  |
+| `SQLSTATE[HY000] [2002]` / connection refused                              | MySQL isn't running. Start it (e.g. from the XAMPP control panel).   |
+| Migration error mentioning `SHOW TABLES` or a syntax error near `ENGINE` | `DB_CONNECTION` is still `sqlite`. Switch to `mysql` (step 4). |
+| Blank page or `Vite manifest not found`                                    | `npm run dev` isn't running. Start it, or run `npm run build`.   |
+| Uploaded images return 404                                                   | Run `php artisan storage:link`.                                    |
+| Config changes have no effect                                                | Run `php artisan config:clear`.                                    |
+| Need a clean database                                                        | `php artisan migrate:fresh --seed` (this deletes all data).        |
