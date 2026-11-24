@@ -1,316 +1,273 @@
-.serv-cont {
-    width: 100%;
-    background: radial-gradient(circle, rgba(16, 101, 82, 0.07) 1.5px, transparent 1.5px) 0 0 / 26px 26px,
-                #F6F8F7;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 64px;
-    padding: 130px 5% 90px;
-    box-sizing: border-box;
+.services-page {
+  font-family: var(--pcs-font);
+  color: var(--pcs-ink);
 }
 
-.serv-cont-left {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 500px;
-    max-width: 607px;
+/* ============ Hero ============ */
+.services-page .serv-cont {
+  width: 100%;
+  background: radial-gradient(circle, rgba(16, 101, 82, 0.07) 1.5px, transparent 1.5px) 0 0 / 26px 26px,
+    var(--pcs-paper);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 64px;
+  padding: calc(var(--pcs-nav-h) + 64px) max(24px, calc((100% - 1200px) / 2)) 96px;
+  box-sizing: border-box;
 }
 
-.serv-cont-right {
-    flex: 1 1 400px;
-    max-width: 560px;
+.services-page .serv-cont-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.serv-cont-right img {
-    width: 100%;
-    height: auto;
-    border-radius: 20px;
+.services-page .serv-cont-right img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--pcs-radius-lg);
 }
 
-.serv-title {
-    font-family: DM Sans;
-    font-weight: 700;
-    font-size: clamp(32px, 4.5vw, 52px);
-    line-height: 1.1;
-    letter-spacing: -1px;
-    text-align: left;
+.services-page .serv-title {
+  font-weight: 700;
+  font-size: clamp(34px, 4.6vw, 58px);
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+  margin: 0;
 }
 
-.serv-desc {
-    font-family: DM Sans;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 1.8;
-    color: #474747;
-    text-align: left;
-    margin-top: 16px;
-    margin-bottom: 34px;
+.services-page .serv-desc {
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--pcs-muted);
+  margin: 18px 0 32px;
+  max-width: 60ch;
 }
 
-.serv-btn {
-    all: unset;
-    font-family: Inter;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 20px;
-    text-align: center;
-    color: white;
-    background-color: #000000;
-    padding: 18px 0;
-    border-radius: 6px;
-    width: 244px;
-    max-width: 100%;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-    box-sizing: border-box;
+.services-page .serv-btn,
+.services-page .serv-each-card-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 32px;
+  border-radius: 10px;
+  font: 700 16px/1.2 var(--pcs-font);
+  text-decoration: none;
+  color: #fff;
+  transition: background-color 0.2s ease, transform 0.2s var(--pcs-ease);
 }
 
-.serv-btn:hover {
-    background-color: #106552;
-    transform: translateY(-2px);
+.services-page .serv-btn {
+  min-width: 220px;
+  background-color: var(--pcs-plum);
+  box-shadow: 0 8px 20px rgba(154, 43, 96, 0.22);
 }
 
-.serv-card-wrp {
-    display: flex;
-    padding: 80px 5%;
-    gap: 48px;
-    background-color: #f6f6f4;
-    box-sizing: border-box;
-    justify-content: center;
+.services-page .serv-btn:hover {
+  background-color: var(--pcs-plum-700);
+  transform: translateY(-2px);
 }
 
-.serv-card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
-    width: 100%;
-    margin-top: 24px;
+/* ============ Category tabs + cards ============ */
+.services-page .serv-card-wrp {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  align-items: start;
+  gap: 48px;
+  padding: 96px max(24px, calc((100% - 1200px) / 2));
+  background-color: #f6f6f4;
+  box-sizing: border-box;
 }
 
-.serv-card-tab {
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-    width: 323px;
+.services-page .serv-card-tab {
+  position: sticky;
+  top: calc(var(--pcs-nav-h) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.serv-card-btn {
-    font-family: DM Sans;
-    font-weight: 700;
-    font-style: Bold;
-    font-size: 24px;
-    line-height: 20px;
-    letter-spacing: 0px;
-    vertical-align: middle;
-    text-align: left;
-    padding: 20px 16px;
-    width: 323px;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-}
-
-.serv-card-btn:hover {
-    background-color: #d4b2c3;
-    color: black;
-    border-radius: 6px;
-    transform: translateY(-2px);
-}
-
-.serv-card-btn.active {
-    background-color: #106552;
-    color: white;
-    border-radius: 6px;
-}
-
-.serv-card {
-    display: flex;
-    flex-direction: column;
-    width: 826px;
-}
-
-.serv-page-title {
-    font-family: DM Sans;
-    font-weight: 700;
-    font-style: Bold;
-    font-size: clamp(28px, 4vw, 48px);
-    leading-trim: NONE;
-    line-height: 1.1;
-    letter-spacing: -2px;
-    vertical-align: middle;
-    text-align: left;
-    margin-bottom: 16px;
-}
-
-.serv-page-desc {
-    font-family: DM Sans;
-    font-weight: 500;
-    font-style: Medium;
-    font-size: 16px;
-    line-height: 32px;
-    letter-spacing: 0px;
-    vertical-align: middle;
-    text-align: left;
-    margin-bottom: 42px;
-}
-
-.serv-each-card {
-    width: 100%;
-    min-height: 559px;
-    display: flex;
-    flex-direction: column;
-    background-color: #fff;
-    border-radius: 14px;
-    padding: 32px;
-    box-sizing: border-box;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.serv-each-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
-
-.serv-each-card-title {
-    font-family: DM Sans;
-    font-weight: 700;
-    font-style: Bold;
-    font-size: 20px;
-    leading-trim: NONE;
-    line-height: 20px;
-    letter-spacing: 0px;
-    vertical-align: middle;
-    margin-top: 24px;
-    margin-bottom: 14px;
-}
-
-.serv-each-card-img {
-    width: 100%;
-    height: 194.05px;
-    border-radius: 6px;
-    object-fit: cover;
-}
-
-.serv-each-card-desc {
-    font-family: DM Sans;
-    font-weight: 400;
-    font-style: Regular;
-    font-size: 14px;
-    leading-trim: NONE;
-    line-height: 32px;
-    letter-spacing: 0px;
-    vertical-align: middle;
-    display: -webkit-box;
-    -webkit-line-clamp: 5;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-height: 160px;
-    min-height: 160px;
-    margin-bottom: 16px;
-}
-
-.serv-each-card-btn {
-    font-family: Inter;
-    font-weight: 500;
-    font-style: Medium;
-    font-size: 16px;
-    leading-trim: NONE;
-    line-height: 20px;
-    letter-spacing: 0%;
-    vertical-align: middle;
-    color: white;
-    background-color: #000;
-    border-radius: 6px;
-    padding: 18px 0;
-    transition: all 0.3s ease-in-out;
-}
-
-.serv-each-card-btn:hover {
-  background-color: white;
-  color: black;
-  box-shadow: 0 0 15px #9A2B60;
+.services-page .serv-card-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  font: 700 18px/1.25 var(--pcs-font);
+  color: var(--pcs-ink);
+  text-align: left;
   cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Responsive (kept at the end of the file so it wins the cascade over
-   the base rules above, which share the same selector specificity) */
-@media (min-width: 1201px) {
-    .serv-card-wrp {
-        padding: 99px 110.5px;
-    }
+.services-page .serv-card-btn:hover {
+  background-color: var(--pcs-plum-50);
+  color: var(--pcs-plum);
 }
 
-@media (max-width: 1200px) {
-    .serv-card-wrp {
-        flex-direction: column;
-        padding: 60px 24px;
-    }
+.services-page .serv-card-btn.active {
+  background-color: var(--pcs-green);
+  color: #fff;
+}
 
-    .serv-card-tab {
-        width: 100%;
-        flex-direction: row;
-        overflow-x: auto;
-        padding-bottom: 16px;
-        margin-bottom: 24px;
-        padding-right: 0;
-        gap: 12px;
-    }
+.services-page .serv-card {
+  min-width: 0;
+}
 
-    .serv-card-btn {
-        white-space: nowrap;
-        width: auto;
-        padding: 12px 24px !important;
-    }
+.services-page .serv-page-title {
+  font-weight: 700;
+  font-size: clamp(28px, 3.4vw, 42px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+}
 
-    .serv-card {
-        width: 100%;
-    }
+.services-page .serv-page-desc {
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--pcs-muted);
+  margin: 0 0 32px;
+}
+
+.services-page .serv-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 20px;
+}
+
+.services-page .serv-each-card {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  border: 1px solid var(--pcs-line);
+  border-radius: var(--pcs-radius-lg);
+  padding: 20px 20px 24px;
+  box-sizing: border-box;
+  transition: transform 0.25s var(--pcs-ease), box-shadow 0.25s var(--pcs-ease);
+}
+
+.services-page .serv-each-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--pcs-shadow-lift);
+}
+
+.services-page .serv-each-card-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.services-page .serv-each-card-title {
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.25;
+  margin: 20px 0 10px;
+}
+
+.services-page .serv-each-card-desc {
+  flex: 1;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--pcs-muted);
+  margin: 0 0 20px;
+}
+
+.services-page .serv-each-card-btn {
+  width: 100%;
+  min-height: 48px;
+  background-color: var(--pcs-green);
+}
+
+.services-page .serv-each-card-btn:hover {
+  background-color: var(--pcs-green-800);
+  transform: translateY(-1px);
+}
+
+/* ============ Responsive ============ */
+@media (max-width: 1024px) {
+  .services-page .serv-card-wrp {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding: 72px 24px;
+  }
+
+  /* Tabs become a horizontally scrolling pill bar */
+  .services-page .serv-card-tab {
+    position: static;
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -24px;
+    padding: 4px 24px 8px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+  }
+
+  .services-page .serv-card-tab::-webkit-scrollbar {
+    display: none;
+  }
+
+  .services-page .serv-card-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-height: 44px;
+    padding: 0 18px;
+    font-size: 15px;
+    border-radius: 999px;
+    background-color: #fff;
+    border: 1px solid var(--pcs-line);
+    scroll-snap-align: center;
+  }
+
+  .services-page .serv-card-btn.active {
+    border-color: var(--pcs-green);
+  }
 }
 
 @media (max-width: 900px) {
-    .serv-cont {
-        flex-direction: column;
-        text-align: center;
-        padding: 100px 20px 60px;
-        gap: 40px;
-    }
+  .services-page .serv-cont {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+    padding: calc(var(--pcs-nav-h) + 44px) 24px 64px;
+  }
 
-    .serv-cont-left {
-        max-width: 100%;
-        align-items: center;
-    }
-
-    .serv-cont-right {
-        max-width: 100%;
-        width: 100%;
-        flex-basis: auto;
-    }
-
-    .serv-title,
-    .serv-desc {
-        text-align: center;
-    }
-
-    .serv-btn {
-        width: 100%;
-        max-width: 320px;
-    }
+  .services-page .serv-cont-right {
+    max-width: 560px;
+  }
 }
 
-@media (max-width: 480px) {
-    .serv-card-btn {
-        font-size: 18px;
-    }
+@media (max-width: 640px) {
+  .services-page .serv-cont {
+    padding: calc(var(--pcs-nav-h) + 36px) 20px 56px;
+  }
 
-    .serv-each-card {
-        min-height: auto;
-        padding: 24px;
-    }
+  .services-page .serv-btn {
+    width: 100%;
+  }
 
-    .serv-each-card-desc {
-        -webkit-line-clamp: 4;
-        max-height: none;
-        min-height: auto;
-    }
+  .services-page .serv-card-wrp {
+    padding: 56px 20px;
+  }
+
+  .services-page .serv-card-tab {
+    margin: 0 -20px;
+    padding: 4px 20px 8px;
+  }
+
+  .services-page .serv-page-desc {
+    margin-bottom: 24px;
+  }
 }

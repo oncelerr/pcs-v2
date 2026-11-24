@@ -139,7 +139,7 @@ export default function Blogs() {
             <div className="grid">
               {rest.map((post) => (
                 <article key={post.id} className="blog-card">
-                  <img src={coverImageUrl(post.cover_image)} alt={post.title} className="blog-image" />
+                  <img src={coverImageUrl(post.cover_image)} alt={post.title} className="blog-image" loading="lazy" />
                   <div className="card-content">
                     <div className="card-badges">
                       {(post.tags || []).slice(0, 3).map(tag => (
@@ -157,11 +157,12 @@ export default function Blogs() {
 
             {/* Pagination */}
             {pagination.last_page > 1 && (
-              <div className="pagination">
+              <nav className="pagination" aria-label="Blog pages">
                 <button
                   className="pagination-button"
                   onClick={() => goToPage(pagination.current_page - 1)}
                   disabled={pagination.current_page === 1}
+                  aria-label="Previous page"
                 >
                   ‹
                 </button>
@@ -170,6 +171,8 @@ export default function Blogs() {
                     key={page}
                     className={`pagination-number ${page === pagination.current_page ? 'active' : ''}`}
                     onClick={() => goToPage(page)}
+                    aria-label={`Page ${page}`}
+                    aria-current={page === pagination.current_page ? 'page' : undefined}
                   >
                     {page}
                   </button>
@@ -178,10 +181,11 @@ export default function Blogs() {
                   className="pagination-button"
                   onClick={() => goToPage(pagination.current_page + 1)}
                   disabled={pagination.current_page === pagination.last_page}
+                  aria-label="Next page"
                 >
                   ›
                 </button>
-              </div>
+              </nav>
             )}
           </div>
         </section>

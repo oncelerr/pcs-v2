@@ -93,7 +93,7 @@ const Login: React.FC = () => {
                 </div>
               )}
 
-              <p className="register-name">Email Address*</p>
+              <label className="register-name" htmlFor="email">Email Address*</label>
               <input
                 className={`register-input-email ${loginError || authError ? 'input-error' : ''}`}
                 id="email"
@@ -104,7 +104,7 @@ const Login: React.FC = () => {
                 disabled={isSubmitting}
               />
 
-              <p className="register-name">Password*</p>
+              <label className="register-name" htmlFor="password">Password*</label>
               <input
                 className={`register-input-password ${loginError || authError ? 'input-error' : ''}`}
                 id="password"
@@ -127,10 +127,11 @@ const Login: React.FC = () => {
               <div className="register-or"><div className="register-hr" /><p>OR</p><div className="register-hr" /></div>
               <button type="button" className="register-google" onClick={handleGoogleSignIn}><img src="/assets/google.png" alt="" />Sign In with Google</button>
               <p className="register-already">
-                Don't have an account? <a onClick={() => navigate('/register')}>Register</a>
+                Don't have an account? <Link to="/register">Register</Link>
               </p>
               <p className="register-already">
-                <a onClick={() => navigate('/forgot-password')}>Forgot Password?</a>
+                {/* There is no self-service reset yet; support resets passwords */}
+                <Link to="/contact">Forgot Password?</Link>
               </p>
             </form>
           )}
