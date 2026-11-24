@@ -39,6 +39,7 @@
 }
 
 .register-name {
+  display: block;
   font-family: DM Sans;
   font-weight: 500;
   font-style: Medium;
@@ -128,8 +129,9 @@
   color: white;
   width: 560px;
   height: 45.18px;
-  background-color: black;
-  border-radius: 4.84px;
+  background-color: var(--pcs-green);
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
   margin-bottom: 16px;
   cursor: pointer;
 }
@@ -395,5 +397,28 @@
 
   .register-right {
     display: none;
+  }
+}
+
+/* Inline field error (verification code) */
+.register-field-error {
+  margin-top: 6px;
+  color: #b42340;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.register-button:hover:not(:disabled) {
+  background-color: var(--pcs-green-800);
+}
+
+/* iOS zooms the page when focusing inputs under 16px; keep them at 16px on phones */
+@media (max-width: 640px) {
+  .register-input-name,
+  .register-input-email,
+  .register-input-password,
+  .register-input-confirm-password,
+  .register-cont input.form-control {
+    font-size: 16px;
   }
 }

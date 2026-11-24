@@ -1,5 +1,5 @@
 import './bootstrap';
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect, useLayoutEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -9,6 +9,8 @@ import Footer from './Components/Footer/Footer';
 import PrivateRoute from './Components/PrivateRoute/PrivateRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import LoadingSpinner from './Components/LoadingSpinner/LoadingSpinner';
+import PageEnter from './Components/PageEnter/PageEnter';
+import { scrollToSection } from './lib/motion';
 import './layouts/DashboardLayout.css';
 
 const Home = lazy(() => import('./Pages/Home/Home'));
@@ -32,13 +34,17 @@ const StateServiceRequests = lazy(() => import('./Pages/StateServiceRequests/Sta
 const AdminActivity = lazy(() => import('./Pages/AdminActivity/AdminActivity'));
 const BlogManagement = lazy(() => import('./Pages/BlogManagement/BlogManagement'));
 
-const PageWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <PageTitle title={title}>
-    <Suspense fallback={<div className="loading-container"><LoadingSpinner size="medium" fullPage={true} /></div>}>
-      {children}
-    </Suspense>
-  </PageTitle>
-);
+const PageWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => {
+  const { pathname } = useLocation();
+  return (
+    <PageTitle title={title}>
+      <Suspense fallback={<div className="loading-container"><LoadingSpinner size="medium" fullPage={true} /></div>}>
+        {/* Keyed by path so every public page change plays the enter transition */}
+        <PageEnter key={pathname}>{children}</PageEnter>
+      </Suspense>
+    </PageTitle>
+  );
+};
 
 const DashboardPage: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <PageTitle title={title}>
@@ -88,9 +94,32 @@ const AppContent: React.FC = () => {
     '/register'
   ].some(route => location.pathname.startsWith(route));
 
+  // Start each new page at the top. Runs before paint so the old scroll
+  // position never flashes on the new page.
+  const previousPath = useRef(location.pathname);
+  useLayoutEffect(() => {
+    if (previousPath.current !== location.pathname) {
+      previousPath.current = location.pathname;
+      window.scrollTo(0, 0);
+    }
+  }, [location.pathname]);
+
+  // Links such as "/#pricing-section" scroll to that section once the page
+  // has rendered. location.key makes repeating the same link work; pathname
+  // and hash cover history entries created without a router key.
+  useEffect(() => {
+    if (location.hash.length > 1) {
+      scrollToSection(decodeURIComponent(location.hash.slice(1)));
+    }
+  }, [location.key, location.pathname, location.hash]);
+
+  const MainElement = showNavbarFooter ? 'main' : 'div';
+
   return (
     <>
+      {showNavbarFooter && <a className="skip-link" href="#main-content">Skip to content</a>}
       {showNavbarFooter && <Navbar />}
+      <MainElement id="main-content" className={showNavbarFooter ? 'site-main' : undefined} tabIndex={-1}>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PageWrapper title=""><Home /></PageWrapper>} />
@@ -127,7 +156,7 @@ const AppContent: React.FC = () => {
         {/* 403 Access Denied Page */}
         <Route path="/403" element={
           <PageWrapper title="Access Denied">
-            <div style={{ textAlign: 'center', marginTop: '100px' }}>
+            <div className="access-denied">
               <h1>403</h1>
               <p>You do not have permission to view this page.</p>
             </div>
@@ -137,6 +166,7 @@ const AppContent: React.FC = () => {
         {/* 404 Not Found */}
         <Route path="*" element={<PageWrapper title="Not Found"><NotFound /></PageWrapper>} />
       </Routes>
+      </MainElement>
       {showNavbarFooter && <Footer />}
     </>
   );
@@ -145,5 +175,9 @@ const AppContent: React.FC = () => {
 
 const rootElement = document.getElementById('app');
 if (rootElement) {
-  ReactDOM.createRoot(rootElement).render(<App />);
+  // Reuse the root when Vite hot-reloads this module instead of creating a
+  // second one on the same container (React warns about that in development).
+  const holder = window as unknown as { __pcsRoot?: ReactDOM.Root };
+  holder.__pcsRoot ??= ReactDOM.createRoot(rootElement);
+  holder.__pcsRoot.render(<App />);
 }

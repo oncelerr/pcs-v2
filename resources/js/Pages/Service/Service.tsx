@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import "./Service.css";
+import { EASE_OUT, gsap, prefersReducedMotion } from "../../lib/motion";
 
 type ServiceCard = {
   id: number;
@@ -19,7 +20,10 @@ type ServiceTab = {
 export default function Service() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<number>(0);
-  const navigate  = useNavigate();
+  const pageRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const hasRenderedPanel = useRef(false);
   
   // Convert tab title to URL-friendly format (lowercase with hyphens, handling special chars)
   const titleToSlug = (title: string) => 
@@ -35,27 +39,24 @@ export default function Service() {
   const handleTabChange = (index: number) => {
     setActiveTab(index);
     const tabSlug = titleToSlug(serviceTabs[index].title);
-    setSearchParams({ service: tabSlug });
+    // replace: switching tabs should not add a Back-button step per click
+    setSearchParams({ service: tabSlug }, { replace: true });
   };
 
   // Set active tab based on URL on component mount and when searchParams change
   useEffect(() => {
     const serviceParam = searchParams.get('service');
-    console.log('URL service param:', serviceParam);
     
     if (serviceParam) {
       const tabIndex = serviceTabs.findIndex(tab => {
         const slug = titleToSlug(tab.title);
-        console.log(`Checking tab: ${tab.title} -> ${slug} vs ${serviceParam}`);
         return slug === serviceParam.toLowerCase();
       });
       
-      console.log('Found tab index:', tabIndex);
       if (tabIndex !== -1) {
         setActiveTab(tabIndex);
       } else {
         // If no matching tab found, default to first tab
-        console.log('No matching tab found, defaulting to first tab');
         setActiveTab(0);
       }
     }
@@ -182,51 +183,110 @@ export default function Service() {
     return text.substring(0, maxLength).trim() + '...';
   };
 
+  // Arrow keys move between tabs, as screen-reader users expect
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const last = serviceTabs.length - 1;
+    let next = -1;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = index === last ? 0 : index + 1;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = index === 0 ? last : index - 1;
+    if (e.key === 'Home') next = 0;
+    if (e.key === 'End') next = last;
+    if (next === -1) return;
+    e.preventDefault();
+    handleTabChange(next);
+    tabRefs.current[next]?.focus();
+  };
+
+  // Keep the active tab visible in the horizontally scrolling tab bar (mobile)
+  useEffect(() => {
+    const tab = tabRefs.current[activeTab];
+    const bar = tab?.parentElement;
+    if (!tab || !bar || bar.scrollWidth <= bar.clientWidth) return;
+    const left = tab.offsetLeft - (bar.clientWidth - tab.offsetWidth) / 2;
+    bar.scrollTo({ left, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  }, [activeTab]);
+
+  // Short cross-fade of the cards when the category changes
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    if (!hasRenderedPanel.current) {
+      hasRenderedPanel.current = true;
+      return;
+    }
+    if (prefersReducedMotion()) return;
+
+    const ctx = gsap.context(() => {
+      gsap.timeline({ defaults: { ease: EASE_OUT } })
+        .from('.serv-page-title, .serv-page-desc', { y: 8, autoAlpha: 0, duration: 0.3, stagger: 0.04 })
+        .from('.serv-each-card', { y: 14, autoAlpha: 0, duration: 0.38, stagger: 0.05, clearProps: 'transform' }, '-=0.18');
+    }, panel);
+
+    return () => ctx.revert();
+  }, [activeTab]);
+
+  const currentTab = serviceTabs[activeTab];
+
   return (
-    <>
+    <div className="services-page" ref={pageRef}>
       <div className="serv-cont">
         <div className="serv-cont-left">
           <h1 className="serv-title">Our Services</h1>
           <p className="serv-desc">Get in touch today to discover how our compliance experts can simplify your business journey. Whether you're starting up, filing taxes, or staying legally compliant, our team is here to provide personalized support and reliable solutions — every step of the way.</p>
-          <button className="serv-btn">Book Now</button>
+          <Link className="serv-btn" to="/contact">Book Now</Link>
         </div>
         <div className="serv-cont-right">
           <img src="/assets/services-hero-img.png" alt="Our Services" />
         </div>
       </div>
       <div className="serv-card-wrp" id="service">
-        <div className="serv-card-tab">
+        <div className="serv-card-tab" role="tablist" aria-label="Service categories" aria-orientation="vertical">
           {serviceTabs.map((tab, index) => (
             <button
               key={tab.id}
+              ref={(el) => { tabRefs.current[index] = el; }}
+              type="button"
+              role="tab"
+              id={`service-tab-${tab.id}`}
+              aria-selected={activeTab === index}
+              aria-controls="service-panel"
+              tabIndex={activeTab === index ? 0 : -1}
               className={`serv-card-btn ${activeTab === index ? 'active' : ''}`}
               onClick={() => handleTabChange(index)}
+              onKeyDown={(e) => handleTabKeyDown(e, index)}
             >
               {tab.title}
             </button>
           ))}
         </div>
-        <div className="serv-card">
-          <h1 className="serv-page-title">{serviceTabs[activeTab].title}</h1>
-          <p className="serv-page-desc">{serviceTabs[activeTab].description}</p>
+        <div
+          className="serv-card"
+          id="service-panel"
+          role="tabpanel"
+          aria-labelledby={`service-tab-${currentTab.id}`}
+          ref={panelRef}
+        >
+          <h2 className="serv-page-title">{currentTab.title}</h2>
+          <p className="serv-page-desc">{currentTab.description}</p>
           <div className="serv-card-grid">
-            {serviceTabs[activeTab].cards.map((card) => (
-              <div key={card.id} className="serv-each-card">
-                <img 
-                  src={card.image} 
-                  alt={card.title} 
-                  className="serv-each-card-img" 
+            {currentTab.cards.map((card) => (
+              <div key={`${currentTab.id}-${card.id}`} className="serv-each-card">
+                <img
+                  src={card.image}
+                  alt={card.title}
+                  className="serv-each-card-img"
+                  loading="lazy"
                 />
-                <h2 className="serv-each-card-title">{card.title}</h2>
+                <h3 className="serv-each-card-title">{card.title}</h3>
                 <p className="serv-each-card-desc">
                   {truncateText(card.description)}
                 </p>
-                <button onClick={() => navigate('/register')} className="serv-each-card-btn">Book Now</button>
+                <Link to="/register" className="serv-each-card-btn" aria-label={`Book Now: ${card.title}`}>Book Now</Link>
               </div>
             ))}
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

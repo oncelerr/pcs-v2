@@ -7,7 +7,15 @@ export default function Privacy() {
   return (
     <>
       <div className="term-hero">
-        <button className="term-back-btn" onClick={() => navigate(-1)}><img className="term-back-img" src="/assets/Back.png" alt="" /></button>
+        {/* Direct visits have no in-app history to return to, so go home instead */}
+        <button
+          type="button"
+          className="term-back-btn"
+          aria-label="Go back"
+          onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate('/'))}
+        >
+          <img className="term-back-img" src="/assets/Back.png" alt="" />
+        </button>
         <h1 className="term-h1">Privacy Policy</h1>
         <p className="term-p">Last updated: September 20, 2025</p>
       </div>

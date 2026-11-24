@@ -130,7 +130,10 @@
 }
 
 
-.active {
+/* Scoped to the sidebar: this stylesheet loads on every page, and a bare
+   `.active` rule was painting active items on the public site green.
+   :where() keeps the original specificity, so sidebar behaviour is unchanged. */
+:where(.sidebar) .active {
   color: white;
   background-color: #146857;
   border-radius: 8px;

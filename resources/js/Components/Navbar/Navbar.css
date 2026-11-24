@@ -1,136 +1,185 @@
+/* Fixed header: transparent over the page top, solid and compact once scrolled */
 .navbar-cont {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 12px 0px;
-  transition: all 0.3s ease-in-out;
-  /* smooth animation */
-  z-index: 1000;
-  margin-top: 42px;
-}
-
-.navbar-cont.scrolled {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
+  z-index: 1000;
+  padding: 0 24px;
+  background: transparent;
+  transition: background-color 0.3s var(--pcs-ease), box-shadow 0.3s var(--pcs-ease);
+}
+
+.navbar-cont.scrolled,
+.navbar-cont.menu-open {
+  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  backdrop-filter: saturate(160%) blur(12px);
+  box-shadow: 0 1px 0 var(--pcs-line), 0 8px 24px rgba(23, 33, 30, 0.06);
 }
 
 .navbar-wrp {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: var(--pcs-nav-h);
   display: flex;
   align-items: center;
-  transition: background 0.3s ease-in-out, 
-              box-shadow 0.3s ease-in-out, 
-              margin-top 0.3s ease-in-out, 
-              padding 0.3s ease-in-out;
-  border-radius: 16px;
+  gap: 32px;
+  transition: height 0.3s var(--pcs-ease);
 }
 
-.navbar-wrp.scrolled {
-  margin-top: -1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-
-  /* neumorphic highlights & shadows */
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-
-  /* highlights top-left, shadow bottom-right */
-  box-shadow:
-    -4px -4px 12px rgba(255, 255, 255, 0.7),
-    /* highlight top-left */
-    6px 6px 16px rgba(0, 0, 0, 0.25);
-  /* shadow bottom-right */
+.navbar-cont.scrolled .navbar-wrp {
+  height: 64px;
 }
 
+.nav-logo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
 
-.navbar-cont img {
-  margin-right: 126px;
-  cursor: pointer;
+.nav-logo img {
+  display: block;
+  height: 30px;
+  width: auto;
+}
+
+/* Wraps links (and, on mobile, account actions) */
+.nav-panel {
+  flex: 1;
+  display: flex;
+  justify-content: center;
 }
 
 .nav-links {
+  position: relative;
   display: flex;
-  gap: 61px;
-  margin-right: 175px;
+  align-items: center;
+  gap: 8px;
 }
 
 .nav-link {
-  font-family: DM Sans;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  font-family: var(--pcs-font);
   font-weight: 500;
   font-size: 16px;
   line-height: 20px;
-  vertical-align: middle;
-  cursor: pointer;
+  color: var(--pcs-ink);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
 
-.user-actions {
+.nav-link:hover {
+  color: var(--pcs-green);
+}
+
+.nav-link.active {
+  color: var(--pcs-green);
+  font-weight: 700;
+}
+
+/* Sliding active-page marker, positioned by GSAP */
+.nav-indicator {
+  position: absolute;
+  left: 0;
+  bottom: 2px;
+  height: 3px;
+  width: 0;
+  border-radius: 3px;
+  background: var(--pcs-plum);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.nav-actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
-.welcome-text {
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 500;
-  font-size: 14px;
-  color: #333;
+.nav-actions-mobile {
+  display: none;
 }
 
-.login-btn, .logout-btn {
-  font-family: 'DM Sans', sans-serif;
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 22px;
+  font-family: var(--pcs-font);
   font-weight: 700;
-  font-size: 16px;
-  line-height: 20px;
-  color: white;
-  background-color: #106552;
-  padding: 11.5px 38px;
-  border: none;
-  border-radius: 6px;
+  font-size: 15px;
+  line-height: 1;
+  text-decoration: none;
+  border-radius: var(--pcs-radius-sm);
+  border: 1.5px solid transparent;
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s var(--pcs-ease);
 }
 
-.login-btn:hover, .logout-btn:hover {
-  background-color: #0d5445;
+.nav-btn-solid {
+  color: #fff;
+  background-color: var(--pcs-green);
+}
+
+.nav-btn-solid:hover {
+  background-color: var(--pcs-green-800);
   transform: translateY(-1px);
 }
 
-.login-btn:active, .logout-btn:active {
+.nav-btn-ghost {
+  color: var(--pcs-green);
+  border-color: rgba(16, 101, 82, 0.35);
+  background: transparent;
+}
+
+.nav-btn-ghost:hover {
+  border-color: var(--pcs-green);
+  background-color: var(--pcs-green-50);
+}
+
+.nav-btn:active {
   transform: translateY(0);
 }
 
+/* Hamburger */
 .nav-toggle {
   display: none;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  width: 32px;
-  height: 32px;
-  background: transparent;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
   border: none;
+  border-radius: 10px;
+  background: transparent;
   cursor: pointer;
-  margin-left: 16px;
 }
 
 .nav-toggle span {
-  display: block;
-  width: 100%;
+  position: absolute;
+  left: 11px;
+  width: 22px;
   height: 2px;
-  background-color: #106552;
   border-radius: 2px;
-  transition: transform 0.25s ease, opacity 0.25s ease;
+  background-color: var(--pcs-green);
+  transition: transform 0.25s var(--pcs-ease), opacity 0.2s ease;
 }
 
+.nav-toggle span:nth-child(1) { top: 15px; }
+.nav-toggle span:nth-child(2) { top: 21px; }
+.nav-toggle span:nth-child(3) { top: 27px; }
+
 .nav-toggle.open span:nth-child(1) {
-  transform: translateY(7px) rotate(45deg);
+  transform: translateY(6px) rotate(45deg);
 }
 
 .nav-toggle.open span:nth-child(2) {
@@ -138,107 +187,98 @@
 }
 
 .nav-toggle.open span:nth-child(3) {
-  transform: translateY(-7px) rotate(-45deg);
+  transform: translateY(-6px) rotate(-45deg);
 }
 
-.user-actions-mobile,
-.login-btn-mobile {
-  display: none;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1024px) {
-  .navbar-cont img {
-    margin-right: 60px;
-  }
-
-  .user-actions {
-    margin-left: 100px;
-  }
-}
-
-@media (max-width: 768px) {
-  .navbar-cont {
-    margin-top: 0;
-    padding: 12px 16px;
-    justify-content: space-between;
-  }
-
+@media (max-width: 1080px) {
   .navbar-wrp {
-    width: 100%;
-    justify-content: space-between;
-    position: relative;
-  }
-
-  .navbar-cont img {
-    margin-right: 0;
-    max-width: 110px;
-  }
-
-  .nav-toggle {
-    display: flex;
-  }
-
-  .nav-links {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: 0;
-    left: 0;
-    margin: 0;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
-    padding: 12px;
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    transition: max-height 0.25s ease, opacity 0.2s ease;
-    z-index: 999;
-  }
-
-  .nav-links.open {
-    max-height: 400px;
-    opacity: 1;
-    padding: 12px;
+    gap: 16px;
   }
 
   .nav-link {
-    width: 100%;
-    text-align: left;
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 0 10px;
   }
 
-  .nav-link:hover {
-    background-color: #f0f9f6;
+  .nav-logo img {
+    height: 26px;
+  }
+}
+
+/* Mobile: hamburger with a drop-down panel animated by GSAP */
+@media (max-width: 960px) {
+  :root {
+    --pcs-nav-h: 64px;
   }
 
-  /* Desktop login/logout button is hidden; the one inside the dropdown is used instead */
-  .navbar-wrp > .user-actions,
-  .navbar-wrp > .login-btn {
-    display: none;
+  .navbar-cont {
+    padding: 0 16px;
   }
 
-  .user-actions-mobile,
-  .login-btn-mobile {
+  .navbar-cont.scrolled .navbar-wrp {
+    height: 60px;
+  }
+
+  .nav-logo img {
+    height: 22px;
+  }
+
+  .nav-toggle {
     display: block;
-    margin: 8px 0 0 0;
   }
 
-  .user-actions-mobile .login-btn,
-  .login-btn-mobile {
-    width: 100%;
-  }
-
-  .welcome-text {
+  .nav-actions {
     display: none;
   }
 
-  .login-btn, .logout-btn {
-    padding: 10px 20px;
-    font-size: 14px;
+  .nav-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    background: #fff;
+    box-shadow: 0 1px 0 var(--pcs-line), 0 18px 32px rgba(23, 33, 30, 0.12);
+    border-radius: 0 0 var(--pcs-radius) var(--pcs-radius);
+    overflow: hidden;
+    /* Closed by default; GSAP animates height and visibility */
+    height: 0;
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    padding: 12px 16px 4px;
+  }
+
+  .nav-link {
+    min-height: 48px;
+    padding: 0 14px;
+    font-size: 17px;
+  }
+
+  .nav-link.active {
+    background-color: var(--pcs-green-50);
+    box-shadow: inset 3px 0 0 var(--pcs-plum);
+  }
+
+  .nav-indicator {
+    display: none;
+  }
+
+  .nav-actions-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 16px 20px;
+  }
+
+  .nav-actions-mobile .nav-btn {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px;
   }
 }

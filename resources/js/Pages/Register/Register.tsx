@@ -238,7 +238,7 @@ const Register: React.FC = () => {
                     className="form-control"
                   />
                   {errors.otp && (
-                    <div style={styles.errorText}>{errors.otp[0]}</div>
+                    <div className="register-field-error" role="alert">{errors.otp[0]}</div>
                   )}
                 </div>
 
@@ -273,7 +273,7 @@ const Register: React.FC = () => {
             </div>
           ) : !showOtpForm && (
             <form onSubmit={handleSubmit} action="">
-              <p className="register-name">Name *</p>
+              <label className="register-name" htmlFor="name">Name *</label>
               <input
                 className={`register-input-name ${errors.name ? 'input-error' : ''}`}
                 type="text"
@@ -284,7 +284,7 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 disabled={isSubmitting}
               />
-              <p className="register-name">Email *</p>
+              <label className="register-name" htmlFor="email">Email *</label>
               <input
                 className={`register-input-email ${errors.email ? 'input-error' : ''}`}
                 placeholder="Enter your email"
@@ -295,7 +295,7 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 disabled={isSubmitting}
               />
-              <p className="register-name">Password *</p>
+              <label className="register-name" htmlFor="password">Password *</label>
               <input
                 className={`register-input-password ${errors.password ? 'input-error' : ''}`}
                 type="password"
@@ -306,7 +306,7 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 disabled={isSubmitting}
               />
-              <p className="register-name">Confirm Password *</p>
+              <label className="register-name" htmlFor="password_confirmation">Confirm Password *</label>
               <input
                 className={`register-input-confirm-password ${errors.password_confirmation ? 'input-error' : ''}`}
                 type="password"
@@ -338,12 +338,12 @@ const Register: React.FC = () => {
                   style={{ marginRight: '8px' }}
                 />
                 <label className="register-agree-label" htmlFor="agreeToTerms">
-                  I agree to the <a onClick={() => navigate('/terms')}>Terms of Service</a> and <a onClick={() => navigate('/privacy')}>Privacy Policy.</a>
+                  I agree to the <Link to="/terms">Terms of Service</Link> and <Link to="/privacy">Privacy Policy.</Link>
                 </label>
               </div>
               <div className="register-or"><div className="register-hr" /><p>OR</p><div className="register-hr" /></div>
               <button type="button" className="register-google" onClick={handleGoogleSignUp}><img src="/assets/google.png" alt="" />Sign Up with Google</button>
-              <p className="register-already">Already have an account? <a onClick={() => navigate('/login')}>Login Here</a></p>
+              <p className="register-already">Already have an account? <Link to="/login">Login Here</Link></p>
             </form>
           )}
         </div>

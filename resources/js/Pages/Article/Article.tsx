@@ -42,7 +42,7 @@ const coverImageUrl = (path: string | null) => {
 const ArticleCard: React.FC<{ post: RelatedBlog }> = ({ post }) => {
   return (
     <div className="article-card">
-      <img className="article-card__image" src={coverImageUrl(post.cover_image)} alt={post.title} />
+      <img className="article-card__image" src={coverImageUrl(post.cover_image)} alt={post.title} loading="lazy" />
       <div className="article-card__content">
         <div className="article-card__tags">
           {(post.tags || []).slice(0, 3).map((tag) => (
@@ -123,17 +123,17 @@ const BlogPost: React.FC = () => {
   return (
     <div className="page-container">
       {/* Breadcrumb */}
-      <div className="breadcrumb">
+      <nav className="breadcrumb" aria-label="Breadcrumb">
         <Link to="/" className="breadcrumb__item">Home</Link>
-        <span className="breadcrumb__separator">›</span>
+        <span className="breadcrumb__separator" aria-hidden="true">›</span>
         <Link to="/blogs" className="breadcrumb__item">Blogs</Link>
-        <span className="breadcrumb__separator">›</span>
-        <span className="breadcrumb__item breadcrumb__item--active">
+        <span className="breadcrumb__separator" aria-hidden="true">›</span>
+        <span className="breadcrumb__item breadcrumb__item--active" aria-current="page">
           {blog.title}
         </span>
-      </div>
+      </nav>
 
-      <main className="main-content">
+      <div className="article-main">
         <article className="article">
           <h1 className="article__title">{blog.title}</h1>
 
@@ -156,7 +156,7 @@ const BlogPost: React.FC = () => {
             ))}
           </div>
         </article>
-      </main>
+      </div>
 
       {/* Recommended Articles */}
       {related.length > 0 && (
